@@ -49,13 +49,113 @@ tabs = st.tabs(tab_labels)
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
     st.header("Encounter Generator")
-    st.markdown("Generate encounters, hostiles, or random situations.")
-    
-    if st.button("Generate Random Encounter"):
-        st.success(roll_table("Random Encounter", group=1, log=True))
 
-    if st.button("Generate Encounter Escalation"):
-        st.success(roll_table("Encounter Escalation", group=1))
+    st.markdown("Use these tools to generate combat-related and encounter-related results. "
+                "All buttons below correspond directly to table files in your Encounter data folder.")
+
+    # Dictionary mapping table names to their metadata
+    encounter_tables = {
+        "diffuculty_modifiers":      {"group": None, "log": False, "inputs": None},
+        "placement":                 {"group": None, "log": False, "inputs": None},
+        "surprise":                  {"group": None, "log": False, "inputs": None},
+        "encounter_activity":        {"group": None, "log": False, "inputs": None},
+        "combat_stance":             {"group": None, "log": False, "inputs": None},
+        "targeting":                 {"group": None, "log": False, "inputs": None},
+        "recovery_status":           {"group": None, "log": False, "inputs": None},
+        "hit_locations":             {"group": None, "log": False,
+                                      "inputs": ["Humanoid", "Quadruped", "Sextuped", "Serpentine"]},
+        "random_direction":          {"group": None, "log": False, "inputs": None},
+        "critical_miss_melee":       {"group": None, "log": False, "inputs": None},
+        "critical_miss_ranged":      {"group": None, "log": False, "inputs": None},
+        "random_combat_event":       {"group": None, "log": False, "inputs": None},
+
+        # Hacking includes three checkboxes
+        "hacking":                   {"group": None, "log": True,
+                                      "checkboxes": ["Cypher", "BlackCypher", "SuccessfulRoll"]},
+
+        # These belong to persistent group 7
+        "encounter_difficulty":      {"group": 7, "log": True},
+        "variable_encounter_difficulty": {"group": 7, "log": True},
+        "one_crew_encounter":        {"group": 7, "log": True,
+                                      "inputs": ["Easy", "Standard", "Elite", "Overwhelming"]},
+        "three_crew_encounter":      {"group": 7, "log": True,
+                                      "inputs": ["Easy", "Standard", "Elite", "Overwhelming"]},
+        "five_crew_encounter":       {"group": 7, "log": True,
+                                      "inputs": ["Easy", "Standard", "Elite", "Overwhelming"]},
+
+        "experimental_malfunction":  {"group": None, "log": True},
+    }
+
+    st.subheader("Encounter Tables")
+
+    # Render a button for each table
+    for table_name, meta in encounter_tables.items():
+
+        # Build the UI row for this table
+        col1, col2 = st.columns([0.4, 0.6])
+
+        with col1:
+            st.markdown(f"**{table_name.replace('_', ' ').title()}**")
+
+        with col2:
+
+            # Handle dropdown inputs
+            selected_input = None
+            if "inputs" in meta and meta["inputs"] is not None:
+                selected_input = st.selectbox(
+                    f"Select option for {table_name}",
+                    meta["inputs"],
+                    key=f"{table_name}_input"
+                )
+
+            # Handle hacking checkboxes
+            check_states = None
+            if "checkboxes" in meta:
+                check_states = {}
+                st.write("Options:")
+                cb1, cb2, cb3 = st.columns(3)
+                for i, opt in enumerate(meta["checkboxes"]):
+                    box_col = [cb1, cb2, cb3][i]
+                    with box_col:
+                        check_states[opt] = st.checkbox(
+                            opt, key=f"{table_name}_cb_{opt}"
+                        )
+
+            # Roll button
+            roll_button = st.button(f"Roll {table_name}", key=f"btn_{table_name}")
+
+            if roll_button:
+                # Construct roll description string
+                input_note = ""
+                if selected_input:
+                    input_note = f" | Option: {selected_input}"
+                if check_states:
+                    enabled = [k for k, v in check_states.items() if v]
+                    input_note = f" | Flags: {', '.join(enabled) if enabled else 'None'}"
+
+                result = roll_table(
+                    table_name + input_note,
+                    group=meta.get("group", None),
+                    log=meta.get("log", False)
+                )
+
+                st.success(result)
+
+    # ---------------------------
+    # Encounter Persistent Section
+    # ---------------------------
+    st.subheader("Persistent Encounter Data")
+
+    if 7 in st.session_state["persistent"] and st.session_state["persistent"][7]:
+        for entry in st.session_state["persistent"][7]:
+            st.write(f"- {entry}")
+    else:
+        st.info("No persistent encounter data yet.")
+
+    if st.button("Clear Encounter Persistent Data"):
+        if 7 in st.session_state["persistent"]:
+            st.session_state["persistent"][7] = []
+        st.experimental_rerun()
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
