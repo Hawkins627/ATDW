@@ -1,0 +1,33 @@
+creature_type,location,modifier
+Humanoid,Feet,-1
+Humanoid,Legs,-1
+Humanoid,Waist,0
+Humanoid,Hands,0
+Humanoid,Arms,0
+Humanoid,Torso,+1
+Humanoid,Torso,+1
+Humanoid,Torso,+1
+Humanoid,Back,+2
+Humanoid,Head,+3
+
+Quadruped,Hindlimb,-1
+Quadruped,Hindlimb,-1
+Quadruped,Forelimb,0
+Quadruped,Forelimb,0
+Quadruped,Forelimb,0
+Quadruped,Forelimb,0
+Quadruped,Body,+2
+Quadruped,Body,+2
+Quadruped,Head,+3
+Quadruped,Head,+3
+
+Serpentine,Lower Body,-1
+Serpentine,Lower Body,-1
+Serpentine,Middle,0
+Serpentine,Middle,0
+Serpentine,Middle,0
+Serpentine,Middle,0
+Serpentine,Upper Body,+2
+Serpentine,Upper Body,+2
+Serpentine,Head,+3
+Serpentine,Head,+3
