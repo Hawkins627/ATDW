@@ -48,97 +48,223 @@ tabs = st.tabs(tab_labels)
 
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
-    st.header("Encounter Generator")
+    st.header("Encounter Tables")
 
-    st.markdown("Use these tools to generate combat-related and encounter-related results. "
-                "All buttons below correspond directly to table files in your Encounter data folder.")
+    # Metadata: rulebook order, plus persistent/log info and any inputs
+    encounter_tables = [
+        {
+            "key": "difficulty_modifiers",
+            "label": "Difficulty Modifiers",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "placement",
+            "label": "Placement",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "surprise",
+            "label": "Surprise",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "encounter_activity",
+            "label": "Encounter Activity",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "combat_stance",
+            "label": "Combat Stance",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "targeting",
+            "label": "Targeting",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "recovery_status",
+            "label": "Recovery Status",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "hit_locations",
+            "label": "Hit Locations",
+            "group": None,
+            "log": False,
+            "input": {
+                "type": "select",
+                "label": "Creature Shape",
+                "options": ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
+            },
+        },
+        {
+            "key": "random_direction",
+            "label": "Random Direction",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "critical_miss_melee",
+            "label": "Critical Miss – Melee",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "critical_miss_ranged",
+            "label": "Critical Miss – Ranged",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "random_combat_event",
+            "label": "Random Combat Event",
+            "group": None,
+            "log": False,
+            "input": None,
+        },
+        {
+            "key": "hacking",
+            "label": "Hacking",
+            "group": None,
+            "log": True,   # goes to mission log
+            "input": {
+                "type": "hacking_flags"
+            },
+        },
+        {
+            "key": "encounter_difficulty",
+            "label": "Encounter Difficulty",
+            "group": 7,    # persistent pool 7
+            "log": True,
+            "input": None,
+        },
+        {
+            "key": "variable_encounter_difficulty",
+            "label": "Variable Encounter Difficulty",
+            "group": 7,
+            "log": True,
+            "input": None,
+        },
+        {
+            "key": "one_crew_encounter",
+            "label": "One-Crew Encounter",
+            "group": 7,
+            "log": True,
+            "input": {
+                "type": "select",
+                "label": "Difficulty",
+                "options": ["Easy", "Standard", "Elite", "Overwhelming"],
+            },
+        },
+        {
+            "key": "three_crew_encounter",
+            "label": "Three-Crew Encounter",
+            "group": 7,
+            "log": True,
+            "input": {
+                "type": "select",
+                "label": "Difficulty",
+                "options": ["Easy", "Standard", "Elite", "Overwhelming"],
+            },
+        },
+        {
+            "key": "five_crew_encounter",
+            "label": "Five-Crew Encounter",
+            "group": 7,
+            "log": True,
+            "input": {
+                "type": "select",
+                "label": "Difficulty",
+                "options": ["Easy", "Standard", "Elite", "Overwhelming"],
+            },
+        },
+        {
+            "key": "experimental_malfunction",
+            "label": "Experimental Gear Malfunction",
+            "group": None,
+            "log": True,
+            "input": None,
+        },
+    ]
 
-    # Dictionary mapping table names to their metadata
-    encounter_tables = {
-        "diffuculty_modifiers":      {"group": None, "log": False, "inputs": None},
-        "placement":                 {"group": None, "log": False, "inputs": None},
-        "surprise":                  {"group": None, "log": False, "inputs": None},
-        "encounter_activity":        {"group": None, "log": False, "inputs": None},
-        "combat_stance":             {"group": None, "log": False, "inputs": None},
-        "targeting":                 {"group": None, "log": False, "inputs": None},
-        "recovery_status":           {"group": None, "log": False, "inputs": None},
-        "hit_locations":             {"group": None, "log": False,
-                                      "inputs": ["Humanoid", "Quadruped", "Sextuped", "Serpentine"]},
-        "random_direction":          {"group": None, "log": False, "inputs": None},
-        "critical_miss_melee":       {"group": None, "log": False, "inputs": None},
-        "critical_miss_ranged":      {"group": None, "log": False, "inputs": None},
-        "random_combat_event":       {"group": None, "log": False, "inputs": None},
+    col_left, col_right = st.columns(2)
 
-        # Hacking includes three checkboxes
-        "hacking":                   {"group": None, "log": True,
-                                      "checkboxes": ["Cypher", "BlackCypher", "SuccessfulRoll"]},
+    # render buttons in two columns, rulebook order
+    for idx, meta in enumerate(encounter_tables):
+        col = col_left if idx % 2 == 0 else col_right
+        key = meta["key"]
+        label = meta["label"]
+        group_id = meta.get("group", None)
+        log_flag = meta.get("log", False)
+        input_cfg = meta.get("input", None)
 
-        # These belong to persistent group 7
-        "encounter_difficulty":      {"group": 7, "log": True},
-        "variable_encounter_difficulty": {"group": 7, "log": True},
-        "one_crew_encounter":        {"group": 7, "log": True,
-                                      "inputs": ["Easy", "Standard", "Elite", "Overwhelming"]},
-        "three_crew_encounter":      {"group": 7, "log": True,
-                                      "inputs": ["Easy", "Standard", "Elite", "Overwhelming"]},
-        "five_crew_encounter":       {"group": 7, "log": True,
-                                      "inputs": ["Easy", "Standard", "Elite", "Overwhelming"]},
+        with col:
+            st.subheader(label)
 
-        "experimental_malfunction":  {"group": None, "log": True},
-    }
-
-    st.subheader("Encounter Tables")
-
-    # Render a button for each table
-    for table_name, meta in encounter_tables.items():
-
-        # Build the UI row for this table
-        col1, col2 = st.columns([0.4, 0.6])
-
-        with col1:
-            st.markdown(f"**{table_name.replace('_', ' ').title()}**")
-
-        with col2:
-
-            # Handle dropdown inputs
-            selected_input = None
-            if "inputs" in meta and meta["inputs"] is not None:
-                selected_input = st.selectbox(
-                    f"Select option for {table_name}",
-                    meta["inputs"],
-                    key=f"{table_name}_input"
+            extra_note = ""
+            # handle select inputs (hit locations, crew encounters)
+            if input_cfg and input_cfg.get("type") == "select":
+                opt = st.selectbox(
+                    input_cfg["label"],
+                    input_cfg["options"],
+                    key=f"{key}_select"
                 )
+                extra_note = f" | Option: {opt}"
 
-            # Handle hacking checkboxes
-            check_states = None
-            if "checkboxes" in meta:
-                check_states = {}
-                st.write("Options:")
-                cb1, cb2, cb3 = st.columns(3)
-                for i, opt in enumerate(meta["checkboxes"]):
-                    box_col = [cb1, cb2, cb3][i]
-                    with box_col:
-                        check_states[opt] = st.checkbox(
-                            opt, key=f"{table_name}_cb_{opt}"
-                        )
+            # handle hacking flags
+            hacking_flags = None
+            if input_cfg and input_cfg.get("type") == "hacking_flags":
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    cypher = st.checkbox("Cypher", key="hack_cypher")
+                with c2:
+                    black = st.checkbox("Black Cypher", key="hack_black")
+                with c3:
+                    suc = st.checkbox("Successful Roll", key="hack_success")
+                flags = []
+                if cypher:
+                    flags.append("Cypher")
+                if black:
+                    flags.append("BlackCypher")
+                if suc:
+                    flags.append("SuccessfulRoll")
+                hacking_flags = flags
+                if flags:
+                    extra_note = " | Flags: " + ", ".join(flags)
+                else:
+                    extra_note = " | Flags: None"
 
-            # Roll button
-            roll_button = st.button(f"Roll {table_name}", key=f"btn_{table_name}")
+            # button itself
+            if st.button(f"Roll {label}", key=f"btn_{key}"):
+                # for now we just tack input information onto the table name;
+                # later the real rolling logic can parse/use it.
+                full_name = key + extra_note
 
-            if roll_button:
-                # Construct roll description string
-                input_note = ""
-                if selected_input:
-                    input_note = f" | Option: {selected_input}"
-                if check_states:
-                    enabled = [k for k, v in check_states.items() if v]
-                    input_note = f" | Flags: {', '.join(enabled) if enabled else 'None'}"
-
+                # Hacking could eventually use its own function; for now we
+                # still go through roll_table so logging/persistence behave.
                 result = roll_table(
-                    table_name + input_note,
-                    group=meta.get("group", None),
-                    log=meta.get("log", False)
+                    full_name,
+                    group=group_id,
+                    log=log_flag
                 )
-
                 st.success(result)
 
     # ---------------------------
