@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Folder that holds ALL your CSV tables, like:
 # data/diffuculty_modifiers.csv, data/one_crew_encounter.csv, etc.
-DATA_DIR = Path("data")
+DATA_DIR = Path(".")
 
 
 def ensure_state():
