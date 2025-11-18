@@ -67,16 +67,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         if pd.notna(v)
     )
 
-
 def roll_table(table_name: str, group=None, log=False, option=None) -> str:
-    """
-    Core roller for almost all tables.
-
-    - table_name: CSV base name (e.g. 'one_crew_encounter')
-    - group: persistent group id (e.g. 7) or None
-    - log: whether to add to mission log
-    - option: optional selector (e.g. difficulty or creature shape)
-    """
     ensure_state()
 
     try:
@@ -85,7 +76,7 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         result = f"[ERROR] CSV for '{table_name}' not found."
         return result
 
-    # Apply option filters where appropriate
+    # Apply option filters
     if option is not None:
         if "difficulty" in df.columns:
             df = df[df["difficulty"] == option]
@@ -99,14 +90,12 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         text = format_row_for_display(table_name, row)
         result = text
 
-    # Handle persistence + log
     if group is not None:
         add_to_persistent(group, result)
     if log:
         add_to_log(f"{table_name}: {result}")
 
     return result
-
 
 def roll_hacking(flags: list[str]) -> str:
     """
@@ -148,15 +137,6 @@ def clear_persistent(group_id):
     """Clear one persistent data pool."""
     if group_id in st.session_state["persistent"]:
         st.session_state["persistent"][group_id] = []
-
-def roll_table(table_name, group=None, log=False):
-    """Temporary placeholder for table roll logic."""
-    result = f"Rolled on **{table_name}** → (Random result placeholder)"
-    if group:
-        add_to_persistent(group, result)
-    if log:
-        add_to_log(result)
-    return result
 
 # ---------- DEFINE PRIMARY TABS ----------
 tab_labels = [
