@@ -49,24 +49,24 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
     ignore_cols = {"difficulty", "creature_type"}
     cols = [c for c in row.index if c not in ignore_cols]
 
-    # If it's a single-column table (e.g., description)
-    if len(cols) == 1:
-        return str(row[cols[0]])
+    parts = []
 
-    # Otherwise join the interesting bits
-parts = []
+    # Safely gather existing columns
+    for col in cols:
+        if col in row:
+            value = row[col]
+            if pd.notna(value):
+                parts.append(str(value))
 
-for col in cols:
-    if col in row:
-        value = row[col]
-        if pd.notna(value):
-            parts.append(str(value))
+    if parts:
+        return " – ".join(parts)
 
-if parts:
-    return " – ".join(parts)
+    # Fallback: show the entire row if formatting fails
+    return " – ".join(
+        str(v) for v in row.values 
+        if pd.notna(v)
+    )
 
-# fallback: show everything in the row
-return " – ".join(str(v) for v in row.values if pd.notna(v))
 
 def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     """
