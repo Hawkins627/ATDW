@@ -54,13 +54,19 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         return str(row[cols[0]])
 
     # Otherwise join the interesting bits
-    parts = []
-    for col in cols:
+parts = []
+
+for col in cols:
+    if col in row:
         value = row[col]
         if pd.notna(value):
             parts.append(str(value))
-    return " – ".join(parts) if parts else table_name
 
+if parts:
+    return " – ".join(parts)
+
+# fallback: show everything in the row
+return " – ".join(str(v) for v in row.values if pd.notna(v))
 
 def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     """
