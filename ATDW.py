@@ -350,11 +350,50 @@ with tabs[0]:
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
-    st.header("Health and Trauma")
-    if st.button("Roll Injury Event"):
-        st.success(roll_table("Injury Event", group=2, log=True))
-    if st.button("Roll Madness Effect"):
-        st.success(roll_table("Madness Effect", group=2))
+    st.header("Health & Trauma")
+
+    # All Health tables (table_key, display_label)
+    health_tables = [
+        ("injuries", "Injuries"),
+        ("critical_injuries", "Critical Injuries"),
+        ("parasite_attack", "Parasite Attack"),
+        ("poison_potency", "Poison Potency"),
+        ("stress_others", "Stress (While With Others)"),
+        ("stress_alone", "Stress (Alone)"),
+        ("obsessions", "Obsessions"),
+        ("trauma", "Trauma"),
+        ("negative_trait", "Negative Trait"),
+    ]
+
+    # Two-column layout (matching Encounter tab)
+    col_left, col_right = st.columns(2)
+
+    # Loop through each health table and place buttons in alternating columns
+    for idx, (key, label) in enumerate(health_tables):
+        col = col_left if idx % 2 == 0 else col_right
+
+        with col.container(border=True):
+            st.markdown(f"### {label}")
+            
+            if st.button(f"Roll {label}", key=f"btn_health_{key}"):
+                # Health tab requires logging but no persistence
+                result = roll_table(key, group=None, log=True, option=None)
+                st.success(result)
+
+    # ---- Health Log Viewer ----
+    st.subheader("Health Log")
+
+    ensure_state()
+
+    if st.session_state["log"]:
+        for entry in st.session_state["log"]:
+            st.write(f"- {entry}")
+    else:
+        st.info("No health log entries yet.")
+
+    if st.button("Clear Health Log", key="clear_health_log"):
+        st.session_state["log"] = []
+        st.rerun()
 
 # ---------- TAB: MISSION ----------
 with tabs[2]:
