@@ -1,0 +1,11 @@
+roll,title,description
+1,Crushed Skull,"The character suffers a fatal wound to the head. They are dead."
+2,Destroyed Ear,"The hit cuts the character's ear off (–5 Perception)."
+3,Missing Fingers,"The character lost a few fingers from the powerful blow (–5 to Combat skills)."
+4,Punctured Lung,"The character's lung is permanently damaged (–5 Stamina)."
+5,Cut Nose,"The character lost their nose (–5 CHA)."
+6,Swollen Brain,"The character suffered a severe brain injury (–5 INT)."
+7,Damaged Tendons,"The character's arm tendons have suffered irreparable damage (–5 STR)."
+8,Nerve Damage,"Permanent nerve damage means the character can only spend 3 Stamina points on defensive maneuvers each round."
+9,Minor Artery Severed,"The maximum number of Wounds the character may receive is reduced by 1."
+10,Weakened,"The injury has left the character's constitution weakened (+2 to all incoming damage)."
