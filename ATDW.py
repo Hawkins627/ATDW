@@ -99,18 +99,83 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
 
 def roll_hacking(flags: list[str]) -> str:
     """
-    Temporary hacking handler. Right now we just describe the flags and
-    log the event; later we can implement the full dice procedure.
+    Implements full hacking mechanics (auto-rolled difficulty).
+    Difficulty = random 1–6.
+    Flags:
+        - "SuccessfulRoll" → 1 reroll
+        - "Cypher" → 1 reroll
+        - "BlackCypher" → 2 rerolls
+    Hacking succeeds if after using rerolls no dice are a 1.
     """
-    ensure_state()
-    if flags:
-        flag_text = ", ".join(flags)
-    else:
-        flag_text = "none"
 
-    text = f"Hacking attempt (flags: {flag_text})"
-    add_to_log(text)
-    return text
+    ensure_state()
+
+    import random
+
+    # ---------------------------------------
+    # 1) Auto-roll the system's difficulty (1 to 6)
+    # ---------------------------------------
+    difficulty = random.randint(1, 6)
+
+    # ---------------------------------------
+    # 2) Roll difficulty number of d6
+    # ---------------------------------------
+    rolls = [random.randint(1, 6) for _ in range(difficulty)]
+
+    # ---------------------------------------
+    # 3) Determine rerolls from flags
+    # ---------------------------------------
+    rerolls = 0
+    if "SuccessfulRoll" in flags:
+        rerolls += 1
+    if "Cypher" in flags:
+        rerolls += 1
+    if "BlackCypher" in flags:
+        rerolls += 2
+
+    original_rolls = rolls.copy()
+
+    # ---------------------------------------
+    # 4) Apply rerolls to any 1’s
+    # ---------------------------------------
+    for i in range(len(rolls)):
+        if rolls[i] == 1 and rerolls > 0:
+            rolls[i] = random.randint(1, 6)
+            rerolls -= 1
+
+    # ---------------------------------------
+    # 5) Determine success or failure
+    # ---------------------------------------
+    success = all(r != 1 for r in rolls)
+
+    # ---------------------------------------
+    # 6) Build summary text
+    # ---------------------------------------
+    text = []
+    text.append(f"Hacking Difficulty: **{difficulty}**")
+    text.append(f"Original Rolls: {original_rolls}")
+    text.append(f"Final Rolls: {rolls}")
+
+    spent = sum(1 for r in original_rolls if r == 1) - sum(1 for r in rolls if r == 1)
+    if spent < 0: spent = 0  # safety
+
+    text.append(f"Rerolls Used: **{spent}**")
+
+    if success:
+        text.append("🟢 **Success! System unlocked.**")
+    else:
+        text.append("🔴 **Failure! System locks.**")
+
+    text.append(f"Time Required: **{difficulty} rounds**")
+
+    result = "\n".join(text)
+
+    # ---------------------------------------
+    # Log result (mission log)
+    # ---------------------------------------
+    add_to_log(result)
+
+    return result
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Across a Thousand Dead Worlds – Generator", layout="wide")
