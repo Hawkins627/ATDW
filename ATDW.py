@@ -472,21 +472,24 @@ with tabs[8]:
     st.header("Mission Log")
     ensure_state()
 
+    # Convert old entries (strings) → new dict format
+    for i, entry in enumerate(st.session_state["log"]):
+        if isinstance(entry, str):
+            st.session_state["log"][i] = {"text": entry, "note": ""}
+
     log_list = st.session_state["log"]
 
     if not log_list:
         st.info("No log entries yet.")
     else:
-        # Iterate with index so notes can be attached to a specific entry
         for idx, entry in enumerate(log_list):
+
             st.markdown(f"### Entry {idx+1}")
             st.markdown(f"**{entry['text']}**")
 
-            # Show note if one exists
             if entry.get("note"):
                 st.markdown(f"📝 **Note:** {entry['note']}")
 
-            # Expandable note editor
             with st.expander("Add / Edit Note"):
                 note_key = f"log_note_{idx}"
                 default_note = entry.get("note", "")
@@ -503,12 +506,10 @@ with tabs[8]:
 
             st.markdown("---")
 
-    # Clear entire log
     if st.button("Clear Mission Log"):
         st.session_state["log"] = []
         st.rerun()
 
-    # Export log to text file
     if log_list:
         export_lines = []
         for idx, entry in enumerate(log_list):
@@ -516,7 +517,7 @@ with tabs[8]:
             export_lines.append(entry["text"])
             if entry.get("note"):
                 export_lines.append(f"NOTE: {entry['note']}")
-            export_lines.append("")  # Blank line
+            export_lines.append("")  
 
         export_text = "\n".join(export_lines)
 
