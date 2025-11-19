@@ -184,8 +184,6 @@ with tabs[0]:
         col = col_left if idx % 2 == 0 else col_right
 
         with col:
-            st.subheader(label)
-
             # -----------------------------------------
             # Special UI controls ABOVE each button
             # -----------------------------------------
