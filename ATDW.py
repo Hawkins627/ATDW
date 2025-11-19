@@ -150,8 +150,9 @@ tabs = st.tabs(tab_labels)
 with tabs[0]:
     st.header("Encounter Tables")
 
+    # Each tuple: (CSV filename, Label, persistent-group, log_flag, special_behavior)
     encounter_tables = [
-        ("diffuculty_modifiers", "Difficulty Modifiers", None, False, None),  # filename uses original spelling
+        ("diffuculty_modifiers", "Difficulty Modifiers", None, False, None),  # filename intentionally misspelled
         ("placement", "Placement", None, False, None),
         ("surprise", "Surprise", None, False, None),
         ("encounter_activity", "Encounter Activity", None, False, None),
@@ -172,93 +173,98 @@ with tabs[0]:
         ("experimental_malfunction", "Experimental Gear Malfunction", None, True, None),
     ]
 
+    # 2 columns for the buttons
     col_left, col_right = st.columns(2)
 
-    # Pre-create special inputs so they line up nicely
-    with col_left:
-        # One-crew difficulty selector
-        crew1_opt = st.selectbox(
-            "One-Crew Difficulty",
-            ["Easy", "Standard", "Elite", "Overwhelming"],
-            key="crew1_diff",
-        )
-
-        # Hit location creature type
-        hitloc_opt = st.selectbox(
-            "Hit Location – Creature Shape",
-            ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
-            key="hitloc_type",
-        )
-
-    with col_right:
-        # Three-crew & five-crew difficulty selectors
-        crew3_opt = st.selectbox(
-            "Three-Crew Difficulty",
-            ["Easy", "Standard", "Elite", "Overwhelming"],
-            key="crew3_diff",
-        )
-        crew5_opt = st.selectbox(
-            "Five-Crew Difficulty",
-            ["Easy", "Standard", "Elite", "Overwhelming"],
-            key="crew5_diff",
-        )
-
-        # Hacking flags
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            hack_cypher = st.checkbox("Cypher", key="hack_cypher")
-        with c2:
-            hack_black = st.checkbox("Black Cypher", key="hack_black")
-        with c3:
-            hack_success = st.checkbox("Successful Tech Roll", key="hack_success")
-        hacking_flags = []
-        if hack_cypher:
-            hacking_flags.append("Cypher")
-        if hack_black:
-            hacking_flags.append("BlackCypher")
-        if hack_success:
-            hacking_flags.append("SuccessfulRoll")
-
-    # Now render all the buttons, rulebook order, in two columns
+    # ------------------------------------------------
+    # RENDER EACH TABLE WITH ITS OPTIONS + BUTTON
+    # ------------------------------------------------
     for idx, (key, label, group_id, log_flag, special) in enumerate(encounter_tables):
+
         col = col_left if idx % 2 == 0 else col_right
+
         with col:
             st.subheader(label)
 
+            # -----------------------------------------
+            # Special UI controls ABOVE each button
+            # -----------------------------------------
+            option = None  # default
+
+            # Hit Locations → Creature Type
+            if special == "hitloc":
+                option = st.selectbox(
+                    "Creature Shape",
+                    ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
+                    key=f"{key}_opt"
+                )
+
+            # One-Crew Difficulty Selector
+            elif special == "crew1":
+                option = st.selectbox(
+                    "Select Difficulty",
+                    ["Easy", "Standard", "Elite", "Overwhelming"],
+                    key=f"{key}_opt"
+                )
+
+            # Three-Crew Difficulty Selector
+            elif special == "crew3":
+                option = st.selectbox(
+                    "Select Difficulty",
+                    ["Easy", "Standard", "Elite", "Overwhelming"],
+                    key=f"{key}_opt"
+                )
+
+            # Five-Crew Difficulty Selector
+            elif special == "crew5":
+                option = st.selectbox(
+                    "Select Difficulty",
+                    ["Easy", "Standard", "Elite", "Overwhelming"],
+                    key=f"{key}_opt"
+                )
+
+            # HACKING FLAGS
+            elif special == "hacking":
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    hack_cypher = st.checkbox("Cypher", key=f"{key}_cypher")
+                with c2:
+                    hack_black = st.checkbox("Black Cypher", key=f"{key}_black")
+                with c3:
+                    hack_success = st.checkbox("Successful Tech Roll", key=f"{key}_success")
+
+                hacking_flags = []
+                if hack_cypher:
+                    hacking_flags.append("Cypher")
+                if hack_black:
+                    hacking_flags.append("BlackCypher")
+                if hack_success:
+                    hacking_flags.append("SuccessfulRoll")
+
+            # -----------------------------------------
+            # ROLL BUTTON
+            # -----------------------------------------
             if st.button(f"Roll {label}", key=f"btn_{key}"):
 
-                option = None
-                if special == "hitloc":
-                    option = hitloc_opt
-                elif special == "crew1":
-                    option = crew1_opt
-                elif special == "crew3":
-                    option = crew3_opt
-                elif special == "crew5":
-                    option = crew5_opt
-
+                # Hacking uses its own function
                 if special == "hacking":
                     result = roll_hacking(hacking_flags)
+
                 else:
-                    result = roll_table(key, group=group_id, log=log_flag, option=option)
+                    # Everything else uses roll_table
+                    result = roll_table(
+                        key,
+                        group=group_id,
+                        log=log_flag,
+                        option=option,
+                    )
 
                 st.success(result)
 
-    # ---------------------------
-    # Encounter Persistent Section
-    # ---------------------------
-    st.subheader("Persistent Encounter Data")
-
-    ensure_state()
-    if 7 in st.session_state["persistent"] and st.session_state["persistent"][7]:
-        for entry in st.session_state["persistent"][7]:
-            st.write(f"- {entry}")
-    else:
-        st.info("No persistent encounter data yet.")
-
-    if st.button("Clear Encounter Persistent Data"):
-        st.session_state["persistent"][7] = []
-        st.experimental_rerun()
+    # ------------------------------------------------
+    # IMPORTANT — we REMOVED the extra persistent data block here
+    # Persistent data now ONLY appears in the left sidebar (as you want)
+    # ------------------------------------------------
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
