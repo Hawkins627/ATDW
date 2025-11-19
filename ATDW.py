@@ -26,12 +26,13 @@ def add_to_persistent(group_id, text):
         st.session_state["persistent"][group_id] = []
     st.session_state["persistent"][group_id].append(text)
 
-
-def add_to_log(text):
-    """Append a line to the global mission log."""
+def add_to_log(text: str):
+    """Append a structured log entry (text + note)."""
     ensure_state()
-    st.session_state["log"].append(text)
-
+    st.session_state["log"].append({
+        "text": text,
+        "note": ""
+    })
 
 def load_table_df(table_name: str) -> pd.DataFrame:
     """Load a CSV for a given table name."""
@@ -469,15 +470,62 @@ with tabs[7]:
 # ---------- TAB: LOG ----------
 with tabs[8]:
     st.header("Mission Log")
-    if st.session_state["log"]:
-        for entry in st.session_state["log"]:
-            st.markdown(f"- {entry}")
-    else:
+    ensure_state()
+
+    log_list = st.session_state["log"]
+
+    if not log_list:
         st.info("No log entries yet.")
-    
+    else:
+        # Iterate with index so notes can be attached to a specific entry
+        for idx, entry in enumerate(log_list):
+            st.markdown(f"### Entry {idx+1}")
+            st.markdown(f"**{entry['text']}**")
+
+            # Show note if one exists
+            if entry.get("note"):
+                st.markdown(f"📝 **Note:** {entry['note']}")
+
+            # Expandable note editor
+            with st.expander("Add / Edit Note"):
+                note_key = f"log_note_{idx}"
+                default_note = entry.get("note", "")
+                new_note = st.text_area(
+                    "Optional note for this entry:",
+                    value=default_note,
+                    key=note_key
+                )
+
+                if st.button(f"Save Note {idx}", key=f"save_note_{idx}"):
+                    st.session_state["log"][idx]["note"] = new_note
+                    st.success("Note saved.")
+                    st.rerun()
+
+            st.markdown("---")
+
+    # Clear entire log
     if st.button("Clear Mission Log"):
         st.session_state["log"] = []
         st.rerun()
+
+    # Export log to text file
+    if log_list:
+        export_lines = []
+        for idx, entry in enumerate(log_list):
+            export_lines.append(f"Entry {idx+1}")
+            export_lines.append(entry["text"])
+            if entry.get("note"):
+                export_lines.append(f"NOTE: {entry['note']}")
+            export_lines.append("")  # Blank line
+
+        export_text = "\n".join(export_lines)
+
+        st.download_button(
+            label="📄 Export Log as Text File",
+            data=export_text,
+            file_name="mission_log.txt",
+            mime="text/plain"
+        )
 
 # ---------- SIDEBAR: PERSISTENT POOLS ----------
 st.sidebar.header("Persistent Data Pools")
