@@ -41,31 +41,30 @@ def load_table_df(table_name: str) -> pd.DataFrame:
 
 def format_row_for_display(table_name: str, row: pd.Series) -> str:
     """
-    Turn a CSV row into a nice human-readable string.
-
-    We ignore 'difficulty' and 'creature_type' (used for filtering)
-    and combine the remaining columns.
+    Cleaner formatter for tables that may contain
+    'title' and 'description' columns.
     """
+
+    # Preferred formatting if present
+    if "title" in row and "description" in row:
+        title = str(row["title"]) if pd.notna(row["title"]) else ""
+        desc = str(row["description"]) if pd.notna(row["description"]) else ""
+        if title and desc:
+            return f"{title}: {desc}"
+        elif title:
+            return title
+        elif desc:
+            return desc
+
+    # Fallback: ignore filter columns
     ignore_cols = {"difficulty", "creature_type"}
-    cols = [c for c in row.index if c not in ignore_cols]
+    parts = [
+        str(row[c])
+        for c in row.index
+        if c not in ignore_cols and pd.notna(row[c])
+    ]
 
-    parts = []
-
-    # Safely gather existing columns
-    for col in cols:
-        if col in row:
-            value = row[col]
-            if pd.notna(value):
-                parts.append(str(value))
-
-    if parts:
-        return " – ".join(parts)
-
-    # Fallback: show the entire row if formatting fails
-    return " – ".join(
-        str(v) for v in row.values 
-        if pd.notna(v)
-    )
+    return " – ".join(parts) if parts else table_name
 
 def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     ensure_state()
