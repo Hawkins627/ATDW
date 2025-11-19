@@ -332,8 +332,8 @@ with tabs[8]:
         st.info("No log entries yet.")
     
     if st.button("Clear Mission Log"):
-        st.session_state["log"] = []
-        st.experimental_rerun()
+    st.session_state["log"] = []
+    st.rerun()
 
 # ---------- SIDEBAR: PERSISTENT POOLS ----------
 st.sidebar.header("Persistent Data Pools")
