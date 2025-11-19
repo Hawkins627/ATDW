@@ -148,121 +148,140 @@ tabs = st.tabs(tab_labels)
 
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
+
     st.header("Encounter Tables")
 
-    # Each tuple: (CSV filename, Label, persistent-group, log_flag, special_behavior)
-    encounter_tables = [
-        ("diffuculty_modifiers", "Difficulty Modifiers", None, False, None),  # filename intentionally misspelled
-        ("placement", "Placement", None, False, None),
-        ("surprise", "Surprise", None, False, None),
-        ("encounter_activity", "Encounter Activity", None, False, None),
-        ("combat_stance", "Combat Stance", None, False, None),
-        ("targeting", "Targeting", None, False, None),
-        ("recovery_status", "Recovery Status", None, False, None),
-        ("hit_locations", "Hit Locations", None, False, "hitloc"),
-        ("random_direction", "Random Direction", None, False, None),
-        ("critical_miss_melee", "Critical Miss – Melee", None, False, None),
-        ("critical_miss_ranged", "Critical Miss – Ranged", None, False, None),
-        ("random_combat_event", "Random Combat Event", None, False, None),
-        ("hacking", "Hacking", None, True, "hacking"),
-        ("encounter_difficulty", "Encounter Difficulty", 7, True, None),
-        ("variable_encounter_difficulty", "Variable Encounter Difficulty", 7, True, None),
-        ("one_crew_encounter", "One-Crew Encounter", 7, True, "crew1"),
-        ("three_crew_encounter", "Three-Crew Encounter", 7, True, "crew3"),
-        ("five_crew_encounter", "Five-Crew Encounter", 7, True, "crew5"),
-        ("experimental_malfunction", "Experimental Gear Malfunction", None, True, None),
-    ]
+    ensure_state()
 
-    # 2 columns for the buttons
+    # LEFT / RIGHT COLUMN SETUP
     col_left, col_right = st.columns(2)
 
-    # ------------------------------------------------
-    # RENDER EACH TABLE WITH ITS OPTIONS + BUTTON
-    # ------------------------------------------------
-    for idx, (key, label, group_id, log_flag, special) in enumerate(encounter_tables):
+    # ======= LEFT COLUMN BOXES =======
 
-        col = col_left if idx % 2 == 0 else col_right
+    # Difficulty Modifiers
+    with col_left.container(border=True):
+        if st.button("Roll Difficulty Modifiers", key="btn_diffmod"):
+            st.success(roll_table("diffuculty_modifiers"))
 
-        with col:
-            # -----------------------------------------
-            # Special UI controls ABOVE each button
-            # -----------------------------------------
-            option = None  # default
+    # Surprise
+    with col_left.container(border=True):
+        if st.button("Roll Surprise", key="btn_surprise"):
+            st.success(roll_table("surprise"))
 
-            # Hit Locations → Creature Type
-            if special == "hitloc":
-                option = st.selectbox(
-                    "Creature Shape",
-                    ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
-                    key=f"{key}_opt"
-                )
+    # Encounter Activity
+    with col_left.container(border=True):
+        if st.button("Roll Encounter Activity", key="btn_enc_act"):
+            st.success(roll_table("encounter_activity"))
 
-            # One-Crew Difficulty Selector
-            elif special == "crew1":
-                option = st.selectbox(
-                    "Select Difficulty",
-                    ["Easy", "Standard", "Elite", "Overwhelming"],
-                    key=f"{key}_opt"
-                )
+    # Combat Stance
+    with col_left.container(border=True):
+        if st.button("Roll Combat Stance", key="btn_cstance"):
+            st.success(roll_table("combat_stance"))
 
-            # Three-Crew Difficulty Selector
-            elif special == "crew3":
-                option = st.selectbox(
-                    "Select Difficulty",
-                    ["Easy", "Standard", "Elite", "Overwhelming"],
-                    key=f"{key}_opt"
-                )
+    # Hit Locations — Boxed with Creature Shape selector
+    with col_left.container(border=True):
+        st.markdown("### Hit Locations")
+        hitloc_opt = st.selectbox(
+            "Creature Shape",
+            ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
+            key="hitloc_type",
+        )
+        if st.button("Roll Hit Locations", key="btn_hitloc"):
+            st.success(roll_table("hit_locations", option=hitloc_opt))
 
-            # Five-Crew Difficulty Selector
-            elif special == "crew5":
-                option = st.selectbox(
-                    "Select Difficulty",
-                    ["Easy", "Standard", "Elite", "Overwhelming"],
-                    key=f"{key}_opt"
-                )
+    # Random Direction
+    with col_left.container(border=True):
+        if st.button("Roll Random Direction", key="btn_randir"):
+            st.success(roll_table("random_direction"))
 
-            # HACKING FLAGS
-            elif special == "hacking":
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    hack_cypher = st.checkbox("Cypher", key=f"{key}_cypher")
-                with c2:
-                    hack_black = st.checkbox("Black Cypher", key=f"{key}_black")
-                with c3:
-                    hack_success = st.checkbox("Successful Tech Roll", key=f"{key}_success")
+    # Critical Miss – Melee
+    with col_left.container(border=True):
+        if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
+            st.success(roll_table("critical_miss_melee"))
 
-                hacking_flags = []
-                if hack_cypher:
-                    hacking_flags.append("Cypher")
-                if hack_black:
-                    hacking_flags.append("BlackCypher")
-                if hack_success:
-                    hacking_flags.append("SuccessfulRoll")
+    # ======= RIGHT COLUMN BOXES =======
 
-            # -----------------------------------------
-            # ROLL BUTTON
-            # -----------------------------------------
-            if st.button(f"Roll {label}", key=f"btn_{key}"):
+    # Targeting
+    with col_right.container(border=True):
+        if st.button("Roll Targeting", key="btn_targeting"):
+            st.success(roll_table("targeting"))
 
-                # Hacking uses its own function
-                if special == "hacking":
-                    result = roll_hacking(hacking_flags)
+    # Critical Miss – Ranged
+    with col_right.container(border=True):
+        if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
+            st.success(roll_table("critical_miss_ranged"))
 
-                else:
-                    # Everything else uses roll_table
-                    result = roll_table(
-                        key,
-                        group=group_id,
-                        log=log_flag,
-                        option=option,
-                    )
+    # Random Combat Event
+    with col_right.container(border=True):
+        if st.button("Roll Random Combat Event", key="btn_rce"):
+            st.success(roll_table("random_combat_event"))
 
-                st.success(result)
+    # Hacking — Boxed with checkboxes
+    with col_right.container(border=True):
+        st.markdown("### Hacking")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            hack_cypher = st.checkbox("Cypher", key="hack_cypher")
+        with c2:
+            hack_black = st.checkbox("Black Cypher", key="hack_black")
+        with c3:
+            hack_success = st.checkbox("Successful Tech Roll", key="hack_success")
 
-    # ------------------------------------------------
-    # IMPORTANT — we REMOVED the extra persistent data block here
-    # Persistent data now ONLY appears in the left sidebar (as you want)
-    # ------------------------------------------------
+        flags = []
+        if hack_cypher: flags.append("Cypher")
+        if hack_black: flags.append("BlackCypher")
+        if hack_success: flags.append("SuccessfulRoll")
+
+        if st.button("Roll Hacking", key="btn_hacking"):
+            st.success(roll_hacking(flags))
+
+    # Encounter Difficulty (D20)
+    with col_right.container(border=True):
+        if st.button("Roll Encounter Difficulty", key="btn_encdif"):
+            st.success(roll_table("encounter_difficulty", group=7, log=True))
+
+    # Variable Encounter Difficulty (D10)
+    with col_right.container(border=True):
+        if st.button("Roll Variable Encounter Difficulty", key="btn_varenc"):
+            st.success(roll_table("variable_encounter_difficulty", group=7, log=True))
+
+    # One-Crew Encounter — Boxed with difficulty menu
+    with col_right.container(border=True):
+        st.markdown("### One-Crew Encounter")
+        crew1_opt = st.selectbox(
+            "Select Difficulty",
+            ["Easy", "Standard", "Elite", "Overwhelming"],
+            key="crew1_diff",
+        )
+        if st.button("Roll One-Crew Encounter", key="btn_onecrew"):
+            st.success(roll_table("one_crew_encounter", option=crew1_opt, group=7, log=True))
+
+    # Three-Crew Encounter — Boxed with difficulty menu
+    with col_right.container(border=True):
+        st.markdown("### Three-Crew Encounter")
+        crew3_opt = st.selectbox(
+            "Select Difficulty",
+            ["Easy", "Standard", "Elite", "Overwhelming"],
+            key="crew3_diff",
+        )
+        if st.button("Roll Three-Crew Encounter", key="btn_threecrew"):
+            st.success(roll_table("three_crew_encounter", option=crew3_opt, group=7, log=True))
+
+    # Five-Crew Encounter — Boxed with difficulty menu
+    with col_right.container(border=True):
+        st.markdown("### Five-Crew Encounter")
+        crew5_opt = st.selectbox(
+            "Select Difficulty",
+            ["Easy", "Standard", "Elite", "Overwhelming"],
+            key="crew5_diff",
+        )
+        if st.button("Roll Five-Crew Encounter", key="btn_fivecrew"):
+            st.success(roll_table("five_crew_encounter", option=crew5_opt, group=7, log=True))
+
+    # Experimental Gear Malfunction
+    with col_right.container(border=True):
+        if st.button("Roll Experimental Gear Malfunction", key="btn_expmal"):
+            st.success(roll_table("experimental_malfunction", log=True))
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
