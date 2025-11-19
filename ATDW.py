@@ -349,50 +349,74 @@ with tabs[0]:
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
-    st.header("Health & Trauma")
+    st.header("Health & Trauma Tables")
 
-    # All Health tables (table_key, display_label)
-    health_tables = [
-        ("injuries", "Injuries"),
-        ("critical_injuries", "Critical Injuries"),
-        ("parasite_attack", "Parasite Attack"),
-        ("poison_potency", "Poison Potency"),
-        ("stress_others", "Stress (While With Others)"),
-        ("stress_alone", "Stress (Alone)"),
-        ("obsessions", "Obsessions"),
-        ("trauma", "Trauma"),
-        ("negative_trait", "Negative Trait"),
-    ]
-
-    # Two-column layout (matching Encounter tab)
+    # Two-column layout
     col_left, col_right = st.columns(2)
 
-    # Loop through each health table and place buttons in alternating columns
-    for idx, (key, label) in enumerate(health_tables):
-        col = col_left if idx % 2 == 0 else col_right
+    # -----------------------------------------------------
+    # LEFT COLUMN — Injuries, Critical Injuries, Parasites
+    # -----------------------------------------------------
+    with col_left:
 
-        with col.container(border=True):
-            st.markdown(f"### {label}")
-            
-            if st.button(f"Roll {label}", key=f"btn_health_{key}"):
-                # Health tab requires logging but no persistence
-                result = roll_table(key, group=None, log=True, option=None)
-                st.success(result)
+        # Injuries
+        with st.container(border=True):
+            st.markdown("### Injuries")
+            if st.button("Roll Injuries", key="btn_injuries"):
+                st.success(roll_table("injuries", group=None, log=True))
 
-    # ---- Health Log Viewer ----
-    st.subheader("Health Log")
+        # Critical Injuries
+        with st.container(border=True):
+            st.markdown("### Critical Injuries")
+            if st.button("Roll Critical Injuries", key="btn_crit_injuries"):
+                st.success(roll_table("critical_injuries", group=None, log=True))
 
-    ensure_state()
+        # Parasite Attack
+        with st.container(border=True):
+            st.markdown("### Parasite Attack")
+            if st.button("Roll Parasite Attack", key="btn_parasite_attack"):
+                st.success(roll_table("parasite_attack", group=None, log=True))
 
-    if st.session_state["log"]:
-        for entry in st.session_state["log"]:
-            st.write(f"- {entry}")
-    else:
-        st.info("No health log entries yet.")
+        # Poison Potency
+        with st.container(border=True):
+            st.markdown("### Poison Potency")
+            if st.button("Roll Poison Potency", key="btn_poison_potency"):
+                st.success(roll_table("poison_potency", group=None, log=True))
 
-    if st.button("Clear Health Log", key="clear_health_log"):
-        st.session_state["log"] = []
-        st.rerun()
+    # -----------------------------------------------------
+    # RIGHT COLUMN — Stress, Obsessions, Trauma, Neg Traits
+    # -----------------------------------------------------
+    with col_right:
+
+        # Stress Reaction – Others
+        with st.container(border=True):
+            st.markdown("### Stress Reaction – Others")
+            if st.button("Roll Stress (Others)", key="btn_stress_others"):
+                st.success(roll_table("stress_others", group=None, log=True))
+
+        # Stress Reaction – Alone
+        with st.container(border=True):
+            st.markdown("### Stress Reaction – Alone")
+            if st.button("Roll Stress (Alone)", key="btn_stress_alone"):
+                st.success(roll_table("stress_alone", group=None, log=True))
+
+        # Obsessions
+        with st.container(border=True):
+            st.markdown("### Obsessions")
+            if st.button("Roll Obsessions", key="btn_obsessions"):
+                st.success(roll_table("obsessions", group=None, log=True))
+
+        # Trauma
+        with st.container(border=True):
+            st.markdown("### Trauma")
+            if st.button("Roll Trauma", key="btn_trauma"):
+                st.success(roll_table("trauma", group=None, log=True))
+
+        # Negative Traits
+        with st.container(border=True):
+            st.markdown("### Negative Traits")
+            if st.button("Roll Negative Trait", key="btn_negative_trait"):
+                st.success(roll_table("negative_trait", group=None, log=True))
 
 # ---------- TAB: MISSION ----------
 with tabs[2]:
