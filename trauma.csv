@@ -1,0 +1,10 @@
+roll,title,description
+1-2,Negative Trait,"Roll on the Negative Traits table."
+3,Extreme Nervousness,"The extreme nervousness you feel just makes things worse. Gain 5 permanent Stress."
+4,Shaking Hands,"Your shaking hands can barely hold a thing. Take –1 to either Close Combat or Ranged Combat."
+5,Distracted,"Distracted by shadows, you can't focus on anything. Take –1 Perception."
+6,Fluttering Heart,"Your heart is fluttering and you have problems breathing. Take –1 Stamina."
+7,Broken Inside,"You feel as if something broke inside of you. Take –1 WIL."
+8,Hyperventilation,"You hyperventilate when you enter combat, immediately expending 1× Oxygen Pellet."
+9,Deep Anxiety,"Stressful situations fill you with a deep anxiety that can only be suppressed with physical pain. Each time you gain Stress, receive 1 Wound."
+10,Heart Attack,"This stress is so intense that you suffer a heart attack. Pass a CON check or die."
