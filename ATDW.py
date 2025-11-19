@@ -514,24 +514,24 @@ with tabs[2]:
             st.success(roll_table("secondary_misjump_effects", log=True))
 
         # BIG combined button
-st.markdown("### **Full Misjump (All Effects)**")
-if st.button("🔥 ROLL FULL MISJUMP", key="btn_misjump_full"):
+        st.markdown("### **Full Misjump (All Effects)**")
+        if st.button("🔥 ROLL FULL MISJUMP", key="btn_misjump_full"):
 
-    primary = roll_table("misjump", log=False)
+            primary = roll_table("misjump", log=False)
 
-    dilation = roll_table(
-        random.choice(["time_dilation_misjump", "transit_dilation_misjump"]),
-        log=False
-    )
+            dilation = roll_table(
+                random.choice(["time_dilation_misjump", "transit_dilation_misjump"]),
+                log=False
+            )
 
-    # FIXED: Correct table name (matches your CSV)
-    secondary = roll_table("secondary_misjump_effect", log=False)
+        # FIXED: Correct table name (matches your CSV)
+        secondary = roll_table("secondary_misjump_effect", log=False)
 
-    combined = (
-        f"**Primary:** {primary}\n"
-        f"**Dilation:** {dilation}\n"
-        f"**Secondary:** {secondary}"
-    )
+        combined = (
+            f"**Primary:** {primary}\n"
+            f"**Dilation:** {dilation}\n"
+            f"**Secondary:** {secondary}"
+        )
 
     add_to_log("Misjump:\n" + combined)
     st.success(combined)
