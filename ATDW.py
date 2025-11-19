@@ -346,5 +346,6 @@ else:
             st.sidebar.text(f"- {item}")
         if st.sidebar.button(f"Clear Persistent {group_id}"):
             clear_persistent(group_id)
-            st.experimental_rerun()
+            st.rerun()
+
 
