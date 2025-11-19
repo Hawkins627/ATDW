@@ -422,10 +422,213 @@ with tabs[1]:
 # ---------- TAB: MISSION ----------
 with tabs[2]:
     st.header("Mission Generator")
-    if st.button("Generate Mission Seed"):
-        st.success(roll_table("Mission Seed", log=True))
-    if st.button("Generate Mission Obstacle"):
-        st.success(roll_table("Mission Obstacle", log=True))
+
+    # We'll treat persistent group 1 as "Mission / Site" data
+    MISSION_GROUP = 1
+
+    col_left, col_right = st.columns(2)
+
+    # ----------------------
+    # SHIP GENERATOR (COMBINED + INDIVIDUAL)
+    # ----------------------
+    with col_left.container(border=True):
+        st.subheader("Ship Generator")
+
+        if st.button("Roll Ship Name", key="btn_ship_name"):
+            name = roll_table("spaceship_name", group=MISSION_GROUP, log=True)
+            st.success(name)
+
+        if st.button("Roll Ship Adjective", key="btn_ship_adj"):
+            adj = roll_table("spaceship_adjective", group=MISSION_GROUP, log=True)
+            st.success(adj)
+
+        if st.button("Roll Full Ship (Adjective + Name)", key="btn_ship_full"):
+            adj = roll_table("spaceship_adjective", group=MISSION_GROUP, log=False)
+            name = roll_table("spaceship_name", group=MISSION_GROUP, log=False)
+            combined = f"{adj} {name}"
+            add_to_log(f"Ship: {combined}")
+            st.success(combined)
+
+    # ----------------------
+    # TRAVEL EVENTS (COMBINED + INDIVIDUAL)
+    # ----------------------
+    with col_right.container(border=True):
+        st.subheader("Travel Events")
+
+        # Base type table
+        if st.button("Roll Travel Event Type", key="btn_travel_type"):
+            event_type = roll_table("random_travel_event_type", log=True)
+            st.success(event_type)
+
+        # Individual subtables
+        if st.button("Roll Social Travel Event", key="btn_social_travel"):
+            res = roll_table("social_travel_event", log=True)
+            st.success(res)
+
+        if st.button("Roll Ship Malfunction Travel Event", key="btn_ship_malf_travel"):
+            res = roll_table("ship_malfunction_travel_event", log=True)
+            st.success(res)
+
+        if st.button("Roll Space Anomaly Travel Event", key="btn_space_anom_travel"):
+            res = roll_table("space_anomaly_travel_event", log=True)
+            st.success(res)
+
+        if st.button("Roll Mental/Physical Travel Event", key="btn_mental_phys_travel"):
+            res = roll_table("mental_physical_travel_event", log=True)
+            st.success(res)
+
+        # Combined travel event (type + one random subtable)
+        if st.button("Roll Full Travel Event", key="btn_travel_full"):
+            event_type = roll_table("random_travel_event_type", log=False)
+            subtable = random.choice(
+                [
+                    "social_travel_event",
+                    "ship_malfunction_travel_event",
+                    "space_anomaly_travel_event",
+                    "mental_physical_travel_event",
+                ]
+            )
+            detail = roll_table(subtable, log=False)
+            combined = f"{event_type} – {detail}"
+            add_to_log(f"Travel Event: {combined}")
+            st.success(combined)
+
+    # ----------------------
+    # MISJUMP GENERATOR (COMBINED + INDIVIDUAL)
+    # ----------------------
+    with col_left.container(border=True):
+        st.subheader("Misjump Generator")
+
+        if st.button("Roll Misjump (Primary)", key="btn_misjump_primary"):
+            res = roll_table("misjump", log=True)
+            st.success(res)
+
+        if st.button("Roll Time Dilation Misjump", key="btn_time_dilation_misjump"):
+            res = roll_table("time_dilation_misjump", log=True)
+            st.success(res)
+
+        if st.button("Roll Transit Dilation Misjump", key="btn_transit_dilation_misjump"):
+            res = roll_table("transit_dilation_misjump", log=True)
+            st.success(res)
+
+        if st.button("Roll Secondary Misjump Effects", key="btn_secondary_misjump"):
+            res = roll_table("secondary_misjump_effects", log=True)
+            st.success(res)
+
+        # Combined misjump: primary + one dilation + secondary
+        if st.button("Roll Full Misjump (All Effects)", key="btn_misjump_full"):
+            primary = roll_table("misjump", log=False)
+            dilation_table = random.choice(
+                ["time_dilation_misjump", "transit_dilation_misjump"]
+            )
+            dilation = roll_table(dilation_table, log=False)
+            secondary = roll_table("secondary_misjump_effects", log=False)
+
+            combined = "\n".join(
+                [
+                    f"Primary: {primary}",
+                    f"Dilation: {dilation}",
+                    f"Secondary Effects: {secondary}",
+                ]
+            )
+            add_to_log("Misjump:\n" + combined)
+            st.success(combined)
+
+    # ----------------------
+    # SITE GENERATOR (BIG COMBINED + INDIVIDUAL)
+    # ----------------------
+    with st.container(border=True):
+        st.subheader("Site Generator")
+
+        site_col1, site_col2 = st.columns(2)
+
+        # Column 1 buttons
+        with site_col1:
+            if st.button("Roll Arrival Table", key="btn_arrival_table"):
+                res = roll_table("arrival_table", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Random Site Name", key="btn_random_site_name"):
+                res = roll_table("random_site_name", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Site Original Purpose", key="btn_site_original_purpose"):
+                res = roll_table("site_original_purpose", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Site Story", key="btn_site_story"):
+                res = roll_table("site_story", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Overall Site Descriptor", key="btn_overall_site_desc"):
+                res = roll_table("overall_site_descriptor", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+        # Column 2 buttons
+        with site_col2:
+            if st.button("Roll Planetary Site Descriptor", key="btn_planetary_site_desc"):
+                res = roll_table("planetary_site_descriptor", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Site Activity", key="btn_site_activity"):
+                res = roll_table("site_activity", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Known Threats", key="btn_known_threats"):
+                res = roll_table("known_threats", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Site Hazard", key="btn_site_hazard"):
+                res = roll_table("site_hazard", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+            if st.button("Roll Site Size", key="btn_site_size"):
+                res = roll_table("site_size", group=MISSION_GROUP, log=True)
+                st.success(res)
+
+        # BIG combined site roll (all the above in one go)
+        if st.button("Roll Full Site (All Tables)", key="btn_site_full"):
+            parts = []
+
+            def add_part(label: str, table: str):
+                text = roll_table(table, group=MISSION_GROUP, log=False)
+                parts.append(f"**{label}:** {text}")
+
+            add_part("Arrival", "arrival_table")
+            add_part("Planetary Descriptor", "planetary_site_descriptor")
+            add_part("Random Site Name", "random_site_name")
+            add_part("Original Purpose", "site_original_purpose")
+            add_part("Site Story", "site_story")
+            add_part("Overall Descriptor", "overall_site_descriptor")
+            add_part("Activity", "site_activity")
+            add_part("Known Threats", "known_threats")
+            add_part("Hazards", "site_hazard")
+            add_part("Size", "site_size")
+
+            combined = "\n".join(parts)
+            add_to_log("Site Generated:\n" + combined)
+            st.success(combined)
+
+    # ----------------------
+    # ACTION + THEME (COMBINED + INDIVIDUAL)
+    # ----------------------
+    with col_right.container(border=True):
+        st.subheader("Action & Theme")
+
+        if st.button("Roll Action", key="btn_action_table"):
+            res = roll_table("action", log=False)  # CSV says no default logging
+            st.success(res)
+
+        if st.button("Roll Theme", key="btn_theme_table"):
+            res = roll_table("theme", log=False)
+            st.success(res)
+
+        if st.button("Roll Action + Theme", key="btn_action_theme_full"):
+            action_res = roll_table("action", log=False)
+            theme_res = roll_table("theme", log=False)
+            combined = f"{action_res} – {theme_res}"
+            add_to_log("Action & Theme: " + combined)
+            st.success(combined)
 
 # ---------- TAB: EXPLORATION ----------
 with tabs[3]:
