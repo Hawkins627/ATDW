@@ -539,81 +539,78 @@ with tabs[2]:
 
         site_col1, site_col2 = st.columns(2)
 
-        # ============ LEFT COLUMN =============
+        # Checkbox to optionally include Planetary Descriptor
+        include_planetary = st.checkbox(
+            "Include Planetary Descriptor in Full Site", value=True, key="include_planetary_desc"
+        )
+    
+        # Left column buttons
         with site_col1:
             if st.button("Roll Arrival Table", key="btn_arrival_table"):
                 st.success(roll_table("arrival_table", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Random Site Name", key="btn_random_site_name"):
                 st.success(roll_table("random_site_name", group=MISSION_GROUP, log=True))
 
             if st.button("Roll Site Original Purpose", key="btn_site_original_purpose"):
                 st.success(roll_table("site_original_purpose", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Site Story", key="btn_site_story"):
                 st.success(roll_table("site_story", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Overall Site Descriptor", key="btn_overall_site_desc"):
                 st.success(roll_table("overall_site_descriptor", group=MISSION_GROUP, log=True))
-
-        # ============ RIGHT COLUMN =============
+    
+        # Right column
         with site_col2:
-
-            # NEW: Checkbox for optional table
-            include_planet_desc = st.checkbox(
-                "Include Planetary Descriptor in Full Site",
-                value=True,
-                key="chk_planet_desc"
-            )
-
             if st.button("Roll Planetary Site Descriptor", key="btn_planetary_site_desc"):
                 st.success(roll_table("planetary_site_descriptor", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Site Activity", key="btn_site_activity"):
                 st.success(roll_table("site_activity", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Known Threats", key="btn_known_threats"):
                 st.success(roll_table("known_threats", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Site Hazard", key="btn_site_hazard"):
                 st.success(roll_table("site_hazard", group=MISSION_GROUP, log=True))
-
+    
             if st.button("Roll Site Size", key="btn_site_size"):
                 st.success(roll_table("site_size", group=MISSION_GROUP, log=True))
 
-        # ===========================
-        # FULL SITE BUTTON (ALL 10)
-        # ===========================
+        # BIG FULL SITE BUTTON
         st.markdown("### **Full Site (ALL 10 Tables)**")
         if st.button("🏗️ ROLL FULL SITE", key="btn_site_full"):
 
-            parts = []
+            def add(label, table):
+                """Roll table and return formatted bullet entry."""
+                result = roll_table(table, log=False)
+                return f"- **{label}:** {result}"
+    
+            # Build list
+            parts = [
+                add("Arrival", "arrival_table"),
+            ]
 
-            def add_part(label, table, include=True):
-                if not include:
-                    return
-                text = roll_table(table, group=MISSION_GROUP, log=False)
-                parts.append(f"• **{label}:** {text}")
+            if include_planetary:
+                parts.append(add("Planetary Descriptor", "planetary_site_descriptor"))
 
-            # Always included
-            add_part("Arrival", "arrival_table")
-            add_part("Random Site Name", "random_site_name")
-            add_part("Original Purpose", "site_original_purpose")
-            add_part("Story", "site_story")
-            add_part("Overall Descriptor", "overall_site_descriptor")
-            add_part("Activity", "site_activity")
-            add_part("Known Threats", "known_threats")
-            add_part("Hazard", "site_hazard")
-            add_part("Size", "site_size")
-
-            # Conditionally included
-            add_part("Planetary Descriptor", "planetary_site_descriptor", include_planet_desc)
-
+            parts.extend([
+                add("Random Site Name", "random_site_name"),
+                add("Original Purpose", "site_original_purpose"),
+                add("Story", "site_story"),
+                add("Overall Descriptor", "overall_site_descriptor"),
+                add("Activity", "site_activity"),
+                add("Known Threats", "known_threats"),
+                add("Hazard", "site_hazard"),
+                add("Size", "site_size"),
+            ])
+    
             combined = "\n".join(parts)
 
             add_to_log("Site Generated:\n" + combined)
             st.success(combined)
-
+    
     # =====================================================================
     # ACTION + THEME
     # =====================================================================
