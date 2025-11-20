@@ -665,7 +665,7 @@ with tabs[8]:
     st.header("Mission Log")
     ensure_state()
 
-    # Convert old string entries → dict entries
+    # Convert old plain-string entries → dict entries
     for i, entry in enumerate(st.session_state["log"]):
         if isinstance(entry, str):
             st.session_state["log"][i] = {"text": entry, "note": ""}
@@ -677,42 +677,47 @@ with tabs[8]:
     else:
         for idx, entry in enumerate(log_list):
 
-            log_text = entry["text"]
-            note_text = entry.get("note", "")
+            text = entry["text"]
+            note = entry.get("note", "")
 
-            # Inline display of entry + its note
-            if note_text:
-                st.markdown(f"{log_text}  \n📝 *{note_text}*")
-            else:
-                st.markdown(log_text)
+            # Two-column row: Left = Notes button, Right = Entry text
+            row_left, row_right = st.columns([1, 10])
 
-            # Small horizontal row for controls
-            small_col, _ = st.columns([1, 8])
-
-            with small_col:
-                with st.expander("✏️", expanded=False):
+            # --- LEFT COLUMN: Small Notes button ---
+            with row_left:
+                with st.expander("Notes", expanded=False):
                     note_key = f"log_note_{idx}"
                     new_note = st.text_area(
-                        "Edit note:", value=note_text, key=note_key
+                        "Edit note:",
+                        value=note,
+                        key=note_key
                     )
                     if st.button("Save", key=f"save_note_{idx}"):
                         st.session_state["log"][idx]["note"] = new_note
                         st.success("Saved!")
                         st.rerun()
 
+            # --- RIGHT COLUMN: Log entry + inline note ---
+            if note:
+                row_right.markdown(f"{text}  \n📝 *{note}*")
+            else:
+                row_right.markdown(text)
+
             st.markdown("---")
 
+    # Clear log button
     if st.button("Clear Mission Log"):
         st.session_state["log"] = []
         st.rerun()
 
+    # Export button
     if log_list:
         export_lines = []
         for entry in log_list:
             export_lines.append(entry["text"])
             if entry.get("note"):
                 export_lines.append(f"NOTE: {entry['note']}")
-            export_lines.append("")  # spacing
+            export_lines.append("")
         export_text = "\n".join(export_lines)
 
         st.download_button(
