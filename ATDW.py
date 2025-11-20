@@ -665,7 +665,7 @@ with tabs[8]:
     st.header("Mission Log")
     ensure_state()
 
-    # Convert old entries (strings) → new dict format
+    # Convert old string entries → dict entries
     for i, entry in enumerate(st.session_state["log"]):
         if isinstance(entry, str):
             st.session_state["log"][i] = {"text": entry, "note": ""}
@@ -677,25 +677,28 @@ with tabs[8]:
     else:
         for idx, entry in enumerate(log_list):
 
-            st.markdown(f"### Entry {idx+1}")
-            st.markdown(f"**{entry['text']}**")
+            log_text = entry["text"]
+            note_text = entry.get("note", "")
 
-            if entry.get("note"):
-                st.markdown(f"📝 **Note:** {entry['note']}")
+            # Inline display of entry + its note
+            if note_text:
+                st.markdown(f"{log_text}  \n📝 *{note_text}*")
+            else:
+                st.markdown(log_text)
 
-            with st.expander("Add / Edit Note"):
-                note_key = f"log_note_{idx}"
-                default_note = entry.get("note", "")
-                new_note = st.text_area(
-                    "Optional note for this entry:",
-                    value=default_note,
-                    key=note_key
-                )
+            # Small horizontal row for controls
+            small_col, _ = st.columns([1, 8])
 
-                if st.button(f"Save Note {idx}", key=f"save_note_{idx}"):
-                    st.session_state["log"][idx]["note"] = new_note
-                    st.success("Note saved.")
-                    st.rerun()
+            with small_col:
+                with st.expander("✏️", expanded=False):
+                    note_key = f"log_note_{idx}"
+                    new_note = st.text_area(
+                        "Edit note:", value=note_text, key=note_key
+                    )
+                    if st.button("Save", key=f"save_note_{idx}"):
+                        st.session_state["log"][idx]["note"] = new_note
+                        st.success("Saved!")
+                        st.rerun()
 
             st.markdown("---")
 
@@ -705,13 +708,11 @@ with tabs[8]:
 
     if log_list:
         export_lines = []
-        for idx, entry in enumerate(log_list):
-            export_lines.append(f"Entry {idx+1}")
+        for entry in log_list:
             export_lines.append(entry["text"])
             if entry.get("note"):
                 export_lines.append(f"NOTE: {entry['note']}")
-            export_lines.append("")  
-
+            export_lines.append("")  # spacing
         export_text = "\n".join(export_lines)
 
         st.download_button(
