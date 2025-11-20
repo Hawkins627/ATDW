@@ -539,7 +539,7 @@ with tabs[2]:
 
         site_col1, site_col2 = st.columns(2)
 
-        # Left column
+        # ============ LEFT COLUMN =============
         with site_col1:
             if st.button("Roll Arrival Table", key="btn_arrival_table"):
                 st.success(roll_table("arrival_table", group=MISSION_GROUP, log=True))
@@ -556,8 +556,16 @@ with tabs[2]:
             if st.button("Roll Overall Site Descriptor", key="btn_overall_site_desc"):
                 st.success(roll_table("overall_site_descriptor", group=MISSION_GROUP, log=True))
 
-        # Right column
+        # ============ RIGHT COLUMN =============
         with site_col2:
+
+            # NEW: Checkbox for optional table
+            include_planet_desc = st.checkbox(
+                "Include Planetary Descriptor in Full Site",
+                value=True,
+                key="chk_planet_desc"
+            )
+
             if st.button("Roll Planetary Site Descriptor", key="btn_planetary_site_desc"):
                 st.success(roll_table("planetary_site_descriptor", group=MISSION_GROUP, log=True))
 
@@ -573,18 +581,22 @@ with tabs[2]:
             if st.button("Roll Site Size", key="btn_site_size"):
                 st.success(roll_table("site_size", group=MISSION_GROUP, log=True))
 
-        # BIG combined button
+        # ===========================
+        # FULL SITE BUTTON (ALL 10)
+        # ===========================
         st.markdown("### **Full Site (ALL 10 Tables)**")
         if st.button("🏗️ ROLL FULL SITE", key="btn_site_full"):
 
             parts = []
 
-            def add_part(label, table):
+            def add_part(label, table, include=True):
+                if not include:
+                    return
                 text = roll_table(table, group=MISSION_GROUP, log=False)
-                parts.append(f"**{label}:** {text}")
+                parts.append(f"• **{label}:** {text}")
 
+            # Always included
             add_part("Arrival", "arrival_table")
-            add_part("Planetary Descriptor", "planetary_site_descriptor")
             add_part("Random Site Name", "random_site_name")
             add_part("Original Purpose", "site_original_purpose")
             add_part("Story", "site_story")
@@ -593,6 +605,9 @@ with tabs[2]:
             add_part("Known Threats", "known_threats")
             add_part("Hazard", "site_hazard")
             add_part("Size", "site_size")
+
+            # Conditionally included
+            add_part("Planetary Descriptor", "planetary_site_descriptor", include_planet_desc)
 
             combined = "\n".join(parts)
 
