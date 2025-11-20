@@ -424,7 +424,6 @@ with tabs[2]:
     st.header("Mission Generator")
 
     ensure_state()
-
     import random
 
     # Persistent group for Mission/Site results
@@ -516,25 +515,21 @@ with tabs[2]:
         # BIG combined button
         st.markdown("### **Full Misjump (All Effects)**")
         if st.button("🔥 ROLL FULL MISJUMP", key="btn_misjump_full"):
-
             primary = roll_table("misjump", log=False)
-
             dilation = roll_table(
                 random.choice(["time_dilation_misjump", "transit_dilation_misjump"]),
                 log=False
             )
+            secondary = roll_table("secondary_misjump_effects", log=False)
 
-        # FIXED: Correct table name (matches your CSV)
-        secondary = roll_table("secondary_misjump_effect", log=False)
+            combined = (
+                f"**Primary:** {primary}\n"
+                f"**Dilation:** {dilation}\n"
+                f"**Secondary:** {secondary}"
+            )
 
-        combined = (
-            f"**Primary:** {primary}\n"
-            f"**Dilation:** {dilation}\n"
-            f"**Secondary:** {secondary}"
-        )
-
-    add_to_log("Misjump:\n" + combined)
-    st.success(combined)
+            add_to_log("Misjump:\n" + combined)
+            st.success(combined)
 
     # =====================================================================
     # SITE GENERATOR
