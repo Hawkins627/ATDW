@@ -12,10 +12,10 @@ st.markdown(
     <style>
         /* Widen the sidebar (Persistent Data Pool) */
         section[data-testid="stSidebar"] {
-            width: 600px !important;
+            width: 1000px !important;
         }
         section[data-testid="stSidebar"] > div {
-            width: 600px !important;
+            width: 1000px !important;
         }
 
         /* Reduce padding around main content container */
