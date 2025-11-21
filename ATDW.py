@@ -7,32 +7,25 @@ from pathlib import Path
 # -------------------------------------------------------
 # CUSTOM CSS — Wider sidebar + tighter column spacing
 # -------------------------------------------------------
-st.markdown(
-    """
+st.markdown("""
     <style>
-        /* Widen the sidebar (Persistent Data Pool) */
+        /* Widen the entire left sidebar area */
         section[data-testid="stSidebar"] {
             width: 1000px !important;
         }
-        section[data-testid="stSidebar"] > div {
+
+        /* Widen the internal sidebar content as well */
+        .css-1d391kg {  
             width: 1000px !important;
         }
 
-        /* Reduce padding around main content container */
-        .block-container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-        }
-
-        /* Tighten horizontal spacing between st.columns */
-        div[data-testid="column"] {
-            padding-right: 0.25rem !important;
-            padding-left: 0.25rem !important;
+        /* Keep main content compact */
+        section.main {
+            margin-left: 1020px !important;
         }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
+
 
 # Folder that holds ALL your CSV tables, like:
 # data/diffuculty_modifiers.csv, data/one_crew_encounter.csv, etc.
