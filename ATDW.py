@@ -356,6 +356,12 @@ with tabs[0]:
             if st.button("Roll Experimental Gear Malfunction", key="btn_expmal"):
                 st.success(roll_table("experimental_malfunction"))
 
+        # Critical Miss – Ranged
+        with st.container(border=True):
+            if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
+                st.success(roll_table("critical_miss_ranged"))
+
+
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
     st.header("Health & Trauma Tables")
