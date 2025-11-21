@@ -314,6 +314,10 @@ with tabs[0]:
     with col_left.container(border=True):
         if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
             st.success(roll_table("critical_miss_melee"))
+ 
+    # =====================================
+    # ========== RIGHT COLUMN =============
+    # =====================================
 
     # Targeting
     with col_right.container(border=True):
@@ -330,10 +334,6 @@ with tabs[0]:
         if st.button("Roll Random Combat Event", key="btn_rce"):
             st.success(roll_table("random_combat_event"))
     
-    # =====================================
-    # ========== RIGHT COLUMN =============
-    # =====================================
-
     # ---------- HACKING (checkbox flag system) ----------
     with col_right.container(border=True):
         st.markdown("### Hacking")
