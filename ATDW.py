@@ -16,7 +16,6 @@ def ensure_state():
     if "log" not in st.session_state:
         st.session_state["log"] = []
 
-
 def add_to_persistent(group_id, text):
     """Store a text entry in a numbered persistent pool."""
     if group_id is None:
@@ -56,7 +55,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         combined = f"{first}{second}-{number}"
 
         return combined
-
 
     # Preferred formatting if present
     if "title" in row and "description" in row:
