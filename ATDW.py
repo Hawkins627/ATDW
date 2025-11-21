@@ -45,18 +45,18 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
     Cleaner formatter + special case handling for Random Site Name.
     """
 
-    # SPECIAL CASE: random_site_name formatting
+    # --- Special case handling: Random Site Name ---
     if table_name == "random_site_name":
-        # Extract columns safely
-        first = str(row.get("First Syllable", "")).replace("-", "").strip()
-        second = str(row.get("Second Syllable", "")).replace("-", "").strip()
-        num = str(row.get("Numeric Designation", "")).strip()
+        first = str(row.get("first_syllable", "")).strip()
+        second = str(row.get("second_syllable", "")).strip()
+        number = str(row.get("numeric", "")).strip()
+    
+        # Build the final name:
+        # Remove internal hyphen between syllables (you requested no hyphen)
+        combined = f"{first}{second}-{number}"
 
-        combined_name = f"{first}{second}"
-        if num:
-            combined_name += f"-{num}"
+        return combined
 
-        return combined_name
 
     # Preferred formatting if present
     if "title" in row and "description" in row:
