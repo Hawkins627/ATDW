@@ -257,11 +257,11 @@ with tabs[0]:
     st.header("Encounter Tables")
     ensure_state()
 
-    # Create two evenly balanced columns
+    # Make two columns
     col_left, col_right = st.columns(2)
 
     # ======================================================
-    # LEFT COLUMN  — shifted extra items here to balance
+    # LEFT COLUMN  (we moved 3 boxes here)
     # ======================================================
     with col_left:
 
@@ -280,27 +280,23 @@ with tabs[0]:
             if st.button("Roll Encounter Activity", key="btn_enc_act"):
                 st.success(roll_table("encounter_activity"))
 
-        # -----------------------
-        # MOVED FROM RIGHT COLUMN
-        # -----------------------
+        # === MOVED FROM RIGHT SIDE ===
 
-        # Targeting
         with st.container(border=True):
             if st.button("Roll Targeting", key="btn_targeting"):
                 st.success(roll_table("targeting"))
 
-        # Critical Miss – Ranged
         with st.container(border=True):
             if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
                 st.success(roll_table("critical_miss_ranged"))
 
-        # Random Combat Event
         with st.container(border=True):
             if st.button("Roll Random Combat Event", key="btn_rce"):
                 st.success(roll_table("random_combat_event"))
 
+
     # ======================================================
-    # RIGHT COLUMN — now contains remaining items only
+    # RIGHT COLUMN  (remaining items only)
     # ======================================================
     with col_right:
 
@@ -309,7 +305,7 @@ with tabs[0]:
             if st.button("Roll Combat Stance", key="btn_cstance"):
                 st.success(roll_table("combat_stance"))
 
-        # Hit Locations — with type selector
+        # Hit Locations
         with st.container(border=True):
             st.markdown("### Hit Locations")
             hitloc_opt = st.selectbox(
