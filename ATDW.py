@@ -42,9 +42,21 @@ def load_table_df(table_name: str) -> pd.DataFrame:
 
 def format_row_for_display(table_name: str, row: pd.Series) -> str:
     """
-    Cleaner formatter for tables that may contain
-    'title' and 'description' columns.
+    Cleaner formatter + special case handling for Random Site Name.
     """
+
+    # SPECIAL CASE: random_site_name formatting
+    if table_name == "random_site_name":
+        # Extract columns safely
+        first = str(row.get("First Syllable", "")).replace("-", "").strip()
+        second = str(row.get("Second Syllable", "")).replace("-", "").strip()
+        num = str(row.get("Numeric Designation", "")).strip()
+
+        combined_name = f"{first}{second}"
+        if num:
+            combined_name += f"-{num}"
+
+        return combined_name
 
     # Preferred formatting if present
     if "title" in row and "description" in row:
