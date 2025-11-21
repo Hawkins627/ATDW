@@ -5,26 +5,26 @@ import os
 from pathlib import Path
 
 # -------------------------------------------------------
-# CUSTOM CSS — Modify layout widths (sidebar + main area)
+# CUSTOM CSS — Wider sidebar + tighter column spacing
 # -------------------------------------------------------
 st.markdown(
     """
     <style>
-        /* Widen sidebar */
+        /* Widen the sidebar (Persistent Data Pool) */
         section[data-testid="stSidebar"] {
-            width: 400px !important;   /* default is ~250px */
+            width: 600px !important;
         }
         section[data-testid="stSidebar"] > div {
-            width: 400px !important;
+            width: 600px !important;
         }
 
-        /* Reduce padding between columns in main area */
+        /* Reduce padding around main content container */
         .block-container {
             padding-left: 1rem !important;
             padding-right: 1rem !important;
         }
 
-        /* Reduce empty gap between st.columns */
+        /* Tighten horizontal spacing between st.columns */
         div[data-testid="column"] {
             padding-right: 0.25rem !important;
             padding-left: 0.25rem !important;
