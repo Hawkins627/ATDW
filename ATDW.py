@@ -9,23 +9,24 @@ from pathlib import Path
 # -------------------------------------------------------
 st.markdown("""
     <style>
-        /* Widen the entire left sidebar area */
+        /* Widen the LEFT persistent data sidebar */
         section[data-testid="stSidebar"] {
             width: 1000px !important;
+            min-width: 1000px !important;
         }
 
-        /* Widen the internal sidebar content as well */
-        .css-1d391kg {  
-            width: 1000px !important;
+        /* Pull main content left so it isn’t pushed too far */
+        .main {
+            margin-left: 150px !important;
         }
 
-        /* Keep main content compact */
-        section.main {
-            margin-left: 1020px !important;
+        /* Reduce gap between columns */
+        div[data-testid="column"] {
+            padding-right: 0.5rem !important;
+            padding-left: 0.5rem !important;
         }
     </style>
 """, unsafe_allow_html=True)
-
 
 # Folder that holds ALL your CSV tables, like:
 # data/diffuculty_modifiers.csv, data/one_crew_encounter.csv, etc.
