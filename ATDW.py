@@ -4,6 +4,36 @@ import random
 import os
 from pathlib import Path
 
+# -------------------------------------------------------
+# CUSTOM CSS — Modify layout widths (sidebar + main area)
+# -------------------------------------------------------
+st.markdown(
+    """
+    <style>
+        /* Widen sidebar */
+        section[data-testid="stSidebar"] {
+            width: 400px !important;   /* default is ~250px */
+        }
+        section[data-testid="stSidebar"] > div {
+            width: 400px !important;
+        }
+
+        /* Reduce padding between columns in main area */
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        /* Reduce empty gap between st.columns */
+        div[data-testid="column"] {
+            padding-right: 0.25rem !important;
+            padding-left: 0.25rem !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Folder that holds ALL your CSV tables, like:
 # data/diffuculty_modifiers.csv, data/one_crew_encounter.csv, etc.
 DATA_DIR = Path(".")
