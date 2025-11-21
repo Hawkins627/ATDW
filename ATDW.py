@@ -294,9 +294,6 @@ with tabs[0]:
             if st.button("Roll Random Combat Event", key="btn_rce"):
                 st.success(roll_table("random_combat_event"))
 
-    # ===== RIGHT COLUMN =====
-    with col_right:
-
         # Combat Stance
         with st.container(border=True):
             if st.button("Roll Combat Stance", key="btn_cstance"):
@@ -317,6 +314,9 @@ with tabs[0]:
         with st.container(border=True):
             if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
                 st.success(roll_table("critical_miss_melee"))
+    
+    # ===== RIGHT COLUMN =====
+    with col_right:
 
         # One-Crew Encounter
         with st.container(border=True):
