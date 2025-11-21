@@ -257,18 +257,22 @@ with tabs[0]:
     st.header("Encounter Tables")
     ensure_state()
 
-    # Two-column layout
     col_left, col_right = st.columns(2, gap="small")
 
-    # ======================
+    # -------------------------
     # LEFT COLUMN
-    # ======================
+    # -------------------------
     with col_left:
 
         # Difficulty Modifiers
         with st.container(border=True):
             if st.button("Roll Difficulty Modifiers", key="btn_diffmod"):
                 st.success(roll_table("diffuculty_modifiers"))
+
+        # Placement
+        with st.container(border=True):
+            if st.button("Roll Placement", key="btn_placement"):
+                st.success(roll_table("placement"))
 
         # Surprise
         with st.container(border=True):
@@ -280,25 +284,40 @@ with tabs[0]:
             if st.button("Roll Encounter Activity", key="btn_enc_act"):
                 st.success(roll_table("encounter_activity"))
 
+        # Combat Stance
+        with st.container(border=True):
+            if st.button("Roll Combat Stance", key="btn_combatstance"):
+                st.success(roll_table("combat_stance"))
+
         # Targeting
         with st.container(border=True):
             if st.button("Roll Targeting", key="btn_targeting"):
                 st.success(roll_table("targeting"))
 
-        # Critical Miss – Ranged  (LEFT COLUMN VERSION)
+        # Recovery Status
         with st.container(border=True):
-            if st.button("Roll Critical Miss – Ranged (L)", key="btn_cmr_left"):
+            if st.button("Roll Recovery Status", key="btn_recovery"):
+                st.success(roll_table("recovery_status"))
+
+        # Random Direction
+        with st.container(border=True):
+            if st.button("Roll Random Direction", key="btn_randdir"):
+                st.success(roll_table("random_direction"))
+
+        # Critical Miss – Melee
+        with st.container(border=True):
+            if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
+                st.success(roll_table("critical_miss_melee"))
+
+        # Critical Miss – Ranged
+        with st.container(border=True):
+            if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
                 st.success(roll_table("critical_miss_ranged"))
 
         # Random Combat Event
         with st.container(border=True):
             if st.button("Roll Random Combat Event", key="btn_rce"):
                 st.success(roll_table("random_combat_event"))
-
-        # Combat Stance
-        with st.container(border=True):
-            if st.button("Roll Combat Stance", key="btn_cstance"):
-                st.success(roll_table("combat_stance"))
 
         # Hit Locations
         with st.container(border=True):
@@ -311,21 +330,38 @@ with tabs[0]:
             if st.button("Roll Hit Locations", key="btn_hitloc"):
                 st.success(roll_table("hit_locations", option=hitloc_type))
 
-        # Critical Miss – Melee
+        # Hacking Table
         with st.container(border=True):
-            if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
-                st.success(roll_table("critical_miss_melee"))
+            st.markdown("### Hacking")
+            hack_option = st.selectbox(
+                "Select Roll Type",
+                ["Cypher", "BlackCypher", "SuccessfulRoll"],
+                key="hack_option",
+            )
+            if st.button("Roll Hacking", key="btn_hacking"):
+                st.success(roll_table("hacking", option=hack_option))
 
-    # ======================
+        # Encounter Difficulty
+        with st.container(border=True):
+            if st.button("Roll Encounter Difficulty", key="btn_encdiff"):
+                st.success(roll_table("encounter_difficulty"))
+
+        # Variable Encounter Difficulty
+        with st.container(border=True):
+            if st.button("Roll Variable Encounter Difficulty", key="btn_varencdiff"):
+                st.success(roll_table("variable_encounter_difficulty"))
+
+
+    # -------------------------
     # RIGHT COLUMN
-    # ======================
+    # -------------------------
     with col_right:
 
         # One-Crew Encounter
         with st.container(border=True):
             st.markdown("### One-Crew Encounter")
             crew1_diff = st.selectbox(
-                "Select Difficulty",
+                "Select Difficulty (1-Crew)",
                 ["Easy", "Standard", "Elite", "Overwhelming"],
                 key="crew1_diff",
             )
@@ -336,7 +372,7 @@ with tabs[0]:
         with st.container(border=True):
             st.markdown("### Three-Crew Encounter")
             crew3_diff = st.selectbox(
-                "Difficulty",
+                "Select Difficulty (3-Crew)",
                 ["Easy", "Standard", "Elite", "Overwhelming"],
                 key="crew3_diff",
             )
@@ -347,7 +383,7 @@ with tabs[0]:
         with st.container(border=True):
             st.markdown("### Five-Crew Encounter")
             crew5_diff = st.selectbox(
-                "Difficulty",
+                "Select Difficulty (5-Crew)",
                 ["Easy", "Standard", "Elite", "Overwhelming"],
                 key="crew5_diff",
             )
@@ -358,11 +394,6 @@ with tabs[0]:
         with st.container(border=True):
             if st.button("Roll Experimental Gear Malfunction", key="btn_expmal"):
                 st.success(roll_table("experimental_malfunction"))
-
-        # Critical Miss – Ranged (RIGHT COLUMN VERSION)
-        with st.container(border=True):
-            if st.button("Roll Critical Miss – Ranged (R)", key="btn_cmr_right"):
-                st.success(roll_table("critical_miss_ranged"))
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
