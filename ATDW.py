@@ -255,7 +255,6 @@ tabs = st.tabs(tab_labels)
 with tabs[0]:
 
     st.header("Encounter Tables")
-
     ensure_state()
 
     # LEFT / RIGHT COLUMNS
@@ -284,11 +283,6 @@ with tabs[0]:
             if st.button("Roll Targeting", key="btn_targeting"):
                 st.success(roll_table("targeting"))
 
-        # Critical Miss – Ranged
-        with st.container(border=True):
-            if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
-                st.success(roll_table("critical_miss_ranged"))
-
         # Random Combat Event
         with st.container(border=True):
             if st.button("Roll Random Combat Event", key="btn_rce"):
@@ -314,7 +308,7 @@ with tabs[0]:
         with st.container(border=True):
             if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
                 st.success(roll_table("critical_miss_melee"))
-    
+
     # ===== RIGHT COLUMN =====
     with col_right:
 
@@ -334,33 +328,7 @@ with tabs[0]:
             st.markdown("### Three-Crew Encounter")
             crew3_diff = st.selectbox(
                 "Difficulty",
-                ["Easy", "Standard", "Elite", "Overwhelming"],
-                key="crew3_diff",
-            )
-            if st.button("Roll Three-Crew Encounter", key="btn_threecrew"):
-                st.success(roll_table("three_crew_encounter", option=crew3_diff))
-
-        # Five-Crew Encounter
-        with st.container(border=True):
-            st.markdown("### Five-Crew Encounter")
-            crew5_diff = st.selectbox(
-                "Difficulty",
-                ["Easy", "Standard", "Elite", "Overwhelming"],
-                key="crew5_diff",
-            )
-            if st.button("Roll Five-Crew Encounter", key="btn_fivecrew"):
-                st.success(roll_table("five_crew_encounter", option=crew5_diff))
-
-        # Experimental Gear Malfunction
-        with st.container(border=True):
-            if st.button("Roll Experimental Gear Malfunction", key="btn_expmal"):
-                st.success(roll_table("experimental_malfunction"))
-
-        # Critical Miss – Ranged
-        with st.container(border=True):
-            if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
-                st.success(roll_table("critical_miss_ranged"))
-
+                ["Easy", "Standard", "Elite",]()
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
