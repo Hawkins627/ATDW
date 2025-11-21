@@ -257,143 +257,153 @@ with tabs[0]:
     st.header("Encounter Tables")
     ensure_state()
 
-    col_left, col_right = st.columns(2, gap="small")
+    # LEFT / RIGHT COLUMN SETUP
+    col_left, col_right = st.columns(2)
 
-    # -------------------------
-    # LEFT COLUMN
-    # -------------------------
-    with col_left:
+    # =====================================
+    # ========== LEFT COLUMN ==============
+    # =====================================
 
-        # Difficulty Modifiers
-        with st.container(border=True):
-            if st.button("Roll Difficulty Modifiers", key="btn_diffmod"):
-                st.success(roll_table("diffuculty_modifiers"))
+    # Difficulty Modifiers
+    with col_left.container(border=True):
+        if st.button("Roll Difficulty Modifiers", key="btn_diffmod"):
+            st.success(roll_table("diffuculty_modifiers"))
 
-        # Placement
-        with st.container(border=True):
-            if st.button("Roll Placement", key="btn_placement"):
-                st.success(roll_table("placement"))
+    # Placement (NEW)
+    with col_left.container(border=True):
+        if st.button("Roll Placement", key="btn_place"):
+            st.success(roll_table("placement"))
 
-        # Surprise
-        with st.container(border=True):
-            if st.button("Roll Surprise", key="btn_surprise"):
-                st.success(roll_table("surprise"))
+    # Surprise
+    with col_left.container(border=True):
+        if st.button("Roll Surprise", key="btn_surprise"):
+            st.success(roll_table("surprise"))
 
-        # Encounter Activity
-        with st.container(border=True):
-            if st.button("Roll Encounter Activity", key="btn_enc_act"):
-                st.success(roll_table("encounter_activity"))
+    # Encounter Activity
+    with col_left.container(border=True):
+        if st.button("Roll Encounter Activity", key="btn_enc_act"):
+            st.success(roll_table("encounter_activity"))
 
-        # Combat Stance
-        with st.container(border=True):
-            if st.button("Roll Combat Stance", key="btn_combatstance"):
-                st.success(roll_table("combat_stance"))
+    # Combat Stance
+    with col_left.container(border=True):
+        if st.button("Roll Combat Stance", key="btn_cstance"):
+            st.success(roll_table("combat_stance"))
 
-        # Targeting
-        with st.container(border=True):
-            if st.button("Roll Targeting", key="btn_targeting"):
-                st.success(roll_table("targeting"))
+    # Hit Locations — Boxed with Creature Shape selector
+    with col_left.container(border=True):
+        st.markdown("### Hit Locations")
+        hitloc_opt = st.selectbox(
+            "Creature Shape",
+            ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
+            key="hitloc_type",
+        )
+        if st.button("Roll Hit Locations", key="btn_hitloc"):
+            st.success(roll_table("hit_locations", option=hitloc_opt))
 
-        # Recovery Status
-        with st.container(border=True):
-            if st.button("Roll Recovery Status", key="btn_recovery"):
-                st.success(roll_table("recovery_status"))
+    # Random Direction
+    with col_left.container(border=True):
+        if st.button("Roll Random Direction", key="btn_randir"):
+            st.success(roll_table("random_direction"))
 
-        # Random Direction
-        with st.container(border=True):
-            if st.button("Roll Random Direction", key="btn_randdir"):
-                st.success(roll_table("random_direction"))
+    # Recovery Status (NEW)
+    with col_left.container(border=True):
+        if st.button("Roll Recovery Status", key="btn_recovery"):
+            st.success(roll_table("recovery_status"))
 
-        # Critical Miss – Melee
-        with st.container(border=True):
-            if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
-                st.success(roll_table("critical_miss_melee"))
+    # Critical Miss – Melee
+    with col_left.container(border=True):
+        if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
+            st.success(roll_table("critical_miss_melee"))
 
-        # Critical Miss – Ranged
-        with st.container(border=True):
-            if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
-                st.success(roll_table("critical_miss_ranged"))
+    # =====================================
+    # ========== RIGHT COLUMN =============
+    # =====================================
 
-        # Random Combat Event
-        with st.container(border=True):
-            if st.button("Roll Random Combat Event", key="btn_rce"):
-                st.success(roll_table("random_combat_event"))
+    # Targeting
+    with col_right.container(border=True):
+        if st.button("Roll Targeting", key="btn_targeting"):
+            st.success(roll_table("targeting"))
 
-        # Hit Locations
-        with st.container(border=True):
-            st.markdown("### Hit Locations")
-            hitloc_type = st.selectbox(
-                "Creature Shape",
-                ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
-                key="hitloc_type",
-            )
-            if st.button("Roll Hit Locations", key="btn_hitloc"):
-                st.success(roll_table("hit_locations", option=hitloc_type))
+    # Critical Miss – Ranged
+    with col_right.container(border=True):
+        if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
+            st.success(roll_table("critical_miss_ranged"))
 
-        # Hacking Table
-        with st.container(border=True):
-            st.markdown("### Hacking")
-            hack_option = st.selectbox(
-                "Select Roll Type",
-                ["Cypher", "BlackCypher", "SuccessfulRoll"],
-                key="hack_option",
-            )
-            if st.button("Roll Hacking", key="btn_hacking"):
-                st.success(roll_table("hacking", option=hack_option))
+    # Random Combat Event
+    with col_right.container(border=True):
+        if st.button("Roll Random Combat Event", key="btn_rce"):
+            st.success(roll_table("random_combat_event"))
 
-        # Encounter Difficulty
-        with st.container(border=True):
-            if st.button("Roll Encounter Difficulty", key="btn_encdiff"):
-                st.success(roll_table("encounter_difficulty"))
+    # ---------- HACKING (checkbox flag system) ----------
+    with col_right.container(border=True):
+        st.markdown("### Hacking")
 
-        # Variable Encounter Difficulty
-        with st.container(border=True):
-            if st.button("Roll Variable Encounter Difficulty", key="btn_varencdiff"):
-                st.success(roll_table("variable_encounter_difficulty"))
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            hack_cypher = st.checkbox("Cypher", key="hack_cypher")
+        with c2:
+            hack_black = st.checkbox("Black Cypher", key="hack_black")
+        with c3:
+            hack_success = st.checkbox("Successful Tech Roll", key="hack_success")
 
+        flags = []
+        if hack_cypher:
+            flags.append("Cypher")
+        if hack_black:
+            flags.append("BlackCypher")
+        if hack_success:
+            flags.append("SuccessfulRoll")
 
-    # -------------------------
-    # RIGHT COLUMN
-    # -------------------------
-    with col_right:
+        if st.button("Roll Hacking", key="btn_hacking"):
+            st.success(roll_hacking(flags))
 
-        # One-Crew Encounter
-        with st.container(border=True):
-            st.markdown("### One-Crew Encounter")
-            crew1_diff = st.selectbox(
-                "Select Difficulty (1-Crew)",
-                ["Easy", "Standard", "Elite", "Overwhelming"],
-                key="crew1_diff",
-            )
-            if st.button("Roll One-Crew Encounter", key="btn_onecrew"):
-                st.success(roll_table("one_crew_encounter", option=crew1_diff))
+    # Encounter Difficulty (D20)
+    with col_right.container(border=True):
+        if st.button("Roll Encounter Difficulty", key="btn_encdif"):
+            st.success(roll_table("encounter_difficulty", group=7, log=True))
 
-        # Three-Crew Encounter
-        with st.container(border=True):
-            st.markdown("### Three-Crew Encounter")
-            crew3_diff = st.selectbox(
-                "Select Difficulty (3-Crew)",
-                ["Easy", "Standard", "Elite", "Overwhelming"],
-                key="crew3_diff",
-            )
-            if st.button("Roll Three-Crew Encounter", key="btn_threecrew"):
-                st.success(roll_table("three_crew_encounter", option=crew3_diff))
+    # Variable Encounter Difficulty (D10)
+    with col_right.container(border=True):
+        if st.button("Roll Variable Encounter Difficulty", key="btn_varenc"):
+            st.success(roll_table("variable_encounter_difficulty", group=7, log=True))
 
-        # Five-Crew Encounter
-        with st.container(border=True):
-            st.markdown("### Five-Crew Encounter")
-            crew5_diff = st.selectbox(
-                "Select Difficulty (5-Crew)",
-                ["Easy", "Standard", "Elite", "Overwhelming"],
-                key="crew5_diff",
-            )
-            if st.button("Roll Five-Crew Encounter", key="btn_fivecrew"):
-                st.success(roll_table("five_crew_encounter", option=crew5_diff))
+    # One-Crew Encounter
+    with col_right.container(border=True):
+        st.markdown("### One-Crew Encounter")
+        crew1_opt = st.selectbox(
+            "Select Difficulty", 
+            ["Easy", "Standard", "Elite", "Overwhelming"], 
+            key="crew1_diff"
+        )
+        if st.button("Roll One-Crew Encounter", key="btn_onecrew"):
+            st.success(roll_table("one_crew_encounter", option=crew1_opt, group=7, log=True))
 
-        # Experimental Gear Malfunction
-        with st.container(border=True):
-            if st.button("Roll Experimental Gear Malfunction", key="btn_expmal"):
-                st.success(roll_table("experimental_malfunction"))
+    # Three-Crew Encounter
+    with col_right.container(border=True):
+        st.markdown("### Three-Crew Encounter")
+        crew3_opt = st.selectbox(
+            "Select Difficulty", 
+            ["Easy", "Standard", "Elite", "Overwhelming"], 
+            key="crew3_diff"
+        )
+        if st.button("Roll Three-Crew Encounter", key="btn_threecrew"):
+            st.success(roll_table("three_crew_encounter", option=crew3_opt, group=7, log=True))
+
+    # Five-Crew Encounter
+    with col_right.container(border=True):
+        st.markdown("### Five-Crew Encounter")
+        crew5_opt = st.selectbox(
+            "Select Difficulty", 
+            ["Easy", "Standard", "Elite", "Overwhelming"], 
+            key="crew5_diff"
+        )
+        if st.button("Roll Five-Crew Encounter", key="btn_fivecrew"):
+            st.success(roll_table("five_crew_encounter", option=crew5_opt, group=7, log=True))
+
+    # Experimental Gear Malfunction
+    with col_right.container(border=True):
+        if st.button("Roll Experimental Gear Malfunction", key="btn_expmal"):
+            st.success(roll_table("experimental_malfunction", log=True))
 
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
