@@ -257,11 +257,11 @@ with tabs[0]:
     st.header("Encounter Tables")
     ensure_state()
 
-    # Make two columns
+    # Two-column layout
     col_left, col_right = st.columns(2)
 
     # ======================================================
-    # LEFT COLUMN  (we moved 3 boxes here)
+    # LEFT COLUMN
     # ======================================================
     with col_left:
 
@@ -280,76 +280,21 @@ with tabs[0]:
             if st.button("Roll Encounter Activity", key="btn_enc_act"):
                 st.success(roll_table("encounter_activity"))
 
-        # === MOVED FROM RIGHT SIDE ===
-
+        # Targeting (moved from right)
         with st.container(border=True):
             if st.button("Roll Targeting", key="btn_targeting"):
                 st.success(roll_table("targeting"))
 
+        # Critical Miss – Ranged (moved)
         with st.container(border=True):
             if st.button("Roll Critical Miss – Ranged", key="btn_cmr"):
                 st.success(roll_table("critical_miss_ranged"))
 
+        # Random Combat Event (moved)
         with st.container(border=True):
             if st.button("Roll Random Combat Event", key="btn_rce"):
                 st.success(roll_table("random_combat_event"))
-
-
-    # ======================================================
-    # RIGHT COLUMN  (remaining items only)
-    # ======================================================
-    with col_right:
-
-        # Combat Stance
-        with st.container(border=True):
-            if st.button("Roll Combat Stance", key="btn_cstance"):
-                st.success(roll_table("combat_stance"))
-
-        # Hit Locations
-        with st.container(border=True):
-            st.markdown("### Hit Locations")
-            hitloc_opt = st.selectbox(
-                "Creature Shape",
-                ["Humanoid", "Quadruped", "Sextuped", "Serpentine"],
-                key="hitloc_type",
-            )
-            if st.button("Roll Hit Locations", key="btn_hitloc"):
-                st.success(roll_table("hit_locations", option=hitloc_opt))
-
-        # Critical Miss – Melee
-        with st.container(border=True):
-            if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
-                st.success(roll_table("critical_miss_melee"))
-
-        # Hacking
-        with st.container(border=True):
-            st.markdown("### Hacking")
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                hack_cypher = st.checkbox("Cypher", key="hack_cypher")
-            with c2:
-                hack_black = st.checkbox("Black Cypher", key="hack_black")
-            with c3:
-                hack_success = st.checkbox("Successful Tech Roll", key="hack_success")
-
-            flags = []
-            if hack_cypher: flags.append("Cypher")
-            if hack_black: flags.append("BlackCypher")
-            if hack_success: flags.append("SuccessfulRoll")
-
-            if st.button("Roll Hacking", key="btn_hacking"):
-                st.success(roll_hacking(flags))
-
-        # Encounter Difficulty
-        with st.container(border=True):
-            if st.button("Roll Encounter Difficulty", key="btn_encdif"):
-                st.success(roll_table("encounter_difficulty", group=7, log=True))
-
-        # Variable Encounter Difficulty
-        with st.container(border=True):
-            if st.button("Roll Variable Encounter Difficulty", key="btn_varenc"):
-                st.success(roll_table("variable_encounter_difficulty", group=7, log=True))
-
+   
 # ---------- TAB: HEALTH ----------
 with tabs[1]:
     st.header("Health & Trauma Tables")
