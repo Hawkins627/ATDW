@@ -901,11 +901,153 @@ with tabs[3]:
 
 # ---------- TAB: PLANET ----------
 with tabs[4]:
+
     st.header("Planet Generation")
-    if st.button("Generate Planet Type"):
-        st.success(roll_table("Planet Type", group=4, log=True))
-    if st.button("Generate Planet Resources"):
-        st.success(roll_table("Planet Resources", group=4))
+    ensure_state()
+
+    col_left, col_right = st.columns(2)
+
+    # =====================================
+    # ========== LEFT COLUMN ==============
+    # =====================================
+
+    with col_left:
+
+        # Planet Designation
+        with st.container(border=True):
+            if st.button("Planet Designation", key="btn_planet_designation"):
+                st.success(roll_table("planet_designation", group=3, log=True))
+
+        # Diameter
+        with st.container(border=True):
+            if st.button("Planet Diameter", key="btn_planet_diameter"):
+                st.success(roll_table("planet_diameter", group=3, log=True))
+
+        # Atmosphere
+        with st.container(border=True):
+            if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
+                st.success(roll_table("planet_atmosphere", group=3, log=True))
+
+        # Climate
+        with st.container(border=True):
+            if st.button("Planet Climate", key="btn_planet_climate"):
+                st.success(roll_table("planet_climate", group=3, log=True))
+
+        # Biome Diversity
+        with st.container(border=True):
+            if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
+                st.success(roll_table("planet_biome_diversity", group=3, log=True))
+
+        # Whats in the sky
+        with st.container(border=True):
+            if st.button("What's in the Sky?", key="btn_whats_in_sky"):
+                st.success(roll_table("whats_in_sky", group=3, log=True))
+
+        # Day/Night Cycle
+        with st.container(border=True):
+            if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
+                st.success(roll_table("day_night_cycle", group=3, log=True))
+
+
+    # =====================================
+    # ========== RIGHT COLUMN =============
+    # =====================================
+
+    with col_right:
+
+        # Biome (title/description)
+        with st.container(border=True):
+            if st.button("Planet Biome", key="btn_planet_biome"):
+                st.success(roll_table("planet_biome", group=4, log=True))
+
+        # Biome Activity
+        with st.container(border=True):
+            if st.button("Biome Activity", key="btn_biome_activity"):
+                st.success(roll_table("biome_activity", group=4, log=True))
+
+        # Known Threats
+        with st.container(border=True):
+            if st.button("Known Threats", key="btn_known_threats"):
+                st.success(roll_table("known_threats", group=4, log=True))
+
+        # Terrain Difficulty (options required)
+        with st.container(border=True):
+
+            terrain_options = [
+                "Hazardous",
+                "Convoluted",
+                "Inhabited",
+                "BiomeDependent",
+                "EasyGoing"
+            ]
+
+            terrain_choice = st.selectbox(
+                "Terrain Difficulty Type:",
+                terrain_options,
+                key="terrain_choice"
+            )
+
+            if st.button("Terrain Difficulty", key="btn_terrain_difficulty"):
+                st.success(
+                    roll_table(
+                        "terrain_difficulty",
+                        option=terrain_choice,
+                        group=4,
+                        log=True
+                    )
+                )
+
+        # Planetside Exploration (requires no input)
+        with st.container(border=True):
+            if st.button("Planetside Exploration", key="btn_planetside_exploration"):
+                st.success(roll_table("planetside_exploration", log=True))
+
+        # Planetside Encounters
+        with st.container(border=True):
+            if st.button("Planetside Encounters", key="btn_planetside_encounters"):
+                st.success(roll_table("planetside_encounters", log=True))
+
+        # Close Encounters
+        with st.container(border=True):
+            if st.button("Close Encounters", key="btn_close_encounters"):
+                st.success(roll_table("close_encounters", log=True))
+
+    # =====================================
+    # =========== BIOME SETS  =============
+    # =====================================
+    st.markdown("### Biome-Specific Sights & Hazards")
+
+    biome_cols = st.columns(3)
+
+    biome_button_defs = [
+        ("Barren Sights", "barren_sights"),
+        ("Barren Hazards", "barren_hazards"),
+        ("Exotic Sights", "exotic_sights"),
+        ("Exotic Hazards", "exotic_hazards"),
+        ("Frozen Sights", "frozen_sights"),
+        ("Frozen Hazards", "frozen_hazards"),
+        ("Irradiated Sights", "irradiated_sights"),
+        ("Irradiated Hazards", "irradiated_hazards"),
+        ("Lush Sights", "lush_sights"),
+        ("Lush Hazards", "lush_hazards"),
+        ("Scorched Sights", "scorched_sights"),
+        ("Scorched Hazards", "scorched_hazards"),
+        ("Toxic Sights", "toxic_sights"),
+        ("Toxic Hazards", "toxic_hazards"),
+        ("Urban Sights", "urban_sights"),
+        ("Urban Hazards", "urban_hazards"),
+        ("Volcanic Sights", "volcanic_sights"),
+        ("Volcanic Hazards", "volcanic_hazards"),
+        ("Water Sights", "water_sights"),
+        ("Water Hazards", "water_hazards"),
+    ]
+
+    # auto layout into 3 columns
+    for i, (label, table) in enumerate(biome_button_defs):
+        col = biome_cols[i % 3]
+        with col.container(border=True):
+            if st.button(label, key=f"btn_{table}"):
+                st.success(roll_table(table, group=4, log=True))
 
 # ---------- TAB: NPC ----------
 with tabs[5]:
