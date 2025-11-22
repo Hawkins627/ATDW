@@ -304,6 +304,16 @@ with tabs[0]:
     with col_left.container(border=True):
         if st.button("Roll Critical Miss – Melee", key="btn_cmm"):
             st.success(roll_table("critical_miss_melee"))
+
+    # Encounter Difficulty (D20)
+    with col_right.container(border=True):
+        if st.button("Roll Encounter Difficulty", key="btn_encdif"):
+            st.success(roll_table("encounter_difficulty", group=7, log=True))
+
+    # Variable Encounter Difficulty (D10)
+    with col_right.container(border=True):
+        if st.button("Roll Variable Encounter Difficulty", key="btn_varenc"):
+            st.success(roll_table("variable_encounter_difficulty", group=7, log=True))
  
     # =====================================
     # ========== RIGHT COLUMN =============
@@ -346,16 +356,6 @@ with tabs[0]:
 
         if st.button("Roll Hacking", key="btn_hacking"):
             st.success(roll_hacking(flags))
-
-    # Encounter Difficulty (D20)
-    with col_right.container(border=True):
-        if st.button("Roll Encounter Difficulty", key="btn_encdif"):
-            st.success(roll_table("encounter_difficulty", group=7, log=True))
-
-    # Variable Encounter Difficulty (D10)
-    with col_right.container(border=True):
-        if st.button("Roll Variable Encounter Difficulty", key="btn_varenc"):
-            st.success(roll_table("variable_encounter_difficulty", group=7, log=True))
 
     # One-Crew Encounter
     with col_right.container(border=True):
