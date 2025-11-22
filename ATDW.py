@@ -100,8 +100,6 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         text = format_row_for_display(table_name, row)
         result = text
 
-    if group is not None:
-        add_to_persistent(group, result)
     if log:
         add_to_log(f"{table_name}: {result}")
 
@@ -638,6 +636,7 @@ with tabs[2]:
             def add(label, tbl):
                 txt = roll_table(tbl, group=MISSION_GROUP, log=False)
                 sections.append(f"- **{label}:** {txt}")
+                add_to_persistent(MISSION_GROUP, f"{label}: {txt}")
                 
             add("Arrival", "arrival_table")
             add("Random Site Name", "random_site_name")
