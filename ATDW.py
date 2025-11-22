@@ -4,30 +4,6 @@ import random
 import os
 from pathlib import Path
 
-# -------------------------------------------------------
-# CUSTOM CSS — Wider sidebar + tighter column spacing
-# -------------------------------------------------------
-st.markdown("""
-    <style>
-        /* Widen the LEFT persistent data sidebar */
-        section[data-testid="stSidebar"] {
-            width: 1000px !important;
-            min-width: 1000px !important;
-        }
-
-        /* Pull main content left so it isn’t pushed too far */
-        .main {
-            margin-left: 150px !important;
-        }
-
-        /* Reduce gap between columns */
-        div[data-testid="column"] {
-            padding-right: 0.5rem !important;
-            padding-left: 0.5rem !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # Folder that holds ALL your CSV tables, like:
 # data/diffuculty_modifiers.csv, data/one_crew_encounter.csv, etc.
 DATA_DIR = Path(".")
@@ -244,6 +220,28 @@ tab_labels = [
 ]
 
 tabs = st.tabs(tab_labels)
+
+# ---------- SIDEBAR SIZE SELECTOR ----------
+with st.sidebar:
+    st.markdown("### Persistent Sidebar Width")
+    width_choice = st.select_slider(
+        "Sidebar Size",
+        options=[250, 350, 500, 700, 900, 1100],
+        value=500,
+    )
+
+# Apply CSS using the selected width
+st.markdown(f"""
+    <style>
+        section[data-testid="stSidebar"] {{
+            width: {width_choice}px !important;
+            min-width: {width_choice}px !important;
+        }}
+        .main {{
+            margin-left: {width_choice - 100}px !important;
+        }}
+    </style>
+""", unsafe_allow_html=True)
 
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
