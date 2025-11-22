@@ -98,6 +98,10 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         text = format_row_for_display(table_name, row)
         result = text
 
+    # ADD THIS BACK
+    if group is not None:
+        add_to_persistent(group, result)
+
     if log:
         add_to_log(f"{table_name}: {result}")
 
