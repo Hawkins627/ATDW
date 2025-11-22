@@ -659,11 +659,150 @@ with tabs[2]:
 
 # ---------- TAB: EXPLORATION ----------
 with tabs[3]:
-    st.header("Exploration and Travel")
-    if st.button("Generate Travel Event"):
-        st.success(roll_table("Random Travel Event", group=3, log=True))
-    if st.button("Generate Space Anomaly"):
-        st.success(roll_table("Space Anomaly", group=3))
+
+    st.header("Exploration Tables")
+    ensure_state()
+
+    # Two-column layout to match Encounter / Health / Mission
+    col_left, col_right = st.columns(2)
+
+    # =====================================
+    # ========== LEFT COLUMN ==============
+    # =====================================
+
+    # Area Connector  (Persistent group 2, log=True)
+    with col_left.container(border=True):
+        if st.button("Roll Area Connector", key="btn_area_connector"):
+            st.success(roll_table("area_connector", group=2, log=True))
+
+    # Site Exploration  (Persistent group 2, log=True)
+    with col_left.container(border=True):
+        if st.button("Roll Site Exploration", key="btn_site_exploration"):
+            st.success(roll_table("site_exploration", group=2, log=True))
+
+    # Xenoanthropological Artifact  (log=True)
+    with col_left.container(border=True):
+        if st.button("Roll Xenoanthropological Artifact", key="btn_xeno_artifact"):
+            st.success(roll_table("xenoanthropological_artifact", log=True))
+
+    # Activating Artifact  (log=True)
+    with col_left.container(border=True):
+        if st.button("Roll Activating Artifact", key="btn_activating_artifact"):
+            st.success(roll_table("activating_artifact", log=True))
+
+    # Hazard Manifestation  (log=True)
+    with col_left.container(border=True):
+        if st.button("Roll Hazard Manifestation", key="btn_hazard_manifestation"):
+            st.success(roll_table("hazard_manifestation", log=True))
+
+    # =====================================
+    # ========== RIGHT COLUMN =============
+    # =====================================
+
+    # Door Type  (log=True)
+    with col_right.container(border=True):
+        if st.button("Roll Door Type", key="btn_door_type"):
+            st.success(roll_table("door_type", log=True))
+
+    # Behind Door  (log=True)
+    with col_right.container(border=True):
+        if st.button("Roll Behind Door", key="btn_behind_door"):
+            st.success(roll_table("behind_door", log=True))
+
+    # Automatic Security Measure  (log=True)
+    with col_right.container(border=True):
+        if st.button("Roll Automatic Security Measure", key="btn_auto_security"):
+            st.success(roll_table("automatic_security_measure", log=True))
+
+    # Teleport (for security measures)  (log=True)
+    with col_right.container(border=True):
+        if st.button("Roll Teleport Effect", key="btn_teleport"):
+            st.success(roll_table("teleport", log=True))
+
+    # Fixed Event  (log=True)
+    with col_right.container(border=True):
+        if st.button("Roll Fixed Event", key="btn_fixed_event"):
+            st.success(roll_table("fixed_event", log=True))
+
+    # =====================================
+    # ========== SPECIAL SETS =============
+    # =====================================
+
+    # ----- Dread Event + Taints (Combined = 5) -----
+    with col_left.container(border=True):
+        st.markdown("### Dread Event & Taints")
+
+        if st.button("Roll Taints", key="btn_taints"):
+            st.success(roll_table("taints", log=True))
+
+        if st.button("Roll Dread Event", key="btn_dread_event"):
+            st.success(roll_table("dread_event", log=True))
+
+        if st.button("Roll Full Dread Event", key="btn_dread_full"):
+            taint = roll_table("taints", log=False)
+            dread = roll_table("dread_event", log=False)
+            combined = f"Taint: {taint}\nEvent: {dread}"
+            add_to_log("Dread Event:\n" + combined)
+            st.success(combined)
+
+    # ----- Automatic Security + Teleport (Combined = 6) -----
+    with col_right.container(border=True):
+        st.markdown("### Security Measure & Teleport")
+
+        if st.button("Roll Security + Teleport", key="btn_security_full"):
+            sec = roll_table("automatic_security_measure", log=False)
+            tel = roll_table("teleport", log=False)
+            combined = f"Security Measure: {sec}\nTeleport Effect: {tel}"
+            add_to_log("Security Event:\n" + combined)
+            st.success(combined)
+
+    # ----- Occurrence + Discovery / Danger / Event (Combined = 7) -----
+    with col_left.container(border=True):
+        st.markdown("### Occurrence & Surrounding Details")
+
+        if st.button("Roll Discovery", key="btn_discovery"):
+            st.success(roll_table("discovery", group=7, log=True))
+
+        if st.button("Roll Danger", key="btn_danger"):
+            st.success(roll_table("danger", group=7, log=True))
+
+        if st.button("Roll Event", key="btn_event"):
+            st.success(roll_table("event", group=7, log=True))
+
+        if st.button("Roll Occurrence", key="btn_occurrence"):
+            st.success(roll_table("occurrence", group=7, log=True))
+
+        if st.button("Roll Full Occurrence Set", key="btn_occurrence_full"):
+            disc = roll_table("discovery", log=False)
+            dang = roll_table("danger", log=False)
+            evt = roll_table("event", log=False)
+            occ = roll_table("occurrence", log=False)
+            combined = (
+                f"Discovery: {disc}\n"
+                f"Danger: {dang}\n"
+                f"Event: {evt}\n"
+                f"Occurrence: {occ}"
+            )
+            add_to_log("Occurrence:\n" + combined)
+            add_to_persistent(7, combined)
+            st.success(combined)
+
+    # ----- Situation Verb + Noun (Combined = 8) -----
+    with col_right.container(border=True):
+        st.markdown("### Situation (Verb & Noun)")
+
+        if st.button("Roll Situation Verb", key="btn_situation_verb"):
+            st.success(roll_table("situation_verb", log=True))
+
+        if st.button("Roll Situation Noun", key="btn_situation_noun"):
+            st.success(roll_table("situation_noun", log=True))
+
+        if st.button("Roll Full Situation", key="btn_situation_full"):
+            verb = roll_table("situation_verb", log=False)
+            noun = roll_table("situation_noun", log=False)
+            combined = f"Verb: {verb}\nNoun: {noun}"
+            add_to_log("Situation:\n" + combined)
+            st.success(combined)
 
 # ---------- TAB: PLANET ----------
 with tabs[4]:
