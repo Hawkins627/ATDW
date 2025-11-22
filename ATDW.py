@@ -699,12 +699,12 @@ with tabs[3]:
             st.success(roll_table("hazard_manifestation", log=True))
 
     # Door Type  (log=True)
-    with col_right.container(border=True):
+    with col_=left.container(border=True):
         if st.button("Roll Door Type", key="btn_door_type"):
             st.success(roll_table("door_type", log=True))
 
     # Behind Door  (log=True)
-    with col_right.container(border=True):
+    with col_left.container(border=True):
         if st.button("Roll Behind Door", key="btn_behind_door"):
             st.success(roll_table("behind_door", log=True))
 
