@@ -712,16 +712,6 @@ with tabs[3]:
         if st.button("Roll Behind Door", key="btn_behind_door"):
             st.success(roll_table("behind_door", log=True))
 
-    # Automatic Security Measure  (log=True)
-    with col_right.container(border=True):
-        if st.button("Roll Automatic Security Measure", key="btn_auto_security"):
-            st.success(roll_table("automatic_security_measure", log=True))
-
-    # Teleport (for security measures)  (log=True)
-    with col_right.container(border=True):
-        if st.button("Roll Teleport Effect", key="btn_teleport"):
-            st.success(roll_table("teleport", log=True))
-
     # Fixed Event  (log=True)
     with col_right.container(border=True):
         if st.button("Roll Fixed Event", key="btn_fixed_event"):
@@ -775,7 +765,6 @@ with tabs[3]:
 
             st.success(final_output)
 
-
     # ---------- SECURITY MEASURE & TELEPORT ----------
     with col_right.container(border=True):
         st.markdown("### Security Measure & Teleport")
@@ -788,6 +777,28 @@ with tabs[3]:
         if st.button("Roll Teleport Effect", key="btn_teleport"):
             tele = roll_table("teleport", log=True)
             st.success(tele)
+
+        # -------------- Combined Roll --------------
+        if st.button("Roll Security + Teleport", key="btn_security_full"):
+
+            results = []
+
+            # Step 1 — roll the security measure
+            sec = roll_table("automatic_security_measure", log=False)
+            results.append(f"- **Security Measure:** {sec}")
+            add_to_log(f"Security Measure: {sec}")
+
+            # Normalize lookup form
+            sec_lower = sec.lower()
+
+            # Step 2 — ONLY roll teleport if applicable
+            if "teleport" in sec_lower:
+                tele = roll_table("teleport", log=False)
+                results.append(f"- **Teleport Result:** {tele}")
+                add_to_log(f"Teleport Result: {tele}")
+
+            final = "\n".join(results)
+            st.success(final)
 
     # -------------- Combined Roll --------------
     if st.button("Roll Security + Teleport", key="btn_security_full"):
