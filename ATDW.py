@@ -8,7 +8,6 @@ from pathlib import Path
 # data/diffuculty_modifiers.csv, data/one_crew_encounter.csv, etc.
 DATA_DIR = Path(".")
 
-
 def ensure_state():
     """Make sure persistent + log structures exist."""
     if "persistent" not in st.session_state:
@@ -37,7 +36,6 @@ def load_table_df(table_name: str) -> pd.DataFrame:
     """Load a CSV for a given table name."""
     path = DATA_DIR / f"{table_name}.csv"
     return pd.read_csv(path)
-
 
 def format_row_for_display(table_name: str, row: pd.Series) -> str:
     """
@@ -196,12 +194,6 @@ if "log" not in st.session_state:
     st.session_state["log"] = []  # stores mission log entries
 
 # ---------- BASIC UTILITIES ----------
-def add_to_persistent(group_id, result):
-    """Add generated data to a persistent pool (kept between tab switches)."""
-    if group_id not in st.session_state["persistent"]:
-        st.session_state["persistent"][group_id] = []
-    st.session_state["persistent"][group_id].append(result)
-
 def add_to_log(result):
     """Add generated data to the mission log."""
     st.session_state["log"].append(result)
