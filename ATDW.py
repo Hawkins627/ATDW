@@ -784,36 +784,62 @@ with tabs[3]:
             add_to_log("Security Event:\n" + combined)
             st.success(combined)
 
-    # ----- Occurrence + Discovery / Danger / Event (Combined = 7) -----
-    with col_left.container(border=True):
+    # ---------- OCCURRENCE & SURROUNDINGS ----------
+    with col_right.container(border=True):
         st.markdown("### Occurrence & Surrounding Details")
 
+        # Roll Occurrence only
+        if st.button("Roll Occurrence", key="btn_occurrence"):
+            occ = roll_table("occurrence", log=True)
+            st.success(f"Occurrence: {occ}")
+
+        # Individual tables
         if st.button("Roll Discovery", key="btn_discovery"):
-            st.success(roll_table("discovery", group=7, log=True))
+            st.success(roll_table("discovery", log=True))
 
         if st.button("Roll Danger", key="btn_danger"):
-            st.success(roll_table("danger", group=7, log=True))
+            st.success(roll_table("danger", log=True))
 
         if st.button("Roll Event", key="btn_event"):
-            st.success(roll_table("event", group=7, log=True))
+            st.success(roll_table("event", log=True))
 
-        if st.button("Roll Occurrence", key="btn_occurrence"):
-            st.success(roll_table("occurrence", group=7, log=True))
+        # ---------- FULL OCCURRENCE SET ----------
+        st.markdown("### Full Occurrence Set")
 
-        if st.button("Roll Full Occurrence Set", key="btn_occurrence_full"):
-            disc = roll_table("discovery", log=False)
-            dang = roll_table("danger", log=False)
-            evt = roll_table("event", log=False)
+        if st.button("Roll Full Occurrence Set", key="btn_occ_full"):
+
+            results = []
+
+            # Step 1: Roll Occurrence
             occ = roll_table("occurrence", log=False)
-            combined = (
-                f"Discovery: {disc}\n"
-                f"Danger: {dang}\n"
-                f"Event: {evt}\n"
-                f"Occurrence: {occ}"
-            )
-            add_to_log("Occurrence:\n" + combined)
-            add_to_persistent(7, combined)
-            st.success(combined)
+            results.append(f"- **Occurrence:** {occ}")
+            add_to_log(f"Occurrence: {occ}")
+
+            # Step 2: Conditional sub-rolls
+            if occ.lower() == "danger":
+                sub = roll_table("danger", log=False)
+                results.append(f"- **Danger:** {sub}")
+                add_to_log(f"Danger: {sub}")
+
+            elif occ.lower() == "discovery":
+                sub = roll_table("discovery", log=False)
+                results.append(f"- **Discovery:** {sub}")
+                add_to_log(f"Discovery: {sub}")
+
+            elif occ.lower() == "event":
+                sub = roll_table("event", log=False)
+                results.append(f"- **Event:** {sub}")
+                add_to_log(f"Event: {sub}")
+
+            elif occ.lower() == "situation":
+                st.info("A Situation was rolled. Please choose a Noun category from the Situation section to complete the roll.")
+                # No auto-roll because Situation requires user category input.
+                results.append("- **Situation:** (Awaiting player noun category selection.)")
+                add_to_log("Situation: Needs noun category input.")
+
+            # Show final combined output
+            final = "\n".join(results)
+            st.success(final)
 
     # ----- Situation Verb + Noun (Combined = 8) -----
     with col_right.container(border=True):
