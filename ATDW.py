@@ -729,12 +729,18 @@ with tabs[8]:
             text = entry["text"]
             note = entry.get("note", "")
 
-            # Two-column row: Left = Notes button, Right = Entry text
+            # Two-column row: Left = Icon, Right = Entry text
             row_left, row_right = st.columns([1, 10])
 
-            # --- LEFT COLUMN: Small Notes button ---
+            # --- LEFT COLUMN: Notepad Icon Expander ---
             with row_left:
-                with st.expander("Notes", expanded=False):
+                # We use a small HTML icon as the expander label
+                note_icon_html = """
+                    <span style="font-size:22px; cursor:pointer;">
+                        🗒️
+                    </span>
+                """
+                with st.expander(note_icon_html, expanded=False):
                     note_key = f"log_note_{idx}"
                     new_note = st.text_area(
                         "Edit note:",
@@ -746,7 +752,16 @@ with tabs[8]:
                         st.success("Saved!")
                         st.rerun()
 
-            # --- RIGHT COLUMN: Log entry + inline note ---
+            # --- RIGHT COLUMN: Log entry with inline note ---
+            if note:
+                row_right.markdown(f"{text}  \n📝 *{note}*")
+            else:
+                row_right.markdown(text)
+
+            st.markdown("---")
+
+
+            # --- RIGHT COLUMN: Log entry with inline note ---
             if note:
                 row_right.markdown(f"{text}  \n📝 *{note}*")
             else:
