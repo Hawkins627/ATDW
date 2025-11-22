@@ -800,26 +800,6 @@ with tabs[3]:
             final = "\n".join(results)
             st.success(final)
 
-        results = []
-
-        # Step 1 — roll the security measure
-        sec = roll_table("automatic_security_measure", log=False)
-        results.append(f"- **Security Measure:** {sec}")
-        add_to_log(f"Security Measure: {sec}")
-
-        # Normalize lookup form
-        sec_lower = sec.lower()
-
-        # Step 2 — ONLY roll teleport if applicable
-        if "teleport" in sec_lower:
-            tele = roll_table("teleport", log=False)
-            results.append(f"- **Teleport Result:** {tele}")
-            add_to_log(f"Teleport Result: {tele}")
-
-        final = "\n".join(results)
-        st.success(final)
-
-
     # ---------- OCCURRENCE & SURROUNDINGS ----------
     with col_right.container(border=True):
         st.markdown("### Occurrence & Surrounding Details")
