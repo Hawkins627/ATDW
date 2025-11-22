@@ -306,13 +306,13 @@ with tabs[0]:
             st.success(roll_table("critical_miss_melee"))
 
     # Encounter Difficulty (D20)
-    with col_right.container(border=True):
-        if st.button("Roll Encounter Difficulty", key="btn_encdif"):
+    with col_left.container(border=True):
+        if st.button("Roll Encounter Difficulty", key="btn_encdif_left"):
             st.success(roll_table("encounter_difficulty", group=7, log=True))
 
     # Variable Encounter Difficulty (D10)
-    with col_right.container(border=True):
-        if st.button("Roll Variable Encounter Difficulty", key="btn_varenc"):
+    with col_left.container(border=True):
+        if st.button("Roll Variable Encounter Difficulty", key="btn_varenc_left"):
             st.success(roll_table("variable_encounter_difficulty", group=7, log=True))
  
     # =====================================
