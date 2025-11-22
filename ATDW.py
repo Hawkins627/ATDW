@@ -673,40 +673,42 @@ with tabs[3]:
     # ========== LEFT COLUMN ==============
     # =====================================
 
-    # Area Connector  (Persistent group 2, log=True)
-    with col_left.container(border=True):
-        if st.button("Roll Area Connector", key="btn_area_connector"):
-            st.success(roll_table("area_connector", group=2, log=True))
+    with col_left:
 
-    # Site Exploration  (Persistent group 2, log=True)
-    with col_left.container(border=True):
-        if st.button("Roll Site Exploration", key="btn_site_exploration"):
-            st.success(roll_table("site_exploration", group=2, log=True))
+        # Area Connector  (Persistent group 2, log=True)
+        with st.container(border=True):
+            if st.button("Roll Area Connector", key="btn_area_connector"):
+                st.success(roll_table("area_connector", group=2, log=True))
 
-    # Xenoanthropological Artifact  (log=True)
-    with col_left.container(border=True):
-        if st.button("Roll Xenoanthropological Artifact", key="btn_xeno_artifact"):
-            st.success(roll_table("xenoanthropological_artifact", log=True))
+        # Site Exploration  (Persistent group 2, log=True)
+        with st.container(border=True):
+            if st.button("Roll Site Exploration", key="btn_site_exploration"):
+                st.success(roll_table("site_exploration", group=2, log=True))
 
-    # Activating Artifact  (log=True)
-    with col_left.container(border=True):
-        if st.button("Roll Activating Artifact", key="btn_activating_artifact"):
-            st.success(roll_table("activating_artifact", log=True))
+        # Xenoanthropological Artifact  (log=True)
+        with st.container(border=True):
+            if st.button("Roll Xenoanthropological Artifact", key="btn_xeno_artifact"):
+                st.success(roll_table("xenoanthropological_artifact", log=True))
 
-    # Hazard Manifestation  (log=True)
-    with col_left.container(border=True):
-        if st.button("Roll Hazard Manifestation", key="btn_hazard_manifestation"):
-            st.success(roll_table("hazard_manifestation", log=True))
+        # Activating Artifact  (log=True)
+        with st.container(border=True):
+            if st.button("Roll Activating Artifact", key="btn_activating_artifact"):
+                st.success(roll_table("activating_artifact", log=True))
 
-    # Door Type  (log=True)
-    with col_=left.container(border=True):
-        if st.button("Roll Door Type", key="btn_door_type"):
-            st.success(roll_table("door_type", log=True))
+        # Hazard Manifestation  (log=True)
+        with st.container(border=True):
+            if st.button("Roll Hazard Manifestation", key="btn_hazard_manifestation"):
+                st.success(roll_table("hazard_manifestation", log=True))
 
-    # Behind Door  (log=True)
-    with col_left.container(border=True):
-        if st.button("Roll Behind Door", key="btn_behind_door"):
-            st.success(roll_table("behind_door", log=True))
+        # ✅ MOVED DOOR TYPE
+        with st.container(border=True):
+            if st.button("Roll Door Type", key="btn_door_type"):
+                st.success(roll_table("door_type", log=True))
+
+        # ✅ MOVED BEHIND DOOR
+        with st.container(border=True):
+            if st.button("Roll Behind Door", key="btn_behind_door"):
+                st.success(roll_table("behind_door", log=True))
 
     # =====================================
     # ========== RIGHT COLUMN =============
