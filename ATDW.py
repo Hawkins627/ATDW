@@ -818,29 +818,32 @@ with tabs[3]:
         if st.button("Roll Event", key="btn_event"):
             st.success(roll_table("event", log=True))
 
-        # -------------------- 🔥 NEW: Full Situation Button --------------------
+        # -------------------- FULL SITUATION BUTTON --------------------
         if st.button("Roll Full Situation", key="btn_situation_full_occ"):
+
             verb = roll_table("situation_verb", log=False)
             noun = roll_table("situation_noun", option=situation_choice, log=False)
-            combined = f"Verb: {verb}\nNoun ({situation_choice}): {noun}"
-            add_to_log("Situation:\n" + combined)
-            st.success(combined)
 
-        # ---------- FULL OCCURRENCE SET ----------
+            final = f"({situation_choice}) {verb} {noun}"
+
+            add_to_log(f"Situation: {final}")
+            st.success(final)
+
+        # -------------------- FULL OCCURRENCE SET --------------------
         st.markdown("### Full Occurrence Set")
-    
+
         if st.button("Roll Full Occurrence Set", key="btn_occ_full"):
-    
+
             results = []
 
             # Step 1 — Roll Occurrence
             occ = roll_table("occurrence", log=False)
+            occ_lower = occ.lower()
+
             results.append(f"- **Occurrence:** {occ}")
             add_to_log(f"Occurrence: {occ}")
 
-            occ_lower = occ.lower()
-
-            # Step 2 — Roll Subtable Depending on Result
+            # Step 2 — Conditional Subrolls
             if occ_lower == "danger":
                 sub = roll_table("danger", log=False)
                 results.append(f"- **Danger:** {sub}")
@@ -860,13 +863,12 @@ with tabs[3]:
                 verb = roll_table("situation_verb", log=False)
                 noun = roll_table("situation_noun", option=situation_choice, log=False)
 
-                results.append(f"- **Situation Verb:** {verb}")
-                results.append(f"- **Situation Noun ({situation_choice}):** {noun}")
+                formatted = f"({situation_choice}) {verb} {noun}"
 
-                add_to_log(f"Situation Verb: {verb}")
-                add_to_log(f"Situation Noun ({situation_choice}): {noun}")
-
-            # Show the final combined result
+                results.append(f"- **Situation:** {formatted}")
+                add_to_log(f"Situation: {formatted}")
+    
+            # Final Output
             final = "\n".join(results)
             st.success(final)
 
