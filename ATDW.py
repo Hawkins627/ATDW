@@ -729,48 +729,49 @@ with tabs[3]:
     # =====================================
 
     # ----- Dread Event + Taints (Combined = 5) -----
-   with col_left.container(border=True):
-    st.markdown("### Dread Event")
+    with col_left.container(border=True):
+        st.markdown("### Dread Event")
 
-    # Standalone Dread Event roll
-    if st.button("Roll Dread Event", key="btn_dread_event"):
-        result = roll_table("dread_event", log=True)
-        st.success(result)
+        # Standalone Dread Event roll
+        if st.button("Roll Dread Event", key="btn_dread_event"):
+            result = roll_table("dread_event", log=True)
+            st.success(result)
 
-    # Standalone Taints roll
-    if st.button("Roll Taints", key="btn_taints"):
-        result = roll_table("taints", log=True)
-        st.success(result)
+        # Standalone Taints roll
+        if st.button("Roll Taints", key="btn_taints"):
+            result = roll_table("taints", log=True)
+            st.success(result)
 
-    # ---- FULL DREAD EVENT (with conditional roll) ----
-    st.markdown("### Full Dread Event (Auto Taint on 1)")
+        # ---- FULL DREAD EVENT (with conditional roll) ----
+        st.markdown("### Full Dread Event (Auto Taint on 1)")
 
-    if st.button("ROLL FULL DREAD EVENT", key="btn_full_dread"):
-        # Roll the primary dread event
-        dread_df = load_table_df("dread_event")
+        if st.button("ROLL FULL DREAD EVENT", key="btn_full_dread"):
+            # Roll the primary dread event
+            dread_df = load_table_df("dread_event")
         
-        # Sample and capture the ROW so we can read the index
-        dread_row = dread_df.sample(1)
-        dread_number = dread_row.index[0] + 1   # Convert to 1–20 numbering
-        dread_text = format_row_for_display("dread_event", dread_row.iloc[0])
+            # Sample and capture the ROW so we can read the index
+            dread_row = dread_df.sample(1)
+            dread_number = dread_row.index[0] + 1   # Convert to 1–20 numbering
+            dread_text = format_row_for_display("dread_event", dread_row.iloc[0])
 
-        final_output = f"**Dread Event ({dread_number}):** {dread_text}"
+            final_output = f"**Dread Event ({dread_number}):** {dread_text}"
 
-        # Log + persistent
-        add_to_log(final_output)
-        add_to_persistent(1, final_output)
+            # Log + persistent
+            add_to_log(final_output)
+            add_to_persistent(1, final_output)
 
-        # If the result is 1 → auto-roll Taint
-        if dread_number == 1:
-            taint_result = roll_table("taints", log=False)
-            full_taint_entry = f"**Taint:** {taint_result}"
+            # If the result is 1 → auto-roll Taint
+            if dread_number == 1:
+                taint_result = roll_table("taints", log=False)
+                full_taint_entry = f"**Taint:** {taint_result}"
 
-            final_output += f"\n\n{full_taint_entry}"
+                final_output += f"\n\n{full_taint_entry}"
 
-            add_to_log(full_taint_entry)
-            add_to_persistent(1, full_taint_entry)
+                add_to_log(full_taint_entry)
+                add_to_persistent(1, full_taint_entry)
 
-        st.success(final_output)
+            st.success(final_output)
+
 
     # ----- Automatic Security + Teleport (Combined = 6) -----
     with col_right.container(border=True):
