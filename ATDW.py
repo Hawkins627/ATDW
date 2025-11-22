@@ -395,72 +395,63 @@ with tabs[0]:
 with tabs[1]:
     st.header("Health & Trauma Tables")
 
-    # Two-column layout
+    # Two-column layout (same as Encounter)
     col_left, col_right = st.columns(2)
 
     # -----------------------------------------------------
-    # LEFT COLUMN — Injuries, Critical Injuries, Parasites
+    # LEFT COLUMN
     # -----------------------------------------------------
     with col_left:
 
         # Injuries
         with st.container(border=True):
-            st.markdown("### Injuries")
             if st.button("Roll Injuries", key="btn_injuries"):
-                st.success(roll_table("injuries", group=None, log=True))
+                st.success(roll_table("injuries", log=True))
 
         # Critical Injuries
         with st.container(border=True):
-            st.markdown("### Critical Injuries")
             if st.button("Roll Critical Injuries", key="btn_crit_injuries"):
-                st.success(roll_table("critical_injuries", group=None, log=True))
+                st.success(roll_table("critical_injuries", log=True))
 
         # Parasite Attack
         with st.container(border=True):
-            st.markdown("### Parasite Attack")
             if st.button("Roll Parasite Attack", key="btn_parasite_attack"):
-                st.success(roll_table("parasite_attack", group=None, log=True))
+                st.success(roll_table("parasite_attack", log=True))
 
         # Poison Potency
         with st.container(border=True):
-            st.markdown("### Poison Potency")
             if st.button("Roll Poison Potency", key="btn_poison_potency"):
-                st.success(roll_table("poison_potency", group=None, log=True))
+                st.success(roll_table("poison_potency", log=True))
 
     # -----------------------------------------------------
-    # RIGHT COLUMN — Stress, Obsessions, Trauma, Neg Traits
+    # RIGHT COLUMN
     # -----------------------------------------------------
     with col_right:
 
         # Stress Reaction – Others
         with st.container(border=True):
-            st.markdown("### Stress Reaction – Others")
             if st.button("Roll Stress (Others)", key="btn_stress_others"):
-                st.success(roll_table("stress_others", group=None, log=True))
+                st.success(roll_table("stress_others", log=True))
 
         # Stress Reaction – Alone
         with st.container(border=True):
-            st.markdown("### Stress Reaction – Alone")
             if st.button("Roll Stress (Alone)", key="btn_stress_alone"):
-                st.success(roll_table("stress_alone", group=None, log=True))
+                st.success(roll_table("stress_alone", log=True))
 
         # Obsessions
         with st.container(border=True):
-            st.markdown("### Obsessions")
             if st.button("Roll Obsessions", key="btn_obsessions"):
-                st.success(roll_table("obsessions", group=None, log=True))
+                st.success(roll_table("obsessions", log=True))
 
         # Trauma
         with st.container(border=True):
-            st.markdown("### Trauma")
             if st.button("Roll Trauma", key="btn_trauma"):
-                st.success(roll_table("trauma", group=None, log=True))
+                st.success(roll_table("trauma", log=True))
 
         # Negative Traits
         with st.container(border=True):
-            st.markdown("### Negative Traits")
             if st.button("Roll Negative Trait", key="btn_negative_trait"):
-                st.success(roll_table("negative_trait", group=None, log=True))
+                st.success(roll_table("negative_trait", log=True))
 
 # ---------- TAB: MISSION ----------
 with tabs[2]:
