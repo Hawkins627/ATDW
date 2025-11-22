@@ -826,8 +826,13 @@ with tabs[3]:
             verb = roll_table("situation_verb", log=False)
             noun = roll_table("situation_noun", option=situation_choice, log=False)
 
-            # Format: (Category) Verb Noun
-            combined = f"({situation_choice}) {verb} {noun}"
+            # --- FIX: remove category prefix from noun result ---
+            if "–" in noun:
+                left, right = noun.split("–", 1)
+                if left.strip().lower() == situation_choice.lower():
+                    noun = right.strip()
+
+            combined = f"({situation_choice}) {verb} – {noun}"
 
             add_to_log(f"Situation: {combined}")
             st.success(combined)
@@ -866,12 +871,16 @@ with tabs[3]:
                 verb = roll_table("situation_verb", log=False)
                 noun = roll_table("situation_noun", option=situation_choice, log=False)
 
-                combined = f"({situation_choice}) {verb} {noun}"
+                # --- FIX: strip category prefix ---
+                if "–" in noun:
+                    left, right = noun.split("–", 1)
+                    if left.strip().lower() == situation_choice.lower():
+                        noun = right.strip()
 
-                results.append(f"- **Situation:** {combined}")
-                add_to_log(f"Situation: {combined}")
- 
-            # Final Output
+                results.append(f"- **Situation:** ({situation_choice}) {verb} – {noun}")
+                add_to_log(f"Situation: ({situation_choice}) {verb} – {noun}")
+
+             # Final Output
             final = "\n".join(results)
             st.success(final)
 
