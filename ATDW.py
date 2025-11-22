@@ -638,8 +638,7 @@ with tabs[2]:
             def add(label, tbl):
                 txt = roll_table(tbl, group=MISSION_GROUP, log=False)
                 sections.append(f"- **{label}:** {txt}")
-                add_to_persistent(MISSION_GROUP, f"{label}: {txt}")
-
+                
             add("Arrival", "arrival_table")
             add("Random Site Name", "random_site_name")
             add("Original Purpose", "site_original_purpose")
