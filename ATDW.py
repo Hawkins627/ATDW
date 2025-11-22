@@ -468,31 +468,28 @@ with tabs[1]:
 
 # ---------- TAB: MISSION ----------
 with tabs[2]:
-    st.header("Mission Generator")
 
+    st.header("Mission Generator")
     ensure_state()
     import random
 
-    # Persistent group for Mission/Site results
+    # Persistent pool group for this section
     MISSION_GROUP = 1
 
+    # =====================================================================
+    # SHIP GENERATOR (Left Column)
+    # =====================================================================
     col_left, col_right = st.columns(2)
 
-    # =====================================================================
-    # SHIP GENERATOR
-    # =====================================================================
     with col_left.container(border=True):
         st.markdown("## 🚀 Ship Generator")
 
         if st.button("Roll Ship Name", key="btn_ship_name"):
-            res = roll_table("spaceship_name", group=MISSION_GROUP, log=True)
-            st.success(res)
+            st.success(roll_table("spaceship_name", group=MISSION_GROUP, log=True))
 
         if st.button("Roll Ship Adjective", key="btn_ship_adj"):
-            res = roll_table("spaceship_adjective", group=MISSION_GROUP, log=True)
-            st.success(res)
+            st.success(roll_table("spaceship_adjective", group=MISSION_GROUP, log=True))
 
-        # BIG combined button
         st.markdown("### **Full Ship (Adjective + Name)**")
         if st.button("🎯 ROLL FULL SHIP", key="btn_ship_full"):
             adj = roll_table("spaceship_adjective", log=False)
@@ -503,30 +500,26 @@ with tabs[2]:
             st.success(combined)
 
     # =====================================================================
-    # TRAVEL EVENTS
+    # TRAVEL EVENTS (Right Column)
     # =====================================================================
     with col_right.container(border=True):
         st.markdown("## ✨ Travel Events")
 
-        # Base type
         if st.button("Roll Travel Event Type", key="btn_travel_type"):
-            res = roll_table("random_travel_event_type", log=True)
-            st.success(res)
+            st.success(roll_table("random_travel_event_type", log=True))
 
-        # Subtables
         if st.button("Roll Social Travel Event", key="btn_social_travel"):
             st.success(roll_table("social_travel_event", log=True))
 
-        if st.button("Roll Ship Malfunction Travel Event", key="btn_ship_malf_travel"):
+        if st.button("Roll Ship Malfunction", key="btn_ship_malf_travel"):
             st.success(roll_table("ship_malfunction_travel_event", log=True))
 
-        if st.button("Roll Space Anomaly Travel Event", key="btn_space_anom_travel"):
+        if st.button("Roll Space Anomaly Event", key="btn_space_anom_travel"):
             st.success(roll_table("space_anomaly_travel_event", log=True))
 
-        if st.button("Roll Mental/Physical Travel Event", key="btn_mental_phys_travel"):
+        if st.button("Roll Mental/Physical Event", key="btn_mental_phys_travel"):
             st.success(roll_table("mental_physical_travel_event", log=True))
 
-        # BIG combined button
         st.markdown("### **Full Travel Event (Type + Detail)**")
         if st.button("🌌 ROLL FULL TRAVEL EVENT", key="btn_travel_full"):
             event_type = roll_table("random_travel_event_type", log=False)
@@ -541,59 +534,58 @@ with tabs[2]:
             add_to_log("Travel Event: " + combined)
             st.success(combined)
 
-# =====================================================================
-# MISJUMP GENERATOR
-# =====================================================================
-with col_left.container(border=True):
-    st.markdown("## 💥 Misjump Generator")
+    # =====================================================================
+    # MISJUMP GENERATOR (Left Column Below Ship)
+    # =====================================================================
+    with col_left.container(border=True):
+        st.markdown("## 💥 Misjump Generator")
 
-    if st.button("Roll Primary Misjump", key="btn_misjump_primary"):
-        st.success(roll_table("misjump", log=True))
+        if st.button("Roll Primary Misjump", key="btn_misjump_primary"):
+            st.success(roll_table("misjump", log=True))
 
-    if st.button("Roll Time Dilation Misjump", key="btn_time_dilation_misjump"):
-        st.success(roll_table("time_dilation_misjump", log=True))
+        if st.button("Roll Time Dilation", key="btn_time_dilation_misjump"):
+            st.success(roll_table("time_dilation_misjump", log=True))
 
-    if st.button("Roll Transit Dilation Misjump", key="btn_transit_dilation_misjump"):
-        st.success(roll_table("transit_dilation_misjump", log=True))
+        if st.button("Roll Transit Dilation", key="btn_transit_dilation_misjump"):
+            st.success(roll_table("transit_dilation_misjump", log=True))
 
-    if st.button("Roll Secondary Misjump Effects", key="btn_secondary_misjump"):
-        st.success(roll_table("secondary_misjump_effects", log=True))
+        if st.button("Roll Secondary Effects", key="btn_secondary_misjump"):
+            st.success(roll_table("secondary_misjump_effects", log=True))
 
-    # BIG combined button
-    st.markdown("### **Full Misjump (All Effects)**")
-    if st.button("🔥 ROLL FULL MISJUMP", key="btn_misjump_full"):
-        primary = roll_table("misjump", log=False)
-        dilation = roll_table(
-            random.choice(["time_dilation_misjump", "transit_dilation_misjump"]),
-            log=False
-        )
-        secondary = roll_table("secondary_misjump_effects", log=False)
+        st.markdown("### **Full Misjump (All Effects)**")
+        if st.button("🔥 ROLL FULL MISJUMP", key="btn_misjump_full"):
+            primary = roll_table("misjump", log=False)
+            dilation = roll_table(random.choice([
+                "time_dilation_misjump",
+                "transit_dilation_misjump"
+            ]), log=False)
+            secondary = roll_table("secondary_misjump_effects", log=False)
 
-        combined = (
-            f"**Primary:** {primary}\n"
-            f"**Dilation:** {dilation}\n"
-            f"**Secondary:** {secondary}"
-        )
+            combined = (
+                f"**Primary:** {primary}\n"
+                f"**Dilation:** {dilation}\n"
+                f"**Secondary:** {secondary}"
+            )
 
-        add_to_log("Misjump:\n" + combined)
-        st.success(combined)
-
-# =====================================================================
-# ARRIVAL TABLE — MOVED HERE OUTSIDE SITE GENERATOR
-# =====================================================================
-with col_left.container(border=True):
-    st.markdown("## 🚪 Arrival Table")
-    if st.button("Roll Arrival Table", key="btn_arrival_table_moved"):
-        st.success(roll_table("arrival_table", group=MISSION_GROUP, log=True))
-
+            add_to_log("Misjump:\n" + combined)
+            st.success(combined)
 
     # =====================================================================
-    # SITE GENERATOR
+    # ARRIVAL TABLE — Standalone (Left Column)
     # =====================================================================
+    with col_left.container(border=True):
+        st.markdown("## 🚪 Arrival Table")
+
+        if st.button("Roll Arrival Table", key="btn_arrival_table_moved"):
+            st.success(roll_table("arrival_table", group=MISSION_GROUP, log=True))
+
+    # =====================================================================
+    # SITE GENERATOR — FULL WIDTH SECTION
+    # =====================================================================
+    st.markdown("## 🏛️ Site Generator")
+
     with st.container(border=True):
-        st.markdown("## 🏛️ Site Generator")
-    
-        # Checkbox for optional planetary descriptor
+
         include_planetary = st.checkbox(
             "Include Planetary Descriptor in Full Site",
             key="include_planet_desc",
@@ -601,25 +593,22 @@ with col_left.container(border=True):
         )
 
         site_col1, site_col2 = st.columns(2)
-    
-        # ---------------- LEFT COLUMN ----------------
+
+        # ---------------- LEFT SIDE
         with site_col1:
-            if st.button("Roll Arrival Table", key="btn_arrival_table"):
-                st.success(roll_table("arrival_table", group=MISSION_GROUP, log=True))
-    
             if st.button("Roll Random Site Name", key="btn_random_site_name"):
                 st.success(roll_table("random_site_name", group=MISSION_GROUP, log=True))
-    
+
             if st.button("Roll Site Original Purpose", key="btn_site_original_purpose"):
                 st.success(roll_table("site_original_purpose", group=MISSION_GROUP, log=True))
 
             if st.button("Roll Site Story", key="btn_site_story"):
                 st.success(roll_table("site_story", group=MISSION_GROUP, log=True))
-    
+
             if st.button("Roll Overall Site Descriptor", key="btn_overall_site_desc"):
                 st.success(roll_table("overall_site_descriptor", group=MISSION_GROUP, log=True))
-    
-        # ---------------- RIGHT COLUMN ----------------
+
+        # ---------------- RIGHT SIDE
         with site_col2:
             if st.button("Roll Planetary Site Descriptor", key="btn_planetary_site_desc"):
                 st.success(roll_table("planetary_site_descriptor", group=MISSION_GROUP, log=True))
@@ -636,7 +625,7 @@ with col_left.container(border=True):
             if st.button("Roll Site Size", key="btn_site_size"):
                 st.success(roll_table("site_size", group=MISSION_GROUP, log=True))
 
-        # ---------------- FULL SITE ROLL ----------------
+        # ---------------- FULL SITE ROLL
         st.markdown("### **Full Site (ALL 10 Tables)**")
         if st.button("🏗️ ROLL FULL SITE", key="btn_site_full"):
 
@@ -646,7 +635,7 @@ with col_left.container(border=True):
                 txt = roll_table(tbl, group=MISSION_GROUP, log=False)
                 sections.append(f"- **{label}:** {txt}")
                 add_to_persistent(MISSION_GROUP, f"{label}: {txt}")
-                
+
             add("Arrival", "arrival_table")
             add("Random Site Name", "random_site_name")
             add("Original Purpose", "site_original_purpose")
@@ -662,13 +651,13 @@ with col_left.container(border=True):
 
             final_output = "\n".join(sections)
             add_to_log("Full Site:\n" + final_output)
-
             st.success(final_output)
-    
+
     # =====================================================================
-    # ACTION + THEME
+    # ACTION + THEME (Right Column)
     # =====================================================================
     with col_right.container(border=True):
+
         st.markdown("## 🎭 Action & Theme")
 
         if st.button("Roll Action", key="btn_action_table"):
@@ -677,7 +666,6 @@ with col_left.container(border=True):
         if st.button("Roll Theme", key="btn_theme_table"):
             st.success(roll_table("theme"))
 
-        # BIG combined button
         st.markdown("### **Action + Theme Pairing**")
         if st.button("🎬 ROLL ACTION + THEME", key="btn_action_theme_full"):
             a = roll_table("action", log=False)
