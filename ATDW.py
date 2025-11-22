@@ -90,6 +90,9 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
             df = df[df["difficulty"] == option]
         elif "creature_type" in df.columns:
             df = df[df["creature_type"] == option]
+        # ⭐ NEW: Situation Noun filtering based on category
+        elif "category" in df.columns:
+            df = df[df["category"].str.lower() == option.lower()]
 
     if df.empty:
         result = f"[ERROR] No rows found for '{table_name}' with option '{option}'."
@@ -98,7 +101,7 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         text = format_row_for_display(table_name, row)
         result = text
 
-    # ADD THIS BACK
+    # Persistent storage
     if group is not None:
         add_to_persistent(group, result)
 
@@ -820,14 +823,14 @@ with tabs[3]:
 
         # -------------------- FULL SITUATION BUTTON --------------------
         if st.button("Roll Full Situation", key="btn_situation_full_occ"):
-
             verb = roll_table("situation_verb", log=False)
             noun = roll_table("situation_noun", option=situation_choice, log=False)
 
-            final = f"({situation_choice}) {verb} {noun}"
+            # Format: (Category) Verb Noun
+            combined = f"({situation_choice}) {verb} {noun}"
 
-            add_to_log(f"Situation: {final}")
-            st.success(final)
+            add_to_log(f"Situation: {combined}")
+            st.success(combined)
 
         # -------------------- FULL OCCURRENCE SET --------------------
         st.markdown("### Full Occurrence Set")
@@ -863,11 +866,11 @@ with tabs[3]:
                 verb = roll_table("situation_verb", log=False)
                 noun = roll_table("situation_noun", option=situation_choice, log=False)
 
-                formatted = f"({situation_choice}) {verb} {noun}"
+                combined = f"({situation_choice}) {verb} {noun}"
 
-                results.append(f"- **Situation:** {formatted}")
-                add_to_log(f"Situation: {formatted}")
-    
+                results.append(f"- **Situation:** {combined}")
+                add_to_log(f"Situation: {combined}")
+ 
             # Final Output
             final = "\n".join(results)
             st.success(final)
