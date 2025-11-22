@@ -776,16 +776,41 @@ with tabs[3]:
             st.success(final_output)
 
 
-    # ----- Automatic Security + Teleport (Combined = 6) -----
+    # ---------- SECURITY MEASURE & TELEPORT ----------
     with col_right.container(border=True):
         st.markdown("### Security Measure & Teleport")
 
-        if st.button("Roll Security + Teleport", key="btn_security_full"):
-            sec = roll_table("automatic_security_measure", log=False)
-            tel = roll_table("teleport", log=False)
-            combined = f"Security Measure: {sec}\nTeleport Effect: {tel}"
-            add_to_log("Security Event:\n" + combined)
-            st.success(combined)
+        # Individual buttons (now inside this box)
+        if st.button("Roll Automatic Security Measure", key="btn_security"):
+            sec = roll_table("automatic_security_measure", log=True)
+            st.success(sec)
+
+        if st.button("Roll Teleport Effect", key="btn_teleport"):
+            tele = roll_table("teleport", log=True)
+            st.success(tele)
+
+    # -------------- Combined Roll --------------
+    if st.button("Roll Security + Teleport", key="btn_security_full"):
+
+        results = []
+
+        # Step 1 — roll the security measure
+        sec = roll_table("automatic_security_measure", log=False)
+        results.append(f"- **Security Measure:** {sec}")
+        add_to_log(f"Security Measure: {sec}")
+
+        # Normalize lookup form
+        sec_lower = sec.lower()
+
+        # Step 2 — ONLY roll teleport if applicable
+        if "teleport" in sec_lower:
+            tele = roll_table("teleport", log=False)
+            results.append(f"- **Teleport Result:** {tele}")
+            add_to_log(f"Teleport Result: {tele}")
+
+        final = "\n".join(results)
+        st.success(final)
+
 
     # ---------- OCCURRENCE & SURROUNDINGS ----------
     with col_right.container(border=True):
