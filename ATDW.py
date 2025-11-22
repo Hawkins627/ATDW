@@ -698,10 +698,6 @@ with tabs[3]:
         if st.button("Roll Hazard Manifestation", key="btn_hazard_manifestation"):
             st.success(roll_table("hazard_manifestation", log=True))
 
-    # =====================================
-    # ========== RIGHT COLUMN =============
-    # =====================================
-
     # Door Type  (log=True)
     with col_right.container(border=True):
         if st.button("Roll Door Type", key="btn_door_type"):
@@ -711,6 +707,10 @@ with tabs[3]:
     with col_right.container(border=True):
         if st.button("Roll Behind Door", key="btn_behind_door"):
             st.success(roll_table("behind_door", log=True))
+
+    # =====================================
+    # ========== RIGHT COLUMN =============
+    # =====================================
 
     # Fixed Event  (log=True)
     with col_right.container(border=True):
