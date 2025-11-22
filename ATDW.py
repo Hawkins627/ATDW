@@ -628,7 +628,7 @@ with tabs[2]:
             sections = []
 
             def add(label, tbl):
-                txt = roll_table(tbl, group=MISSION_GROUP, log=False)
+                txt = roll_table(tbl, log=False)
                 sections.append(f"- **{label}:** {txt}")
                 add_to_persistent(MISSION_GROUP, f"{label}: {txt}")
 
