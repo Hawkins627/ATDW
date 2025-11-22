@@ -788,7 +788,7 @@ with tabs[3]:
     with col_right.container(border=True):
         st.markdown("### Occurrence & Surrounding Details")
 
-        # ---- Situation Category Input (Used when needed) ----
+        # ---- Situation Category Input ----
         situation_categories = [
             "Aesthetic", "Communications", "Data Storage", "Entertainment",
             "Government", "Industrial", "Medical Research", "Military",
@@ -818,11 +818,19 @@ with tabs[3]:
         if st.button("Roll Event", key="btn_event"):
             st.success(roll_table("event", log=True))
 
+        # -------------------- 🔥 NEW: Full Situation Button --------------------
+        if st.button("Roll Full Situation", key="btn_situation_full_occ"):
+            verb = roll_table("situation_verb", log=False)
+            noun = roll_table("situation_noun", option=situation_choice, log=False)
+            combined = f"Verb: {verb}\nNoun ({situation_choice}): {noun}"
+            add_to_log("Situation:\n" + combined)
+            st.success(combined)
+
         # ---------- FULL OCCURRENCE SET ----------
         st.markdown("### Full Occurrence Set")
-
+    
         if st.button("Roll Full Occurrence Set", key="btn_occ_full"):
-
+    
             results = []
 
             # Step 1 — Roll Occurrence
@@ -830,9 +838,9 @@ with tabs[3]:
             results.append(f"- **Occurrence:** {occ}")
             add_to_log(f"Occurrence: {occ}")
 
-            # Step 2 — Roll Subtable Based on Occurrence
             occ_lower = occ.lower()
 
+            # Step 2 — Roll Subtable Depending on Result
             if occ_lower == "danger":
                 sub = roll_table("danger", log=False)
                 results.append(f"- **Danger:** {sub}")
@@ -849,7 +857,6 @@ with tabs[3]:
                 add_to_log(f"Event: {sub}")
 
             elif occ_lower == "situation":
-                # Roll verb + noun automatically!
                 verb = roll_table("situation_verb", log=False)
                 noun = roll_table("situation_noun", option=situation_choice, log=False)
 
@@ -859,26 +866,9 @@ with tabs[3]:
                 add_to_log(f"Situation Verb: {verb}")
                 add_to_log(f"Situation Noun ({situation_choice}): {noun}")
 
-            # Show final combined result
+            # Show the final combined result
             final = "\n".join(results)
             st.success(final)
-
-# ---------- SITUATION (MANUAL ROLLS) ----------
-with col_right.container(border=True):
-    st.markdown("### Situation (Verb & Noun)")
-
-    if st.button("Roll Situation Verb", key="btn_situation_verb"):
-        st.success(roll_table("situation_verb", log=True))
-
-    if st.button("Roll Situation Noun", key="btn_situation_noun"):
-        st.success(roll_table("situation_noun", option=situation_choice, log=True))
-
-    if st.button("Roll Full Situation", key="btn_situation_full"):
-        verb = roll_table("situation_verb", log=False)
-        noun = roll_table("situation_noun", option=situation_choice, log=False)
-        combined = f"Verb: {verb}\nNoun ({situation_choice}): {noun}"
-        add_to_log("Situation:\n" + combined)
-        st.success(combined)
 
 # ---------- TAB: PLANET ----------
 with tabs[4]:
