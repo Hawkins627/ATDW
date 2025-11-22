@@ -729,46 +729,46 @@ with tabs[8]:
             text = entry["text"]
             note = entry.get("note", "")
 
-            # Wider columns: left = icon button, right = full text
+            # ROW: icon button + entry text
             row_left, row_right = st.columns([1, 12])
 
-            # ---------- LEFT COLUMN: Notepad icon button ----------
+            # ---------- LEFT COLUMN: Notepad icon ----------
             with row_left:
                 if st.button("📝", key=f"note_icon_{idx}", help="Add/Edit Note"):
                     st.session_state["active_note"] = idx
 
-            # ---------- RIGHT COLUMN ----------
+            # ---------- RIGHT COLUMN: Log text with inline note ----------
             if note:
                 row_right.markdown(f"{text}  \n📝 *{note}*")
             else:
                 row_right.markdown(text)
 
+            # ---------- INLINE EDITOR BELOW THIS ENTRY ----------
+            if st.session_state.get("active_note") == idx:
+                st.markdown("### ✏️ Edit Note")
+
+                new_note = st.text_area(
+                    "Note text:",
+                    value=note,
+                    height=200,
+                    key=f"note_area_{idx}"
+                )
+
+                c1, c2 = st.columns(2)
+
+                with c1:
+                    if st.button("💾 Save Note", key=f"save_note_{idx}"):
+                        st.session_state["log"][idx]["note"] = new_note
+                        del st.session_state["active_note"]
+                        st.success("Saved!")
+                        st.rerun()
+
+                with c2:
+                    if st.button("❌ Cancel", key=f"cancel_note_{idx}"):
+                        del st.session_state["active_note"]
+                        st.rerun()
+
             st.markdown("---")
-
-        # ---------- MODAL NOTE EDITOR ----------
-        if "active_note" in st.session_state:
-            edit_idx = st.session_state["active_note"]
-
-            st.markdown("## ✏️ Edit Note")
-            new_note = st.text_area(
-                "Note text:",
-                value=st.session_state["log"][edit_idx]["note"],
-                height=200,
-                key=f"note_area_{edit_idx}"
-            )
-
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("💾 Save Note", key=f"save_note_{edit_idx}"):
-                    st.session_state["log"][edit_idx]["note"] = new_note
-                    del st.session_state["active_note"]
-                    st.success("Saved!")
-                    st.rerun()
-
-            with c2:
-                if st.button("❌ Cancel", key=f"cancel_note_{edit_idx}"):
-                    del st.session_state["active_note"]
-                    st.rerun()
 
     # Clear log button
     if st.button("Clear Mission Log"):
