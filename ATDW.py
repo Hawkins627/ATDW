@@ -585,7 +585,7 @@ with tabs[2]:
         include_planetary = st.checkbox(
             "Include Planetary Descriptor in Full Site",
             key="include_planet_desc",
-            value=True
+            value=False
         )
 
         site_col1, site_col2 = st.columns(2)
