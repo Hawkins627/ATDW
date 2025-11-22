@@ -800,9 +800,6 @@ with tabs[3]:
             final = "\n".join(results)
             st.success(final)
 
-    # -------------- Combined Roll --------------
-    if st.button("Roll Security + Teleport", key="btn_security_full"):
-
         results = []
 
         # Step 1 — roll the security measure
