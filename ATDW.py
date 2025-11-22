@@ -729,30 +729,15 @@ with tabs[8]:
             text = entry["text"]
             note = entry.get("note", "")
 
-            # Two-column row: Left = Icon, Right = Entry text
-            row_left, row_right = st.columns([1, 10])
+            # Wider columns: left = icon button, right = full text
+            row_left, row_right = st.columns([1, 12])
 
-            # --- LEFT COLUMN: Notepad Icon Expander ---
+            # ---------- LEFT COLUMN: Notepad icon button ----------
             with row_left:
-                # We use a small HTML icon as the expander label
-                note_icon_html = """
-                    <span style="font-size:22px; cursor:pointer;">
-                        🗒️
-                    </span>
-                """
-                with st.expander(note_icon_html, expanded=False):
-                    note_key = f"log_note_{idx}"
-                    new_note = st.text_area(
-                        "Edit note:",
-                        value=note,
-                        key=note_key
-                    )
-                    if st.button("Save", key=f"save_note_{idx}"):
-                        st.session_state["log"][idx]["note"] = new_note
-                        st.success("Saved!")
-                        st.rerun()
+                if st.button("📝", key=f"note_icon_{idx}", help="Add/Edit Note"):
+                    st.session_state["active_note"] = idx
 
-            # --- RIGHT COLUMN: Log entry with inline note ---
+            # ---------- RIGHT COLUMN ----------
             if note:
                 row_right.markdown(f"{text}  \n📝 *{note}*")
             else:
@@ -760,14 +745,30 @@ with tabs[8]:
 
             st.markdown("---")
 
+        # ---------- MODAL NOTE EDITOR ----------
+        if "active_note" in st.session_state:
+            edit_idx = st.session_state["active_note"]
 
-            # --- RIGHT COLUMN: Log entry with inline note ---
-            if note:
-                row_right.markdown(f"{text}  \n📝 *{note}*")
-            else:
-                row_right.markdown(text)
+            st.markdown("## ✏️ Edit Note")
+            new_note = st.text_area(
+                "Note text:",
+                value=st.session_state["log"][edit_idx]["note"],
+                height=200,
+                key=f"note_area_{edit_idx}"
+            )
 
-            st.markdown("---")
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("💾 Save Note", key=f"save_note_{edit_idx}"):
+                    st.session_state["log"][edit_idx]["note"] = new_note
+                    del st.session_state["active_note"]
+                    st.success("Saved!")
+                    st.rerun()
+
+            with c2:
+                if st.button("❌ Cancel", key=f"cancel_note_{edit_idx}"):
+                    del st.session_state["active_note"]
+                    st.rerun()
 
     # Clear log button
     if st.button("Clear Mission Log"):
@@ -803,5 +804,3 @@ else:
         if st.sidebar.button(f"Clear Persistent {group_id}"):
             clear_persistent(group_id)
             st.rerun()
-
-
