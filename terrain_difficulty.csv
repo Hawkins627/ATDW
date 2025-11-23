@@ -1,27 +1,104 @@
-previous_hex,title,description,biome
-Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it's steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1🕒 to move across it, and all characters must pass a DEX check or suffer D20 damage.",""
-Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1🕒.",""
-Hazardous,Biome-Dependent,"Biome-dependent terrain effect based on current biome.",""
-Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1🕒.",""
-Convoluted,Hazardous,"This hex’s terrain is not easy to deal with. Whether it's steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1🕒 to move across it, and all characters must pass a DEX check or suffer D20 damage.",""
-Convoluted,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here.",""
-Convoluted,Biome-Dependent,"Biome-dependent terrain effect based on current biome.",""
-Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically.",""
-Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically.",""
-Inhabited,Hazardous,"This hex’s terrain is not easy to deal with. Whether it's steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1🕒 to move across it, and all characters must pass a DEX check or suffer D20 damage.",""
-Inhabited,Biome-Dependent,"Biome-dependent terrain effect based on current biome.",""
-Inhabited,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1🕒.",""
-Biome-Dependent,Biome-Dependent,"Impact-craters cover this whole hex, making it difficult to navigate (+1🕒).","Barren"
-Biome-Dependent,Biome-Dependent,"A river of molten metal, liquid methane, or similar hazard blocks the way. Crew must figure a way across or go around it (+3🕒).","Exotic"
-Biome-Dependent,Biome-Dependent,"A dangerous glacier, full of crevasses and sleek blocks of ice, slows down the crew. 1 in 10 chance a random character falls down a crevasse, suffering 1 Wound and losing 1 piece of gear (+1🕒).","Frozen"
-Biome-Dependent,Biome-Dependent,"A radiation storm takes the crew by surprise. All characters suffer 20 rad unless shelter is found.","Irradiated"
-Biome-Dependent,Biome-Dependent,"Thick overgrowth makes progress slow and tiresome. Each character spends 1 extra Oxygen Pellet and the Time Track advances by +1🕒.","Lush"
-Biome-Dependent,Biome-Dependent,"A very active volcano blocks the way. The only solution is to go around it (+3🕒).","Scorched"
-Biome-Dependent,Biome-Dependent,"Staying still in this hex causes gear to start malfunctioning due to the corrosive nature of the air. The crew must run across this hex, spending 1 extra Oxygen Pellet each.","Toxic"
-Biome-Dependent,Biome-Dependent,"Although the terrain is uneven and somewhat treacherous, the party can make good time crossing it. No effect.","Urban Ruins"
-Biome-Dependent,Biome-Dependent,"This whole hex is a lava lake. The crew is forced to go around it (+3🕒).","Volcanic"
-Biome-Dependent,Biome-Dependent,"This area is dominated by water. Ships usually must stop at surface level; underwater travel is slow. Time Track advances by +1🕒.","Water"
-EasyGoing,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here.",""
-EasyGoing,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here.",""
-EasyGoing,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1🕒.",""
-EasyGoing,Hazardous,"This hex’s terrain is not easy to deal with. Whether it's steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1🕒 to move across it, and all characters must pass a DEX check or suffer D20 damage.",""
+previous_hex,result,description
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Hazardous,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+
+Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Hazardous,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+
+Hazardous,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Hazardous,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+
+Hazardous,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+
+Hazardous,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+
+
+Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Convoluted,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+
+Convoluted,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Convoluted,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Convoluted,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Convoluted,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+
+Convoluted,Easier Traveling,"No obstacles impede travel, but watch for anomalies."
+
+Convoluted,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Convoluted,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+
+Convoluted,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+
+Convoluted,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+
+
+Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Inhabited,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+
+Inhabited,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Inhabited,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Inhabited,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+
+Inhabited,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Inhabited,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+
+Inhabited,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Inhabited,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+
+Inhabited,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+
+
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Biome-Dependent,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+
+Biome-Dependent,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Biome-Dependent,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all charactersmust pass a DEX check or suffer D20 damage."
+
+Biome-Dependent,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+
+Biome-Dependent,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+
+Biome-Dependent,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+
+
+Easy Going,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+Easy Going,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+Easy Going,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+Easy Going,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+Easy Going,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
+
+Easy Going,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Easy Going,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+
+Easy Going,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+
+Easy Going,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+
+Easy Going,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
