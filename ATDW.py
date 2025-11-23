@@ -985,30 +985,28 @@ with tabs[4]:
     with st.container(border=True):
 
         st.subheader("Planet Features")
-
-        # Two-column button layout
         colA, colB = st.columns(2)
 
         # ---- LEFT COLUMN ----
         with colA:
 
             if st.button("Planet Designation", key="btn_planet_designation"):
-                result = roll_table("planet_designation", group=3, log=False)
+                result = roll_table("planet_designation", log=False)
                 add_to_persistent(3, f"Designation: {result}")
                 st.success(result)
 
             if st.button("Planet Diameter", key="btn_planet_diameter"):
-                result = roll_table("planet_diameter", group=3, log=False)
+                result = roll_table("planet_diameter", log=False)
                 add_to_persistent(3, f"Diameter: {result}")
                 st.success(result)
 
             if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
-                result = roll_table("planet_atmosphere", group=3, log=False)
+                result = roll_table("planet_atmosphere", log=False)
                 add_to_persistent(3, f"Atmosphere: {result}")
                 st.success(result)
 
             if st.button("Planet Climate", key="btn_planet_climate"):
-                result = roll_table("planet_climate", group=3, log=False)
+                result = roll_table("planet_climate", log=False)
                 add_to_persistent(3, f"Climate: {result}")
                 st.success(result)
 
@@ -1016,17 +1014,17 @@ with tabs[4]:
         with colB:
 
             if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
-                result = roll_table("planet_biome_diversity", group=3, log=False)
+                result = roll_table("planet_biome_diversity", log=False)
                 add_to_persistent(3, f"Biome Diversity: {result}")
                 st.success(result)
 
             if st.button("What's in the Sky?", key="btn_whats_in_sky"):
-                result = roll_table("whats_in_sky", group=3, log=False)
+                result = roll_table("whats_in_sky", log=False)
                 add_to_persistent(3, f"Sky: {result}")
                 st.success(result)
 
             if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
-                result = roll_table("day_night_cycle", group=3, log=False)
+                result = roll_table("day_night_cycle", log=False)
                 add_to_persistent(3, f"Day/Night Cycle: {result}")
                 st.success(result)
 
@@ -1039,13 +1037,13 @@ with tabs[4]:
 
         if st.button("ROLL FULL PLANET", key="btn_full_planet"):
 
-            designation = roll_table("planet_designation", group=3, log=False)
-            diameter = roll_table("planet_diameter", group=3, log=False)
-            atmosphere = roll_table("planet_atmosphere", group=3, log=False)
-            climate = roll_table("planet_climate", group=3, log=False)
-            diversity = roll_table("planet_biome_diversity", group=3, log=False)
-            sky = roll_table("whats_in_sky", group=3, log=False)
-            cycle = roll_table("day_night_cycle", group=3, log=False)
+            designation = roll_table("planet_designation", log=False)
+            diameter = roll_table("planet_diameter", log=False)
+            atmosphere = roll_table("planet_atmosphere", log=False)
+            climate = roll_table("planet_climate", log=False)
+            diversity = roll_table("planet_biome_diversity", log=False)
+            sky = roll_table("whats_in_sky", log=False)
+            cycle = roll_table("day_night_cycle", log=False)
 
             # Store everything with labels
             add_to_persistent(3, f"Designation: {designation}")
@@ -1068,7 +1066,7 @@ with tabs[4]:
 """
             st.success(display)
 
-            # Mission Log (formatted like Site Generator)
+            # Mission Log
             log_entry = f"""
 ### Planet Summary
 - **Designation:** {designation}
