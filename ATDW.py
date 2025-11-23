@@ -90,30 +90,50 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     try:
         df = load_table_df(table_name)
     except FileNotFoundError:
-        result = f"[ERROR] CSV for '{table_name}' not found."
-        return result
+        return f"[ERROR] CSV for '{table_name}' not found."
 
-    # Apply option filters
+    # =====================================================
+    # Apply option filters – in correct priority order
+    # =====================================================
     if option is not None:
-        if "difficulty" in df.columns:
-            df = df[df["difficulty"] == option]
+
+        # 1. Terrain difficulty tables with previous_hex
+        if "previous_hex" in df.columns:
+            df = df[df["previous_hex"].str.lower() == option.lower()]
+
+        # 2. Creature type filters
         elif "creature_type" in df.columns:
-            df = df[df["creature_type"] == option]
-        # ⭐ NEW: Situation Noun filtering based on category
+            df = df[df["creature_type"].str.lower() == option.lower()]
+
+        # 3. Difficulty filters (used by hacking)
+        elif "difficulty" in df.columns:
+            df = df[df["difficulty"] == option]
+
+        # 4. Category-based filters (Situation Nouns, etc.)
         elif "category" in df.columns:
             df = df[df["category"].str.lower() == option.lower()]
 
+    # =====================================================
+    # Handle empty dataframe
+    # =====================================================
     if df.empty:
-        result = f"[ERROR] No rows found for '{table_name}' with option '{option}'."
-    else:
-        row = df.sample(1).iloc[0]
-        text = format_row_for_display(table_name, row)
-        result = text
+        return f"[ERROR] No rows found for '{table_name}' with option '{option}'."
 
+    # =====================================================
+    # Random row → formatted text
+    # =====================================================
+    row = df.sample(1).iloc[0]
+    result = format_row_for_display(table_name, row)
+
+    # =====================================================
     # Persistent storage
+    # =====================================================
     if group is not None:
         add_to_persistent(group, result)
 
+    # =====================================================
+    # Logging
+    # =====================================================
     if log:
         add_to_log(f"{table_name}: {result}")
 
