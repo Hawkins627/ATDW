@@ -1,0 +1,11 @@
+biome,result,description
+Barren,Barren,"Impact-craters cover this whole hex, making it difficult to navigate (+1⭕)."
+Exotic,Exotic,"A river of molten metal, liquid methane or similar hazard blocks the way. The crew must figure a way across or go around it, causing +3⭕."
+Frozen,Frozen,"A dangerous glacier, full of crevasses and sleek blocks of ice, slows down the crew. There’s a 1 in 10 chance that a random character falls down a crevasse, suffering 1 wound and losing 1 piece of gear (+1⭕)."
+Irradiated,Irradiated,"A radiation storm takes the crew by surprise. All characters suffer 200 rad unless shelter is found."
+Lush,Lush,"Thick overgrowth makes progress slow and tiresome. Each character spends 1 extra Oxygen Pellet and the Time Track advances by +1⭕."
+Scorched,Scorched,"A very active volcano blocks the way. The only solution is to go around it (+3⭕)."
+Toxic,Toxic,"Staying still in this hex causes gear to start malfunctioning due to the corrosive nature of the air. The crew is forced to run across this hex, each spending 1 extra Oxygen Pellet."
+Urban,Urban Ruins,"Although the terrain is uneven and somewhat treacherous, the party can make good time crossing it. No effect."
+Volcanic,Volcanic,"This whole hex is a lava lake. The crew is forced to go around it (+3⭕)."
+Water,Water,"The biome-dependent terrain effect for water has no special entry in the text; you may add one later if desired."
