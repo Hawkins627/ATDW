@@ -1,0 +1,13 @@
+title,description
+Barren,"These places are devoid of life. Their dusty and rocky surfaces have no water present, similar to the surface of Earth’s moon."
+Exotic,"Populated by uniquely uncommon features such as rivers of molten metal, strange rock formations and any combination of flora, fauna and weather conditions. Light is generally refracted by the planet’s atmosphere in a single, unusual color."
+Frozen,"This biome is completely covered in ice, making movement slow and difficult. Characters without a Thermic Layer suffer -3 to all actions. Traveling from one Hex to another causes +2⦿, instead of +1."
+Irradiated,"Irradiated biomes are created by artificial cataclysmic events or ancient powersource collapse. Natural vents may emit radioactive gases. Characters without radiation protection receive 20 rads/hex."
+Lush,"Vibrant flora and fauna of all types abound. Still an alien planet—abundance rarely means safe."
+Scorched,"Hard, rocky biomes characterized by extreme heat and little to no flora. Occasional molten metal flows. Characters without a Coolant Layer suffer -3 to all actions and spend (2x) Oxygen Pellets each hex."
+Toxic,"High concentration of biochemicals covers surfaces or falls from the sky. Characters without toxin protection suffer Poison III each time they enter a new hex."
+Urban Ruins,"Remnants of a long-gone civilization. Rubble and scavenging opportunities abound. Traveling between hexes causes +2⦿ instead of +1."
+Volcanic,"Active volcanoes, flowing lava lakes, and rivers. Characters without a Coolant Layer suffer -3 to actions and spend (2x) Oxygen Pellets. Traveling between hexes causes +2⦿."
+Water,"Large lakes or oceans with no shore in sight. Ships dive deep underwater. Traveling between hexes causes +2⦿ instead of +1."
+Same as Current Biome,"This result indicates no change. Use the same biome the players are currently in."
+Same as Current Biome,"This result indicates no change. Use the same biome the players are currently in."
