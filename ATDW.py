@@ -1083,80 +1083,106 @@ with tabs[4]:
 """
             add_to_log(log_entry)
 
-    # =============================
-    # PLANET DETAILS & ENCOUNTERS
-    # (All the CSV tables you listed)
-    # =============================
-    st.markdown("### Planet Details & Encounters")
+    # =============================================
+    # BIOME DETAILS SECTION
+    # =============================================
+    st.markdown("### Biome Details")
 
     with st.container(border=True):
 
-        details_col1, details_col2 = st.columns(2)
+        # Checkbox: is this the first landing?
+        first_landing = st.checkbox(
+            "This is the first biome hex of a NEW planet",
+            key="chk_first_landing"
+        )
 
-        # -------- LEFT: Biome / Activity / Threats --------
-        with details_col1:
+        # Two-column UI for buttons
+        bcol1, bcol2 = st.columns(2)
 
+        # ---------------------
+        # LEFT SIDE
+        # ---------------------
+        with bcol1:
+
+            # === Planet Biome ===
             if st.button("Planet Biome", key="btn_planet_biome"):
-                result = roll_table("planet_biome", group=None, log=True)
-                add_to_persistent(4, f"Biome: {result}")
-                st.success(result)
+                biome = roll_table("planet_biome", group=None, log=True)
 
+                # Handle SAME-AS-CURRENT-BIOME cases
+                if "same as current biome" in biome.lower():
+                    if first_landing:
+                        biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
+                    else:
+                        # Fetch the PREVIOUS biome from Persistent 4
+                        prev = None
+                        for item in reversed(st.session_state["persistent"].get(4, [])):
+                            if item.startswith("Biome:"):
+                                prev = item.replace("Biome:", "").strip()
+                                break
+                        biome = prev if prev else "Unknown biome"
+
+                add_to_persistent(4, f"Biome: {biome}")
+                st.success(biome)
+
+            # === Biome Activity ===
             if st.button("Biome Activity", key="btn_biome_activity"):
                 result = roll_table("biome_activity", group=None, log=True)
-                add_to_persistent(4, f"Biome Activity: {result}")
+                add_to_persistent(4, f"Activity: {result}")
                 st.success(result)
 
-            if st.button("Known Threats", key="btn_known_threats_planet"):
+            # === Known Threats ===
+            if st.button("Known Threats", key="btn_known_threats"):
                 result = roll_table("known_threats", group=None, log=True)
-                add_to_persistent(4, f"Known Threats: {result}")
+                add_to_persistent(4, f"Threats: {result}")
                 st.success(result)
 
-        # -------- RIGHT: Terrain / Exploration / Encounters --------
-        with details_col2:
+        # ---------------------
+        # RIGHT SIDE
+        # ---------------------
+        with bcol2:
 
-            # Terrain Difficulty (with dropdown)
-            terrain_options = [
-                "Hazardous",
-                "Convoluted",
-                "Inhabited",
-                "BiomeDependent",
-                "EasyGoing",
-            ]
+            # === FULL BIOME ROLL ===
+            if st.button("ROLL FULL BIOME", key="btn_full_biome"):
 
-            terrain_choice = st.selectbox(
-                "Terrain Difficulty Type:",
-                terrain_options,
-                key="terrain_choice_planet"
-            )
+                # 1) Biome
+                biome = roll_table("planet_biome", log=False)
+                if "same as current biome" in biome.lower():
+                    if first_landing:
+                        biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
+                    else:
+                        prev = None
+                        for item in reversed(st.session_state["persistent"].get(4, [])):
+                            if item.startswith("Biome:"):
+                                prev = item.replace("Biome:", "").strip()
+                                break
+                        biome = prev if prev else "Unknown biome"
 
-            if st.button("Terrain Difficulty", key="btn_terrain_difficulty"):
-                result = roll_table(
-                    "terrain_difficulty",
-                    option=terrain_choice,
-                    group=None,   # prevent unlabeled auto-persist
-                    log=True
-                )
-                add_to_persistent(4, f"Terrain ({terrain_choice}): {result}")
-                st.success(result)
+                add_to_persistent(4, f"Biome: {biome}")
 
-            # Planetside Exploration (its own D10 table)
-            if st.button("Planetside Exploration", key="btn_planetside_exploration"):
-                # no persistent group per your CSV; just log
-                st.success(roll_table("planetside_exploration", group=None, log=True))
+                # 2) Activity
+                activity = roll_table("biome_activity", log=False)
+                add_to_persistent(4, f"Activity: {activity}")
 
-            # Planetside Encounters
-            if st.button("Planetside Encounters", key="btn_planetside_encounters"):
-                st.success(roll_table("planetside_encounters", group=None, log=True))
+                # 3) Threats
+                threats = roll_table("known_threats", log=False)
+                add_to_persistent(4, f"Threats: {threats}")
+    
+                # Display summary block
+                biome_block = f"""
+    • **Biome:** {biome}  
+    • **Activity:** {activity}  
+    • **Known Threats:** {threats}  
+    """
+                st.success(biome_block)
 
-            # Close Encounters
-            if st.button("Close Encounters", key="btn_close_encounters"):
-                st.success(roll_table("close_encounters", group=None, log=True))
-
-            # Findings (goes into Persistent 4)
-            if st.button("Findings", key="btn_findings"):
-                result = roll_table("findings", group=None, log=True)
-                add_to_persistent(4, f"Findings: {result}")
-                st.success(result)
+                # Log it
+                log_text = f"""
+    ### Biome Summary
+    - **Biome:** {biome}
+    - **Activity:** {activity}
+    - **Known Threats:** {threats}
+    """
+                add_to_log(log_text)
 
     # =====================================
     # =========== BIOME SETS  =============
