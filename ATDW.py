@@ -985,28 +985,31 @@ with tabs[4]:
     with st.container(border=True):
 
         st.subheader("Planet Features")
+
+        # Two-column button layout
         colA, colB = st.columns(2)
 
         # ---- LEFT COLUMN ----
         with colA:
 
             if st.button("Planet Designation", key="btn_planet_designation"):
-                result = roll_table("planet_designation", log=False)
+                # no auto-group here; we label + persist manually
+                result = roll_table("planet_designation", group=None, log=True)
                 add_to_persistent(3, f"Designation: {result}")
                 st.success(result)
 
             if st.button("Planet Diameter", key="btn_planet_diameter"):
-                result = roll_table("planet_diameter", log=False)
+                result = roll_table("planet_diameter", group=None, log=True)
                 add_to_persistent(3, f"Diameter: {result}")
                 st.success(result)
 
             if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
-                result = roll_table("planet_atmosphere", log=False)
+                result = roll_table("planet_atmosphere", group=None, log=True)
                 add_to_persistent(3, f"Atmosphere: {result}")
                 st.success(result)
 
             if st.button("Planet Climate", key="btn_planet_climate"):
-                result = roll_table("planet_climate", log=False)
+                result = roll_table("planet_climate", group=None, log=True)
                 add_to_persistent(3, f"Climate: {result}")
                 st.success(result)
 
@@ -1014,17 +1017,17 @@ with tabs[4]:
         with colB:
 
             if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
-                result = roll_table("planet_biome_diversity", log=False)
+                result = roll_table("planet_biome_diversity", group=None, log=True)
                 add_to_persistent(3, f"Biome Diversity: {result}")
                 st.success(result)
 
             if st.button("What's in the Sky?", key="btn_whats_in_sky"):
-                result = roll_table("whats_in_sky", log=False)
+                result = roll_table("whats_in_sky", group=None, log=True)
                 add_to_persistent(3, f"Sky: {result}")
                 st.success(result)
 
             if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
-                result = roll_table("day_night_cycle", log=False)
+                result = roll_table("day_night_cycle", group=None, log=True)
                 add_to_persistent(3, f"Day/Night Cycle: {result}")
                 st.success(result)
 
@@ -1037,15 +1040,16 @@ with tabs[4]:
 
         if st.button("ROLL FULL PLANET", key="btn_full_planet"):
 
-            designation = roll_table("planet_designation", log=False)
-            diameter = roll_table("planet_diameter", log=False)
-            atmosphere = roll_table("planet_atmosphere", log=False)
-            climate = roll_table("planet_climate", log=False)
-            diversity = roll_table("planet_biome_diversity", log=False)
-            sky = roll_table("whats_in_sky", log=False)
-            cycle = roll_table("day_night_cycle", log=False)
+            # No auto-persist; we’ll write labelled entries ourselves
+            designation = roll_table("planet_designation", group=None, log=False)
+            diameter = roll_table("planet_diameter", group=None, log=False)
+            atmosphere = roll_table("planet_atmosphere", group=None, log=False)
+            climate = roll_table("planet_climate", group=None, log=False)
+            diversity = roll_table("planet_biome_diversity", group=None, log=False)
+            sky = roll_table("whats_in_sky", group=None, log=False)
+            cycle = roll_table("day_night_cycle", group=None, log=False)
 
-            # Store everything with labels
+            # Store everything with labels in Persistent 3
             add_to_persistent(3, f"Designation: {designation}")
             add_to_persistent(3, f"Diameter: {diameter}")
             add_to_persistent(3, f"Atmosphere: {atmosphere}")
@@ -1066,7 +1070,7 @@ with tabs[4]:
 """
             st.success(display)
 
-            # Mission Log
+            # Mission Log (formatted like Site Generator)
             log_entry = f"""
 ### Planet Summary
 - **Designation:** {designation}
@@ -1078,6 +1082,119 @@ with tabs[4]:
 - **Day/Night Cycle:** {cycle}
 """
             add_to_log(log_entry)
+
+    # =============================
+    # PLANET DETAILS & ENCOUNTERS
+    # (All the CSV tables you listed)
+    # =============================
+    st.markdown("### Planet Details & Encounters")
+
+    with st.container(border=True):
+
+        details_col1, details_col2 = st.columns(2)
+
+        # -------- LEFT: Biome / Activity / Threats --------
+        with details_col1:
+
+            if st.button("Planet Biome", key="btn_planet_biome"):
+                result = roll_table("planet_biome", group=None, log=True)
+                add_to_persistent(4, f"Biome: {result}")
+                st.success(result)
+
+            if st.button("Biome Activity", key="btn_biome_activity"):
+                result = roll_table("biome_activity", group=None, log=True)
+                add_to_persistent(4, f"Biome Activity: {result}")
+                st.success(result)
+
+            if st.button("Known Threats", key="btn_known_threats_planet"):
+                result = roll_table("known_threats", group=None, log=True)
+                add_to_persistent(4, f"Known Threats: {result}")
+                st.success(result)
+
+        # -------- RIGHT: Terrain / Exploration / Encounters --------
+        with details_col2:
+
+            # Terrain Difficulty (with dropdown)
+            terrain_options = [
+                "Hazardous",
+                "Convoluted",
+                "Inhabited",
+                "BiomeDependent",
+                "EasyGoing",
+            ]
+
+            terrain_choice = st.selectbox(
+                "Terrain Difficulty Type:",
+                terrain_options,
+                key="terrain_choice_planet"
+            )
+
+            if st.button("Terrain Difficulty", key="btn_terrain_difficulty"):
+                result = roll_table(
+                    "terrain_difficulty",
+                    option=terrain_choice,
+                    group=None,   # prevent unlabeled auto-persist
+                    log=True
+                )
+                add_to_persistent(4, f"Terrain ({terrain_choice}): {result}")
+                st.success(result)
+
+            # Planetside Exploration (its own D10 table)
+            if st.button("Planetside Exploration", key="btn_planetside_exploration"):
+                # no persistent group per your CSV; just log
+                st.success(roll_table("planetside_exploration", group=None, log=True))
+
+            # Planetside Encounters
+            if st.button("Planetside Encounters", key="btn_planetside_encounters"):
+                st.success(roll_table("planetside_encounters", group=None, log=True))
+
+            # Close Encounters
+            if st.button("Close Encounters", key="btn_close_encounters"):
+                st.success(roll_table("close_encounters", group=None, log=True))
+
+            # Findings (goes into Persistent 4)
+            if st.button("Findings", key="btn_findings"):
+                result = roll_table("findings", group=None, log=True)
+                add_to_persistent(4, f"Findings: {result}")
+                st.success(result)
+
+    # =====================================
+    # =========== BIOME SETS  =============
+    # =====================================
+    st.markdown("### Biome-Specific Sights & Hazards")
+
+    biome_cols = st.columns(3)
+
+    biome_button_defs = [
+        ("Barren Sights", "barren_sights"),
+        ("Barren Hazards", "barren_hazards"),
+        ("Exotic Sights", "exotic_sights"),
+        ("Exotic Hazards", "exotic_hazards"),
+        ("Frozen Sights", "frozen_sights"),
+        ("Frozen Hazards", "frozen_hazards"),
+        ("Irradiated Sights", "irradiated_sights"),
+        ("Irradiated Hazards", "irradiated_hazards"),
+        ("Lush Sights", "lush_sights"),
+        ("Lush Hazards", "lush_hazards"),
+        ("Scorched Sights", "scorched_sights"),
+        ("Scorched Hazards", "scorched_hazards"),
+        ("Toxic Sights", "toxic_sights"),
+        ("Toxic Hazards", "toxic_hazards"),
+        ("Urban Sights", "urban_sights"),
+        ("Urban Hazards", "urban_hazards"),
+        ("Volcanic Sights", "volcanic_sights"),
+        ("Volcanic Hazards", "volcanic_hazards"),
+        ("Water Sights", "water_sights"),
+        ("Water Hazards", "water_hazards"),
+    ]
+
+    # auto layout into 3 columns
+    for i, (label, table) in enumerate(biome_button_defs):
+        col = biome_cols[i % 3]
+        with col.container(border=True):
+            if st.button(label, key=f"btn_{table}"):
+                # For these, plain text is fine in Persistent 4
+                st.success(roll_table(table, group=4, log=True))
 
 # ---------- TAB: NPC ----------
 with tabs[5]:
