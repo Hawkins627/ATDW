@@ -252,46 +252,26 @@ st.markdown(f"""
 st.markdown("""
 <style>
 
-/* --- GLOBAL SIDEBAR COMPRESSION --- */
-section[data-testid="stSidebar"] * {
-    line-height: 1.0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-}
+    /* Reduce spacing between each persistent pool line */
+    [data-testid="stSidebar"] .markdown-text-container p {
+        margin-top: -6px !important;
+        margin-bottom: -6px !important;
+        line-height: 0.9 !important;
+        padding: 0 !important;
+    }
 
-/* --- TEXT BLOCKS (st.text) --- */
-section[data-testid="stSidebar"] .stText {
-    margin: 0 !important;
-    padding: 0 !important;
-}
+    /* Reduce spacing for the subtitles ("Persistent 1" etc.) */
+    [data-testid="stSidebar"] h3, 
+    [data-testid="stSidebar"] h2 {
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
+        padding: 0 !important;
+    }
 
-/* --- <pre> inside st.text --- */
-section[data-testid="stSidebar"] pre {
-    line-height: 1.0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* --- Element container wrappers --- */
-section[data-testid="stSidebar"] .element-container {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* --- Subheaders (Persistent 1, Persistent 3, etc.) --- */
-section[data-testid="stSidebar"] h3 {
-    margin-top: 6px !important;
-    margin-bottom: 4px !important;
-    padding: 0 !important;
-}
-
-/* --- Buttons (Clear Persistent X) --- */
-section[data-testid="stSidebar"] button {
-    margin-top: 4px !important;
-    margin-bottom: 8px !important;
-}
+    /* Tighter paragraph + text spacing overall */
+    [data-testid="stSidebar"] * {
+        line-height: 1.0 !important;
+    }
 
 </style>
 """, unsafe_allow_html=True)
