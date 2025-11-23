@@ -979,6 +979,39 @@ with tabs[4]:
     st.header("Planet Generator")
     ensure_state()
 
+    # Helper: roll a biome, handling "same as current biome"
+    def roll_resolved_biome(first_landing: bool) -> str:
+        """
+        Rolls planet_biome and:
+        - If first_landing is True, avoids 'same as current biome' results by rerolling.
+        - Otherwise, replaces 'same as current biome' with the last stored Biome in Persistent 4.
+        """
+        attempts = 0
+        while True:
+            raw = roll_table("planet_biome", group=None, log=False)
+            lower = raw.lower()
+
+            # First landing: never allow SAME-AS-CURRENT-BIOME
+            if "same as current biome" in lower and first_landing:
+                attempts += 1
+                if attempts < 10:
+                    continue  # reroll
+                else:
+                    # safety fallback
+                    return "Unknown biome"
+
+            # Not first landing: SAME-AS-CURRENT-BIOME = last biome from Persistent 4
+            if "same as current biome" in lower and not first_landing:
+                prev = None
+                for item in reversed(st.session_state["persistent"].get(4, [])):
+                    if item.startswith("Biome:"):
+                        prev = item.replace("Biome:", "").strip()
+                        break
+                return prev if prev else "Unknown biome"
+
+            # Normal result
+            return raw
+
     # =============================
     # GROUPED PLANET FEATURE BOX
     # =============================
@@ -992,23 +1025,22 @@ with tabs[4]:
         # ---- LEFT COLUMN ----
         with colA:
 
-            if st.button("Planet Designation", key="btn_planet_designation"):
-                # no auto-group here; we label + persist manually
+            if st.button("Planet Designation", key="planet_btn_designation"):
                 result = roll_table("planet_designation", group=None, log=True)
                 add_to_persistent(3, f"Designation: {result}")
                 st.success(result)
 
-            if st.button("Planet Diameter", key="btn_planet_diameter"):
+            if st.button("Planet Diameter", key="planet_btn_diameter"):
                 result = roll_table("planet_diameter", group=None, log=True)
                 add_to_persistent(3, f"Diameter: {result}")
                 st.success(result)
 
-            if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
+            if st.button("Planet Atmosphere", key="planet_btn_atmosphere"):
                 result = roll_table("planet_atmosphere", group=None, log=True)
                 add_to_persistent(3, f"Atmosphere: {result}")
                 st.success(result)
 
-            if st.button("Planet Climate", key="btn_planet_climate"):
+            if st.button("Planet Climate", key="planet_btn_climate"):
                 result = roll_table("planet_climate", group=None, log=True)
                 add_to_persistent(3, f"Climate: {result}")
                 st.success(result)
@@ -1016,17 +1048,17 @@ with tabs[4]:
         # ---- RIGHT COLUMN ----
         with colB:
 
-            if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
+            if st.button("Biome Diversity", key="planet_btn_biome_diversity"):
                 result = roll_table("planet_biome_diversity", group=None, log=True)
                 add_to_persistent(3, f"Biome Diversity: {result}")
                 st.success(result)
 
-            if st.button("What's in the Sky?", key="btn_whats_in_sky"):
+            if st.button("What's in the Sky?", key="planet_btn_whats_in_sky"):
                 result = roll_table("whats_in_sky", group=None, log=True)
                 add_to_persistent(3, f"Sky: {result}")
                 st.success(result)
 
-            if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
+            if st.button("Day/Night Cycle", key="planet_btn_day_night_cycle"):
                 result = roll_table("day_night_cycle", group=None, log=True)
                 add_to_persistent(3, f"Day/Night Cycle: {result}")
                 st.success(result)
@@ -1038,9 +1070,8 @@ with tabs[4]:
         # =============================
         st.subheader("Full Planet (ALL 7 Tables)")
 
-        if st.button("ROLL FULL PLANET", key="btn_full_planet"):
+        if st.button("ROLL FULL PLANET", key="planet_btn_full_planet"):
 
-            # No auto-persist; we’ll write labelled entries ourselves
             designation = roll_table("planet_designation", group=None, log=False)
             diameter = roll_table("planet_diameter", group=None, log=False)
             atmosphere = roll_table("planet_atmosphere", group=None, log=False)
@@ -1090,10 +1121,10 @@ with tabs[4]:
 
     with st.container(border=True):
 
-        # Checkbox: is this the first landing?
+        # Checkbox: is this the first biome hex on a NEW planet?
         first_landing = st.checkbox(
             "This is the first biome hex of a NEW planet",
-            key="chk_first_landing"
+            key="planet_chk_first_landing"
         )
 
         # Two-column UI for buttons
@@ -1105,33 +1136,21 @@ with tabs[4]:
         with bcol1:
 
             # === Planet Biome ===
-            if st.button("Planet Biome", key="btn_planet_biome"):
-                biome = roll_table("planet_biome", group=None, log=True)
-
-                # Handle SAME-AS-CURRENT-BIOME cases
-                if "same as current biome" in biome.lower():
-                    if first_landing:
-                        biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
-                    else:
-                        # Fetch the PREVIOUS biome from Persistent 4
-                        prev = None
-                        for item in reversed(st.session_state["persistent"].get(4, [])):
-                            if item.startswith("Biome:"):
-                                prev = item.replace("Biome:", "").strip()
-                                break
-                        biome = prev if prev else "Unknown biome"
+            if st.button("Planet Biome", key="planet_btn_biome"):
+                biome = roll_resolved_biome(first_landing)
 
                 add_to_persistent(4, f"Biome: {biome}")
+                add_to_log(f"planet_biome: {biome}")
                 st.success(biome)
 
             # === Biome Activity ===
-            if st.button("Biome Activity", key="btn_biome_activity"):
+            if st.button("Biome Activity", key="planet_btn_biome_activity"):
                 result = roll_table("biome_activity", group=None, log=True)
                 add_to_persistent(4, f"Activity: {result}")
                 st.success(result)
 
             # === Known Threats ===
-            if st.button("Known Threats", key="btn_known_threats"):
+            if st.button("Known Threats", key="planet_btn_known_threats_biome"):
                 result = roll_table("known_threats", group=None, log=True)
                 add_to_persistent(4, f"Threats: {result}")
                 st.success(result)
@@ -1142,46 +1161,32 @@ with tabs[4]:
         with bcol2:
 
             # === FULL BIOME ROLL ===
-            if st.button("ROLL FULL BIOME", key="btn_full_biome"):
+            if st.button("ROLL FULL BIOME", key="planet_btn_full_biome"):
 
-                # 1) Biome
-                biome = roll_table("planet_biome", log=False)
-                if "same as current biome" in biome.lower():
-                    if first_landing:
-                        biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
-                    else:
-                        prev = None
-                        for item in reversed(st.session_state["persistent"].get(4, [])):
-                            if item.startswith("Biome:"):
-                                prev = item.replace("Biome:", "").strip()
-                                break
-                        biome = prev if prev else "Unknown biome"
-
+                biome = roll_resolved_biome(first_landing)
                 add_to_persistent(4, f"Biome: {biome}")
 
-                # 2) Activity
                 activity = roll_table("biome_activity", log=False)
                 add_to_persistent(4, f"Activity: {activity}")
 
-                # 3) Threats
                 threats = roll_table("known_threats", log=False)
                 add_to_persistent(4, f"Threats: {threats}")
-    
+
                 # Display summary block
                 biome_block = f"""
-    • **Biome:** {biome}  
-    • **Activity:** {activity}  
-    • **Known Threats:** {threats}  
-    """
+• **Biome:** {biome}  
+• **Activity:** {activity}  
+• **Known Threats:** {threats}  
+"""
                 st.success(biome_block)
 
                 # Log it
                 log_text = f"""
-    ### Biome Summary
-    - **Biome:** {biome}
-    - **Activity:** {activity}
-    - **Known Threats:** {threats}
-    """
+### Biome Summary
+- **Biome:** {biome}
+- **Activity:** {activity}
+- **Known Threats:** {threats}
+"""
                 add_to_log(log_text)
 
     # =============================================
@@ -1202,12 +1207,12 @@ with tabs[4]:
         previous_hex = st.selectbox(
             "Previous Hex Terrain:",
             terrain_options,
-            key="terrain_prev_hex"
+            key="planet_terrain_prev_hex"
         )
 
-        # Terrain Difficulty Button
-        if st.button("Roll Terrain Difficulty", key="btn_roll_terrain_diff"):
+        if st.button("Roll Terrain Difficulty", key="planet_btn_roll_terrain_diff"):
 
+            # NOTE: roll_table must filter on df['previous_hex'] == option
             result = roll_table(
                 "terrain_difficulty",
                 option=previous_hex,
@@ -1234,13 +1239,12 @@ with tabs[4]:
         biome_choice = st.selectbox(
             "Select Biome:",
             biome_list,
-            key="biome_dep_choice"
+            key="planet_biome_dep_choice"
         )
 
-        if st.button("Roll Biome-Dependent Terrain", key="btn_biome_dep"):
+        if st.button("Roll Biome-Dependent Terrain", key="planet_btn_biome_dep"):
             df = load_table_df("biome_dependent_terrain")
             row = df[df["biome"] == biome_choice].sample(1).iloc[0]
-
             result = f"{row['result']}: {row['description']}"
 
             add_to_persistent(4, f"Biome-Dependent ({biome_choice}): {result}")
@@ -1282,8 +1286,7 @@ with tabs[4]:
     for i, (label, table) in enumerate(biome_button_defs):
         col = biome_cols[i % 3]
         with col.container(border=True):
-            if st.button(label, key=f"btn_{table}"):
-                # For these, plain text is fine in Persistent 4
+            if st.button(label, key=f"planet_btn_{table}"):
                 st.success(roll_table(table, group=4, log=True))
 
 # ---------- TAB: NPC ----------
