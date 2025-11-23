@@ -924,68 +924,91 @@ with tabs[4]:
 
         btn_cols = st.columns(2)
 
+        # ------------------------------
+        # LEFT COLUMN BUTTONS
+        # ------------------------------
         with btn_cols[0]:
+
             if st.button("Planet Designation", key="btn_planet_designation"):
-                result = roll_table("planet_designation", group=3, log=True)
+                result = roll_table("planet_designation", group=3, log=False)
+                persist(3, f"Designation: {result}")
                 st.success(result)
 
             if st.button("Planet Diameter", key="btn_planet_diameter"):
-                result = roll_table("planet_diameter", group=3, log=True)
+                result = roll_table("planet_diameter", group=3, log=False)
+                persist(3, f"Diameter: {result}")
                 st.success(result)
 
             if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
-                result = roll_table("planet_atmosphere", group=3, log=True)
+                result = roll_table("planet_atmosphere", group=3, log=False)
+                persist(3, f"Atmosphere: {result}")
                 st.success(result)
 
             if st.button("Planet Climate", key="btn_planet_climate"):
-                result = roll_table("planet_climate", group=3, log=True)
+                result = roll_table("planet_climate", group=3, log=False)
+                persist(3, f"Climate: {result}")
                 st.success(result)
 
+        # ------------------------------
+        # RIGHT COLUMN BUTTONS
+        # ------------------------------
         with btn_cols[1]:
+
             if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
-                result = roll_table("planet_biome_diversity", group=3, log=True)
+                result = roll_table("planet_biome_diversity", group=3, log=False)
+                persist(3, f"Biome Diversity: {result}")
                 st.success(result)
 
             if st.button("What's in the Sky?", key="btn_whats_in_sky"):
-                result = roll_table("whats_in_sky", group=3, log=True)
+                result = roll_table("whats_in_sky", group=3, log=False)
+                persist(3, f"Sky: {result}")
                 st.success(result)
 
             if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
-                result = roll_table("day_night_cycle", group=3, log=True)
+                result = roll_table("day_night_cycle", group=3, log=False)
+                persist(3, f"Day/Night Cycle: {result}")
                 st.success(result)
 
         st.markdown("---")
 
         # =====================================
-        # FULL PLANET BUTTON
+        # FULL PLANET BUTTON (ALL 7)
         # =====================================
 
         st.subheader("Full Planet (ALL 7 Tables)")
 
         if st.button("ROLL FULL PLANET", key="btn_full_planet"):
 
-            designation = roll_table("planet_designation", group=3, log=True)
-            diameter = roll_table("planet_diameter", group=3, log=True)
-            atmosphere = roll_table("planet_atmosphere", group=3, log=True)
-            climate = roll_table("planet_climate", group=3, log=True)
-            diversity = roll_table("planet_biome_diversity", group=3, log=True)
-            sky = roll_table("whats_in_sky", group=3, log=True)
-            cycle = roll_table("day_night_cycle", group=3, log=True)
+            designation = roll_table("planet_designation", group=3, log=False)
+            diameter = roll_table("planet_diameter", group=3, log=False)
+            atmosphere = roll_table("planet_atmosphere", group=3, log=False)
+            climate = roll_table("planet_climate", group=3, log=False)
+            diversity = roll_table("planet_biome_diversity", group=3, log=False)
+            sky = roll_table("whats_in_sky", group=3, log=False)
+            cycle = roll_table("day_night_cycle", group=3, log=False)
+
+            # Add to Persistent Group 3 with LABELS
+            persist(3, f"Designation: {designation}")
+            persist(3, f"Diameter: {diameter}")
+            persist(3, f"Atmosphere: {atmosphere}")
+            persist(3, f"Climate: {climate}")
+            persist(3, f"Biome Diversity: {diversity}")
+            persist(3, f"Sky: {sky}")
+            persist(3, f"Day/Night Cycle: {cycle}")
 
             # Nice bullet list like Site Generator
             display = f"""
-            • **Designation:** {designation}  
-            • **Diameter:** {diameter}  
-            • **Atmosphere:** {atmosphere}  
-            • **Climate:** {climate}  
-            • **Biome Diversity:** {diversity}  
-            • **Sky:** {sky}  
-            • **Day/Night Cycle:** {cycle}  
-            """
-
+• **Designation:** {designation}  
+• **Diameter:** {diameter}  
+• **Atmosphere:** {atmosphere}  
+• **Climate:** {climate}  
+• **Biome Diversity:** {diversity}  
+• **Sky:** {sky}  
+• **Day/Night Cycle:** {cycle}  
+"""
             st.success(display)
 
-            # Add to mission log in GOOD FORMATTING
+            # GOOD Mission Log formatting (single clean entry)
             log_entry = f"""
 ### Planet Summary
 - **Designation:** {designation}
