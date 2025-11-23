@@ -276,6 +276,27 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+
+    /* EXTRA TIGHTENING — sidebar paragraphs */
+    section[data-testid="stSidebar"] p {
+        margin-top: 0px !important;
+        margin-bottom: -6px !important;   /* yes, negative margin */
+        line-height: 0.9 !important;
+        padding: 0 !important;
+    }
+
+    /* Reduce spacing inside sidebar text blocks */
+    section[data-testid="stSidebar"] .stText {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 0.9 !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
 
