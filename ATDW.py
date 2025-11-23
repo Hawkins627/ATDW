@@ -911,119 +911,121 @@ with tabs[3]:
 # ---------- TAB: PLANET ----------
 with tabs[4]:
 
-    st.header("Planet Generation")
+    st.header("Planet Generator")
     ensure_state()
 
-    col_left, col_right = st.columns(2)
+    # ===========================================================
+    #   PLANET GENERATOR (7 CORE TABLES)
+    # ===========================================================
+    st.markdown("### Planet Features")
 
-    # =====================================
-    # ========== LEFT COLUMN ==============
-    # =====================================
+    gen_left, gen_right = st.columns(2)
 
-    with col_left:
+    # ==============================
+    # LEFT COLUMN BUTTONS
+    # ==============================
+    with gen_left:
 
-        # Planet Designation
+        # Planet Designation (strips number)
         with st.container(border=True):
-            if st.button("Planet Designation", key="btn_planet_designation"):
-                st.success(roll_table("planet_designation", group=3, log=True))
+            if st.button("Planet Designation", key="btn_pg_designation"):
+                raw = roll_table("planet_designation", group=3, log=True)
+                parts = raw.split("–")
+                clean = "–".join(parts[1:]).strip()
+                st.success(clean)
 
-        # Diameter
         with st.container(border=True):
-            if st.button("Planet Diameter", key="btn_planet_diameter"):
+            if st.button("Planet Diameter", key="btn_pg_diameter"):
                 st.success(roll_table("planet_diameter", group=3, log=True))
 
-        # Atmosphere
         with st.container(border=True):
-            if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
+            if st.button("Planet Atmosphere", key="btn_pg_atmosphere"):
                 st.success(roll_table("planet_atmosphere", group=3, log=True))
 
-        # Climate
         with st.container(border=True):
-            if st.button("Planet Climate", key="btn_planet_climate"):
+            if st.button("Planet Climate", key="btn_pg_climate"):
                 st.success(roll_table("planet_climate", group=3, log=True))
 
-        # Biome Diversity
+
+    # ==============================
+    # RIGHT COLUMN BUTTONS
+    # ==============================
+    with gen_right:
+
         with st.container(border=True):
-            if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
+            if st.button("Biome Diversity", key="btn_pg_biome_diversity"):
                 st.success(roll_table("planet_biome_diversity", group=3, log=True))
 
-        # Whats in the sky
         with st.container(border=True):
-            if st.button("What's in the Sky?", key="btn_whats_in_sky"):
+            if st.button("What's in the Sky?", key="btn_pg_sky"):
                 st.success(roll_table("whats_in_sky", group=3, log=True))
 
-        # Day/Night Cycle
         with st.container(border=True):
-            if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
+            if st.button("Day/Night Cycle", key="btn_pg_daynight"):
                 st.success(roll_table("day_night_cycle", group=3, log=True))
 
 
-    # =====================================
-    # ========== RIGHT COLUMN =============
-    # =====================================
+    # ===========================================================
+    #   FULL PLANET ROLL (ALL 7 TABLES)
+    # ===========================================================
+    st.markdown("### Full Planet (ALL 7 Tables)")
 
-    with col_right:
+    if st.button("ROLL FULL PLANET", key="btn_pg_full_planet"):
 
-        # Biome (title/description)
-        with st.container(border=True):
-            if st.button("Planet Biome", key="btn_planet_biome"):
-                st.success(roll_table("planet_biome", group=4, log=True))
+        results = []
 
-        # Biome Activity
-        with st.container(border=True):
-            if st.button("Biome Activity", key="btn_biome_activity"):
-                st.success(roll_table("biome_activity", group=4, log=True))
+        # ---- DESIGNATION ----
+        d_raw = roll_table("planet_designation", log=False)
+        d_parts = d_raw.split("–")
+        designation = "–".join(d_parts[1:]).strip()
+        add_to_log(f"planet_designation: {designation}")
+        add_to_persistent(3, designation)
+        results.append(f"• **Designation:** {designation}")
 
-        # Known Threats
-        with st.container(border=True):
-            if st.button("Known Threats", key="btn_known_threat"):
-                st.success(roll_table("known_threat", group=4, log=True))
+        # ---- DIAMETER ----
+        diameter = roll_table("planet_diameter", log=False)
+        add_to_log(f"planet_diameter: {diameter}")
+        add_to_persistent(3, diameter)
+        results.append(f"• **Diameter:** {diameter}")
 
-        # Terrain Difficulty (options required)
-        with st.container(border=True):
+        # ---- ATMOSPHERE ----
+        atmosphere = roll_table("planet_atmosphere", log=False)
+        add_to_log(f"planet_atmosphere: {atmosphere}")
+        add_to_persistent(3, atmosphere)
+        results.append(f"• **Atmosphere:** {atmosphere}")
 
-            terrain_options = [
-                "Hazardous",
-                "Convoluted",
-                "Inhabited",
-                "BiomeDependent",
-                "EasyGoing"
-            ]
+        # ---- CLIMATE ----
+        climate = roll_table("planet_climate", log=False)
+        add_to_log(f"planet_climate: {climate}")
+        add_to_persistent(3, climate)
+        results.append(f"• **Climate:** {climate}")
 
-            terrain_choice = st.selectbox(
-                "Terrain Difficulty Type:",
-                terrain_options,
-                key="terrain_choice"
-            )
+        # ---- BIOME DIVERSITY ----
+        diversity = roll_table("planet_biome_diversity", log=False)
+        add_to_log(f"planet_biome_diversity: {diversity}")
+        add_to_persistent(3, diversity)
+        results.append(f"• **Biome Diversity:** {diversity}")
 
-            if st.button("Terrain Difficulty", key="btn_terrain_difficulty"):
-                st.success(
-                    roll_table(
-                        "terrain_difficulty",
-                        option=terrain_choice,
-                        group=4,
-                        log=True
-                    )
-                )
+        # ---- SKY ----
+        sky = roll_table("whats_in_sky", log=False)
+        add_to_log(f"whats_in_sky: {sky}")
+        add_to_persistent(3, sky)
+        results.append(f"• **Sky:** {sky}")
 
-        # Planetside Exploration (requires no input)
-        with st.container(border=True):
-            if st.button("Planetside Exploration", key="btn_planetside_exploration"):
-                st.success(roll_table("planetside_exploration", log=True))
+        # ---- DAY/NIGHT ----
+        daynight = roll_table("day_night_cycle", log=False)
+        add_to_log(f"day_night_cycle: {daynight}")
+        add_to_persistent(3, daynight)
+        results.append(f"• **Day/Night Cycle:** {daynight}")
 
-        # Planetside Encounters
-        with st.container(border=True):
-            if st.button("Planetside Encounters", key="btn_planetside_encounters"):
-                st.success(roll_table("planetside_encounters", log=True))
+        # ---- OUTPUT BLOCK ----
+        st.success("\n".join(results))
 
-        # Close Encounters
-        with st.container(border=True):
-            if st.button("Close Encounters", key="btn_close_encounters"):
-                st.success(roll_table("close_encounters", log=True))
 
-    # =====================================
-    # =========== BIOME SETS  =============
-    # =====================================
+    # ===========================================================
+    #   BIOME-SPECIFIC SIGHTS & HAZARDS  (UNCHANGED)
+    # ===========================================================
+
     st.markdown("### Biome-Specific Sights & Hazards")
 
     biome_cols = st.columns(3)
@@ -1051,7 +1053,7 @@ with tabs[4]:
         ("Water Hazards", "water_hazards"),
     ]
 
-    # auto layout into 3 columns
+    # Render biome buttons 3-per-row
     for i, (label, table) in enumerate(biome_button_defs):
         col = biome_cols[i % 3]
         with col.container(border=True):
