@@ -249,27 +249,50 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# ---------- CSS: Tighten Sidebar Persistent Pool Spacing ----------
 st.markdown("""
 <style>
-/* Reduce spacing between lines in the persistent pool */
-section[data-testid="stSidebar"] p {
-    line-height: 1.1 !important;   /* tighter lines */
-    margin-bottom: 0.2rem !important;
+
+/* --- GLOBAL SIDEBAR COMPRESSION --- */
+section[data-testid="stSidebar"] * {
+    line-height: 1.0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
 }
 
-/* Also target st.text() blocks (they render as <pre>) */
+/* --- TEXT BLOCKS (st.text) --- */
+section[data-testid="stSidebar"] .stText {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* --- <pre> inside st.text --- */
 section[data-testid="stSidebar"] pre {
-    line-height: 1.05 !important;
-    margin-bottom: 0.1rem !important;
+    line-height: 1.0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-/* Reduce spacing above/below group headers */
-section[data-testid="stSidebar"] h3, 
-section[data-testid="stSidebar"] h2 {
-    margin-top: 0.4rem !important;
-    margin-bottom: 0.4rem !important;
+/* --- Element container wrappers --- */
+section[data-testid="stSidebar"] .element-container {
+    margin: 0 !important;
+    padding: 0 !important;
 }
+
+/* --- Subheaders (Persistent 1, Persistent 3, etc.) --- */
+section[data-testid="stSidebar"] h3 {
+    margin-top: 6px !important;
+    margin-bottom: 4px !important;
+    padding: 0 !important;
+}
+
+/* --- Buttons (Clear Persistent X) --- */
+section[data-testid="stSidebar"] button {
+    margin-top: 4px !important;
+    margin-bottom: 8px !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
