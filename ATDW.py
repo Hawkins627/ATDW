@@ -1184,6 +1184,70 @@ with tabs[4]:
     """
                 add_to_log(log_text)
 
+    # =============================================
+    # TERRAIN DIFFICULTY
+    # =============================================
+    st.markdown("### Terrain Difficulty")
+
+    with st.container(border=True):
+
+        terrain_options = [
+            "Hazardous",
+            "Convoluted",
+            "Inhabited",
+            "Biome-Dependent",
+            "Easy Going",
+        ]
+
+        previous_hex = st.selectbox(
+            "Previous Hex Terrain:",
+            terrain_options,
+            key="terrain_prev_hex"
+        )
+
+        # Terrain Difficulty Button
+        if st.button("Roll Terrain Difficulty", key="btn_roll_terrain_diff"):
+
+            result = roll_table(
+                "terrain_difficulty",
+                option=previous_hex,
+                group=None,
+                log=True
+            )
+
+            add_to_persistent(4, f"Terrain Difficulty ({previous_hex}): {result}")
+            st.success(result)
+
+    # =============================================
+    # BIOME-DEPENDENT TERRAIN
+    # =============================================
+    st.markdown("### Biome-Dependent Terrain Effect")
+
+    with st.container(border=True):
+
+        biome_list = [
+            "Barren", "Exotic", "Frozen", "Irradiated",
+            "Lush", "Scorched", "Toxic", "Urban",
+            "Volcanic", "Water"
+        ]
+
+        biome_choice = st.selectbox(
+            "Select Biome:",
+            biome_list,
+            key="biome_dep_choice"
+        )
+
+        if st.button("Roll Biome-Dependent Terrain", key="btn_biome_dep"):
+            df = load_table_df("biome_dependent_terrain")
+            row = df[df["biome"] == biome_choice].sample(1).iloc[0]
+
+            result = f"{row['result']}: {row['description']}"
+
+            add_to_persistent(4, f"Biome-Dependent ({biome_choice}): {result}")
+            add_to_log(f"Biome-Dependent Terrain: {result}")
+
+            st.success(result)
+
     # =====================================
     # =========== BIOME SETS  =============
     # =====================================
