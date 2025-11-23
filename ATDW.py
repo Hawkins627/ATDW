@@ -967,8 +967,8 @@ with tabs[4]:
 
         # Known Threats
         with st.container(border=True):
-            if st.button("Known Threats", key="btn_known_threats"):
-                st.success(roll_table("known_threats", group=4, log=True))
+            if st.button("Known Threats", key="btn_known_threat"):
+                st.success(roll_table("known_threat", group=4, log=True))
 
         # Terrain Difficulty (options required)
         with st.container(border=True):
