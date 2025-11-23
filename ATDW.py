@@ -249,6 +249,30 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+# ---------- CSS: Tighten Sidebar Persistent Pool Spacing ----------
+st.markdown("""
+<style>
+/* Reduce spacing between lines in the persistent pool */
+section[data-testid="stSidebar"] p {
+    line-height: 1.1 !important;   /* tighter lines */
+    margin-bottom: 0.2rem !important;
+}
+
+/* Also target st.text() blocks (they render as <pre>) */
+section[data-testid="stSidebar"] pre {
+    line-height: 1.05 !important;
+    margin-bottom: 0.1rem !important;
+}
+
+/* Reduce spacing above/below group headers */
+section[data-testid="stSidebar"] h3, 
+section[data-testid="stSidebar"] h2 {
+    margin-top: 0.4rem !important;
+    margin-bottom: 0.4rem !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
 
