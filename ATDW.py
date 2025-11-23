@@ -914,85 +914,137 @@ with tabs[4]:
     st.header("Planet Generator")
     ensure_state()
 
-    # ------------------------------------------------------------
-    #  Planet Features Container (like Site Generator)
-    # ------------------------------------------------------------
-    with st.container(border=True):
+    st.markdown("### Planet Features")
 
-        st.subheader("Planet Features")
+    # Single unified box (like Site Generator)
+    with st.container(border=True):
 
         col1, col2 = st.columns(2)
 
-        # ---------------------
-        # Left Column
-        # ---------------------
+        # Formatting function for planet designation
+        def format_designation(row):
+            return f"{row['letter']}-{row['noun']}-{row['number']}"
+
+        # Store button results
+        # These variables are collected and displayed in the green summary box
+        planet_results = {}
+
+        # ------------------------------------------------------
+        # LEFT COLUMN
+        # ------------------------------------------------------
         with col1:
+
+            # Planet Designation
             if st.button("Planet Designation", key="btn_planet_designation"):
-                result = roll_table("planet_designation", group=3, log=True, label="Designation")
-                st.success(result)
+                row = roll_raw("planet_designation")
+                formatted = format_designation(row)
+                append_persistent(3, f"Designation: {formatted}")
+                planet_results["Designation"] = formatted
+                st.success(formatted)
 
+            # Planet Diameter
             if st.button("Planet Diameter", key="btn_planet_diameter"):
-                result = roll_table("planet_diameter", group=3, log=True, label="Diameter")
+                result = roll_table("planet_diameter", log=True)
+                append_persistent(3, f"Diameter: {result}")
+                planet_results["Diameter"] = result
                 st.success(result)
 
+            # Atmosphere
             if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
-                result = roll_table("planet_atmosphere", group=3, log=True, label="Atmosphere")
+                result = roll_table("planet_atmosphere", log=True)
+                append_persistent(3, f"Atmosphere: {result}")
+                planet_results["Atmosphere"] = result
                 st.success(result)
 
+            # Climate
             if st.button("Planet Climate", key="btn_planet_climate"):
-                result = roll_table("planet_climate", group=3, log=True, label="Climate")
+                result = roll_table("planet_climate", log=True)
+                append_persistent(3, f"Climate: {result}")
+                planet_results["Climate"] = result
                 st.success(result)
 
-        # ---------------------
-        # Right Column
-        # ---------------------
+
+        # ------------------------------------------------------
+        # RIGHT COLUMN
+        # ------------------------------------------------------
         with col2:
 
+            # Biome Diversity
             if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
-                result = roll_table("planet_biome_diversity", group=3, log=True, label="Biome Diversity")
+                result = roll_table("planet_biome_diversity", log=True)
+                append_persistent(3, f"Biome Diversity: {result}")
+                planet_results["Biome Diversity"] = result
                 st.success(result)
 
+            # What's in the Sky
             if st.button("What's in the Sky?", key="btn_whats_in_sky"):
-                result = roll_table("whats_in_sky", group=3, log=True, label="Sky")
+                result = roll_table("whats_in_sky", log=True)
+                append_persistent(3, f"Sky: {result}")
+                planet_results["Sky"] = result
                 st.success(result)
 
+            # Day/Night Cycle
             if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
-                result = roll_table("day_night_cycle", group=3, log=True, label="Day/Night Cycle")
+                result = roll_table("day_night_cycle", log=True)
+                append_persistent(3, f"Day/Night Cycle: {result}")
+                planet_results["Day/Night Cycle"] = result
                 st.success(result)
 
-        # ------------------------------------------------------------
-        # FULL PLANET BUTTON
-        # ------------------------------------------------------------
-        st.markdown("### Full Planet (ALL 7 Tables)")
+    # ------------------------------------------------------
+    # FULL PLANET BUTTON
+    # ------------------------------------------------------
+    st.markdown("### Full Planet (ALL 7 Tables)")
 
-        if st.button("ROLL FULL PLANET", key="btn_full_planet"):
+    if st.button("ROLL FULL PLANET", key="btn_full_planet"):
 
-            designation = roll_table("planet_designation", group=3, log=True, label="Designation")
-            diameter = roll_table("planet_diameter", group=3, log=True, label="Diameter")
-            atmosphere = roll_table("planet_atmosphere", group=3, log=True, label="Atmosphere")
-            climate = roll_table("planet_climate", group=3, log=True, label="Climate")
-            biodiversity = roll_table("planet_biome_diversity", group=3, log=True, label="Biome Diversity")
-            sky = roll_table("whats_in_sky", group=3, log=True, label="Sky")
-            daynight = roll_table("day_night_cycle", group=3, log=True, label="Day/Night Cycle")
+        # Roll each table
+        row = roll_raw("planet_designation")
+        designation = format_designation(row)
 
-            # Display bullet list (like Site)
-            st.success(
-                f"""
-                • **Designation:** {designation}  
-                • **Diameter:** {diameter}  
-                • **Atmosphere:** {atmosphere}  
-                • **Climate:** {climate}  
-                • **Biome Diversity:** {biodiversity}  
-                • **Sky:** {sky}  
-                • **Day/Night Cycle:** {daynight}
-                """
-            )
+        diameter = roll_table("planet_diameter", log=True)
+        atmosphere = roll_table("planet_atmosphere", log=True)
+        climate = roll_table("planet_climate", log=True)
+        diversity = roll_table("planet_biome_diversity", log=True)
+        sky = roll_table("whats_in_sky", log=True)
+        cycle = roll_table("day_night_cycle", log=True)
 
-    # ------------------------------------------------------------
-    # BIOME-SPECIFIC SIGHTS & HAZARDS
-    # ------------------------------------------------------------
+        # Persistent storage
+        append_persistent(3, f"Designation: {designation}")
+        append_persistent(3, f"Diameter: {diameter}")
+        append_persistent(3, f"Atmosphere: {atmosphere}")
+        append_persistent(3, f"Climate: {climate}")
+        append_persistent(3, f"Biome Diversity: {diversity}")
+        append_persistent(3, f"Sky: {sky}")
+        append_persistent(3, f"Day/Night Cycle: {cycle}")
 
+        # Mission Log Entry
+        log_entry = "\n".join([
+            f"• Designation: {designation}",
+            f"• Diameter: {diameter}",
+            f"• Atmosphere: {atmosphere}",
+            f"• Climate: {climate}",
+            f"• Biome Diversity: {diversity}",
+            f"• Sky: {sky}",
+            f"• Day/Night Cycle: {cycle}"
+        ])
+        append_log("Full Planet", log_entry)
+
+        # GREEN BOX OUTPUT
+        st.success(
+            f"• **Designation:** {designation}\n"
+            f"• **Diameter:** {diameter}\n"
+            f"• **Atmosphere:** {atmosphere}\n"
+            f"• **Climate:** {climate}\n"
+            f"• **Biome Diversity:** {diversity}\n"
+            f"• **Sky:** {sky}\n"
+            f"• **Day/Night Cycle:** {cycle}"
+        )
+
+    # ------------------------------------------------------
+    # BIOME-SPECIFIC SIGHT & HAZARD TABLES
+    # ------------------------------------------------------
     st.markdown("### Biome-Specific Sights & Hazards")
+
     biome_cols = st.columns(3)
 
     biome_button_defs = [
