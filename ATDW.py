@@ -42,6 +42,15 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
     Cleaner formatter + special case handling for Random Site Name.
     """
 
+    # --- SPECIAL CASE: planet_designation ---
+    if table_name == "planet_designation":
+        try:
+            return f"{row['letter']} - {row['noun']} - {row['number']}"
+        except KeyError:
+            # fallback if columns differ
+            vals = [v for k, v in row.items() if k != row.index.name]
+            return " - ".join(str(v) for v in vals)
+    
     # --- Special case handling: Random Site Name ---
     if table_name == "random_site_name":
         first = str(row.get("first_syllable", "")).strip()
