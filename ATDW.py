@@ -297,6 +297,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown(
+    """
+    <style>
+        ul.persist-tight {
+            margin: 0px !important;
+            padding-left: 20px !important;
+        }
+        ul.persist-tight li {
+            margin: 0px !important;
+            padding: 0px !important;
+            line-height: 0.9em !important;   /* VERY tight */
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ---------- TAB: ENCOUNTER ----------
 with tabs[0]:
 
@@ -1178,8 +1195,15 @@ if not st.session_state["persistent"]:
 else:
     for group_id, values in st.session_state["persistent"].items():
         st.sidebar.subheader(f"Persistent {group_id}")
-        for item in values:
-            st.sidebar.text(f"- {item}")
+        html_items = "".join([f"<li>{item}</li>" for item in values])
+        st.sidebar.markdown(
+            f"""
+            <ul class="persist-tight">
+                {html_items}
+            </ul>
+            """,
+            unsafe_allow_html=True
+        )
         if st.sidebar.button(f"Clear Persistent {group_id}"):
             clear_persistent(group_id)
             st.rerun()
