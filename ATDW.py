@@ -1212,23 +1212,67 @@ with tabs[4]:
             add_to_log(f"Biome-Dependent Terrain: {result}")
             st.success(result)
 
-    # ============================================================
-    # PLANETSIDE EXPLORATION (FULL CONDITIONAL ROLL)
-    # ============================================================
+    # -------------------------------
+    # PLANETSIDE EXPLORATION LOGIC
+    # -------------------------------
+
     st.markdown("### Planetside Exploration")
 
     with st.container(border=True):
 
-        # Biome input needed for hazard selection
-        expl_biome = st.selectbox(
+        # Which biome’s hazards to use?
+        biome_choice = st.selectbox(
             "Biome for Hazard Rolls:",
-            biome_list,
-            key="expl_biome_choice"
+            [
+                "Barren","Exotic","Frozen","Irradiated",
+                "Lush","Scorched","Toxic","Urban",
+                "Volcanic","Water"
+            ],
+            key="pexp_biome_choice"
         )
 
-        if st.button("ROLL FULL EXPLORATION", key="btn_full_expl"):
-            # (uses the updated exploration logic I gave you)
-            st.write("Exploration logic inserted here (use the updated block I provided).")
+        # FULL EXPLORATION BUTTON
+        if st.button("ROLL FULL EXPLORATION", key="btn_full_explore"):
+
+            # STEP 1 — Roll on Planetside Exploration table
+            exploration_result = roll_table("planetside_exploration", log=True)
+
+            # Persist & display
+            add_to_persistent(4, f"Planetside Exploration: {exploration_result}")
+
+            st.success(f"**Exploration Result:** {exploration_result}")
+
+            # -------------------------------------
+            # STEP 2 — Branching logic
+            # -------------------------------------
+
+            # === FINDINGS ===
+            if "findings" in exploration_result.lower():
+                findings_result = roll_table("findings", log=True)
+                add_to_persistent(4, f"Findings: {findings_result}")
+                st.success(f"**Findings:** {findings_result}")
+
+            # === HAZARDS ===
+            elif "hazard" in exploration_result.lower():
+                hazard_table = f"{biome_choice.lower()}_hazards"
+                hazard_result = roll_table(hazard_table, log=True)
+                add_to_persistent(4, f"Hazard ({biome_choice}): {hazard_result}")
+                st.success(f"**Hazard:** {hazard_result}")
+
+            # === SITE ===
+            elif "site" in exploration_result.lower():
+                add_to_log("Exploration: Found an Àrsaidh Site.")
+                add_to_persistent(4, "Site Found: Roll full site in Mission tab.")
+                st.success("**Site Found!** Use the Site Generator to roll the full site.")
+
+            # === NOTHING ===
+            elif "nothing" in exploration_result.lower():
+                st.info("Nothing found in this hex.")
+                add_to_persistent(4, "Exploration: Nothing found.")
+    
+            # Safety fallback
+            else:
+                st.warning("Exploration result not recognized — check the CSV formatting.")
 
     # ============================================================
     # BIOME-SPECIFIC SIGHTS & HAZARDS
