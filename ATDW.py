@@ -1308,11 +1308,372 @@ with tabs[4]:
 
 # ---------- TAB: NPC ----------
 with tabs[5]:
+
     st.header("NPC Generator")
-    if st.button("Generate Civilian NPC"):
-        st.success(roll_table("Civilian NPC", group=5, log=True))
-    if st.button("Generate Crew Member"):
-        st.success(roll_table("Crew Member", group=5))
+    ensure_state()
+
+    # Helper to map npc_how_feels → which emotion table
+    def resolve_feeling_table(feeling_text: str):
+        txt = feeling_text.lower()
+        if "surpris" in txt:
+            return "npc_surprised", "Surprised"
+        if "disgust" in txt:
+            return "npc_disgusted", "Disgusted"
+        if "bad" in txt:
+            return "npc_bad", "Bad"
+        if "sad" in txt:
+            return "npc_sad", "Sad"
+        if "fear" in txt:
+            return "npc_fearful", "Fearful"
+        if "happ" in txt:
+            return "npc_happy", "Happy"
+        if "angr" in txt:
+            return "npc_angry", "Angry"
+        return None, None
+
+    # Convenience: store a labeled line in Persistent 6
+    def persist_npc(label: str, value: str):
+        add_to_persistent(6, f"{label}: {value}")
+
+    # =====================================================
+    # SECTION 1 — NPC IDENTITY (Combined 13)
+    # =====================================================
+    with st.container(border=True):
+        st.subheader("NPC Identity (Core Profile)")
+
+        col_left, col_right = st.columns(2)
+
+        # ---------- LEFT: Behavior, Attitude, Reactions, Gender, Age ----------
+        with col_left:
+
+            if st.button("Behavior", key="btn_npc_behavior"):
+                result = roll_table("npc_behavior", log=True)
+                persist_npc("Behavior", result)
+                st.success(result)
+
+            if st.button("Attitude + Reaction", key="btn_npc_attitude_reaction"):
+                attitude = roll_table("npc_attitude", log=True)
+                reaction = roll_table("npc_reactions", log=True)
+                persist_npc("Attitude", attitude)
+                persist_npc("Reaction", reaction)
+                st.success(f"Attitude: {attitude}\nReaction: {reaction}")
+
+            if st.button("Gender", key="btn_npc_gender"):
+                result = roll_table("npc_gender", log=True)
+                persist_npc("Gender", result)
+                st.success(result)
+
+            if st.button("Age", key="btn_npc_age"):
+                result = roll_table("npc_age", log=True)
+                persist_npc("Age", result)
+                st.success(result)
+
+        # ---------- RIGHT: Name, Descriptor, Nature, Quirks ----------
+        with col_right:
+
+            if st.button("First Name", key="btn_npc_name"):
+                first = roll_table("npc_name", log=True)
+                persist_npc("First Name", first)
+                st.success(first)
+
+            if st.button("Surname", key="btn_npc_surname"):
+                last = roll_table("npc_surname", log=True)
+                persist_npc("Surname", last)
+                st.success(last)
+
+            if st.button("Descriptor", key="btn_npc_descriptor"):
+                result = roll_table("npc_descriptor", log=True)
+                persist_npc("Descriptor", result)
+                st.success(result)
+
+            if st.button("Nature", key="btn_npc_nature"):
+                result = roll_table("npc_nature", log=True)
+                persist_npc("Nature", result)
+                st.success(result)
+
+            if st.button("Quirks", key="btn_npc_quirks"):
+                result = roll_table("npc_quirks", log=True)
+                persist_npc("Quirks", result)
+                st.success(result)
+
+        st.markdown("---")
+
+        # ---------- FULL NPC IDENTITY BUTTON ----------
+        st.markdown("### Full NPC Identity (Combined 13)")
+
+        if st.button("ROLL FULL NPC IDENTITY", key="btn_full_npc_identity"):
+
+            behavior = roll_table("npc_behavior", log=False)
+            attitude = roll_table("npc_attitude", log=False)
+            reaction = roll_table("npc_reactions", log=False)
+            gender = roll_table("npc_gender", log=False)
+            age = roll_table("npc_age", log=False)
+            descriptor = roll_table("npc_descriptor", log=False)
+            first = roll_table("npc_name", log=False)
+            last = roll_table("npc_surname", log=False)
+            nature = roll_table("npc_nature", log=False)
+            quirks = roll_table("npc_quirks", log=False)
+
+            full_name = f"{first} {last}"
+
+            # Persist with labels
+            persist_npc("Name", full_name)
+            persist_npc("Behavior", behavior)
+            persist_npc("Attitude", attitude)
+            persist_npc("Reaction", reaction)
+            persist_npc("Gender", gender)
+            persist_npc("Age", age)
+            persist_npc("Descriptor", descriptor)
+            persist_npc("Nature", nature)
+            persist_npc("Quirks", quirks)
+
+            # Display nicely (name on top)
+            identity_block = f"""
+• **Name:** {full_name}  
+• **Gender:** {gender}  
+• **Age:** {age}  
+• **Descriptor:** {descriptor}  
+• **Behavior:** {behavior}  
+• **Attitude:** {attitude}  
+• **Reaction:** {reaction}  
+• **Nature:** {nature}  
+• **Quirks:** {quirks}  
+"""
+            st.success(identity_block)
+
+            # Log entry
+            log_entry = f"""
+### NPC Identity
+- **Name:** {full_name}
+- **Gender:** {gender}
+- **Age:** {age}
+- **Descriptor:** {descriptor}
+- **Behavior:** {behavior}
+- **Attitude:** {attitude}
+- **Reaction:** {reaction}
+- **Nature:** {nature}
+- **Quirks:** {quirks}
+"""
+            add_to_log(log_entry)
+
+    # =====================================================
+    # SECTION 2 — EMOTIONAL STATE (Combined 14)
+    # =====================================================
+    with st.container(border=True):
+        st.subheader("NPC Emotional State")
+
+        emo_col_left, emo_col_right = st.columns(2)
+
+        # ---------- LEFT: How Feels + Full Emotional State ----------
+        with emo_col_left:
+
+            # Base table: npc_how_feels
+            if st.button("How Does the NPC Feel?", key="btn_npc_how_feels"):
+                how_feels = roll_table("npc_how_feels", log=True)
+                persist_npc("How Feels", how_feels)
+
+                table, label = resolve_feeling_table(how_feels)
+                if table:
+                    detail = roll_table(table, log=True)
+                    persist_npc(f"{label} Detail", detail)
+                    st.success(f"{how_feels}\n\n{label} Detail: {detail}")
+                else:
+                    st.success(how_feels)
+
+            # Full emotional state (how_feels + specific table)
+            if st.button("ROLL FULL EMOTIONAL STATE", key="btn_full_emotional"):
+                how_feels = roll_table("npc_how_feels", log=False)
+                persist_npc("How Feels", how_feels)
+
+                table, label = resolve_feeling_table(how_feels)
+                if table:
+                    detail = roll_table(table, log=False)
+                    persist_npc(f"{label} Detail", detail)
+
+                    block = f"""
+• **How They Feel:** {how_feels}  
+• **{label} Detail:** {detail}  
+"""
+                    st.success(block)
+
+                    log_entry = f"""
+### NPC Emotional State
+- **How They Feel:** {how_feels}
+- **{label} Detail:** {detail}
+"""
+                    add_to_log(log_entry)
+                else:
+                    st.success(f"How They Feel: {how_feels}")
+                    add_to_log(f"NPC Emotional State: {how_feels}")
+
+        # ---------- RIGHT: Individual feeling tables ----------
+        with emo_col_right:
+
+            if st.button("Surprised Detail", key="btn_npc_surprised"):
+                result = roll_table("npc_surprised", log=True)
+                persist_npc("Surprised Detail", result)
+                st.success(result)
+
+            if st.button("Disgusted Detail", key="btn_npc_disgusted"):
+                result = roll_table("npc_disgusted", log=True)
+                persist_npc("Disgusted Detail", result)
+                st.success(result)
+
+            if st.button("Bad Detail", key="btn_npc_bad"):
+                result = roll_table("npc_bad", log=True)
+                persist_npc("Bad Detail", result)
+                st.success(result)
+
+            if st.button("Sad Detail", key="btn_npc_sad"):
+                result = roll_table("npc_sad", log=True)
+                persist_npc("Sad Detail", result)
+                st.success(result)
+
+            if st.button("Fearful Detail", key="btn_npc_fearful"):
+                result = roll_table("npc_fearful", log=True)
+                persist_npc("Fearful Detail", result)
+                st.success(result)
+
+            if st.button("Happy Detail", key="btn_npc_happy"):
+                result = roll_table("npc_happy", log=True)
+                persist_npc("Happy Detail", result)
+                st.success(result)
+
+            if st.button("Angry Detail", key="btn_npc_angry"):
+                result = roll_table("npc_angry", log=True)
+                persist_npc("Angry Detail", result)
+                st.success(result)
+
+    # =====================================================
+    # SECTION 3 — INFO, RELATIONS, CONVERSATION, TALENT
+    # =====================================================
+    with st.container(border=True):
+        st.subheader("NPC Info, Relations, & Talent")
+
+        info_col_left, info_col_right = st.columns(2)
+
+        # ---------- LEFT: Info, Motivation, Relations, Talent ----------
+        with info_col_left:
+
+            # npc_information DOES NOT go to persistent (per CSV)
+            if st.button("Information (Type / Topic)", key="btn_npc_information"):
+                result = roll_table("npc_information", log=True)
+                st.success(result)
+
+            if st.button("Motivation", key="btn_npc_motivation"):
+                result = roll_table("npc_motivation", log=True)
+                persist_npc("Motivation", result)
+                st.success(result)
+
+            if st.button("Relations", key="btn_npc_relations"):
+                result = roll_table("npc_relations", log=True)
+                persist_npc("Relations", result)
+                st.success(result)
+
+            if st.button("Talent", key="btn_npc_talent"):
+                result = roll_table("npc_talent", log=True)
+                persist_npc("Talent", result)
+                st.success(result)
+
+        # ---------- RIGHT: Conversation & Demoralized ----------
+        with info_col_right:
+
+            # demoralized reaction DOES NOT go to persistent (per CSV)
+            if st.button("Demoralized Reaction", key="btn_npc_demoralized"):
+                result = roll_table("npc_demoralized_reaction", log=True)
+                st.success(result)
+
+            if st.button("Random Conversation", key="btn_npc_random_convo"):
+                result = roll_table("npc_random_conversation", log=True)
+                persist_npc("Random Conversation", result)
+                st.success(result)
+
+            if st.button("Conversation Topic", key="btn_npc_convo_topic"):
+                result = roll_table("npc_conversation_topic", log=True)
+                persist_npc("Conversation Topic", result)
+                st.success(result)
+
+    # =====================================================
+    # SECTION 4 — FULL NPC (BIG BUTTON)
+    # =====================================================
+    with st.container(border=True):
+        st.subheader("Full NPC (Identity + Emotion + Motivation & Talent)")
+
+        if st.button("ROLL FULL NPC", key="btn_full_npc"):
+
+            # ---------- Identity ----------
+            behavior = roll_table("npc_behavior", log=False)
+            attitude = roll_table("npc_attitude", log=False)
+            reaction = roll_table("npc_reactions", log=False)
+            gender = roll_table("npc_gender", log=False)
+            age = roll_table("npc_age", log=False)
+            descriptor = roll_table("npc_descriptor", log=False)
+            first = roll_table("npc_name", log=False)
+            last = roll_table("npc_surname", log=False)
+            nature = roll_table("npc_nature", log=False)
+            quirks = roll_table("npc_quirks", log=False)
+            full_name = f"{first} {last}"
+
+            persist_npc("Name", full_name)
+            persist_npc("Behavior", behavior)
+            persist_npc("Attitude", attitude)
+            persist_npc("Reaction", reaction)
+            persist_npc("Gender", gender)
+            persist_npc("Age", age)
+            persist_npc("Descriptor", descriptor)
+            persist_npc("Nature", nature)
+            persist_npc("Quirks", quirks)
+
+            # ---------- Emotional State ----------
+            how_feels = roll_table("npc_how_feels", log=False)
+            persist_npc("How Feels", how_feels)
+
+            emo_table, emo_label = resolve_feeling_table(how_feels)
+            emo_detail = None
+            if emo_table:
+                emo_detail = roll_table(emo_table, log=False)
+                persist_npc(f"{emo_label} Detail", emo_detail)
+
+            # ---------- Motivation & Talent ----------
+            motivation = roll_table("npc_motivation", log=False)
+            relations = roll_table("npc_relations", log=False)
+            talent = roll_table("npc_talent", log=False)
+
+            persist_npc("Motivation", motivation)
+            persist_npc("Relations", relations)
+            persist_npc("Talent", talent)
+
+            # ---------- DISPLAY BLOCK ----------
+            emo_section = (
+                f"- **How They Feel:** {how_feels}\n"
+                + (f"- **{emo_label} Detail:** {emo_detail}\n" if emo_detail else "")
+            )
+
+            summary = f"""
+### NPC Summary
+
+**Identity**
+- **Name:** {full_name}
+- **Gender:** {gender}
+- **Age:** {age}
+- **Descriptor:** {descriptor}
+- **Behavior:** {behavior}
+- **Attitude:** {attitude}
+- **Reaction:** {reaction}
+- **Nature:** {nature}
+- **Quirks:** {quirks}
+
+**Emotional State**
+{emo_section}
+
+**Motivation & Social**
+- **Motivation:** {motivation}
+- **Relations:** {relations}
+- **Talent:** {talent}
+"""
+
+            st.success(summary)
+            add_to_log(summary)
 
 # ---------- TAB: ANTAGONIST ----------
 with tabs[6]:
