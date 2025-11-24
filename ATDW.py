@@ -24,6 +24,12 @@ def add_to_persistent(group_id, text):
         st.session_state["persistent"][group_id] = []
     st.session_state["persistent"][group_id].append(text)
 
+def clear_persistent(group_id):
+    """Clear one persistent data pool."""
+    ensure_state()
+    if group_id in st.session_state["persistent"]:
+        st.session_state["persistent"][group_id] = []
+
 def add_to_log(text: str):
     """Append a structured log entry (text + note)."""
     ensure_state()
