@@ -229,16 +229,6 @@ if "persistent" not in st.session_state:
 if "log" not in st.session_state:
     st.session_state["log"] = []  # stores mission log entries
 
-# ---------- BASIC UTILITIES ----------
-def add_to_log(result):
-    """Add generated data to the mission log."""
-    st.session_state["log"].append(result)
-
-def clear_persistent(group_id):
-    """Clear one persistent data pool."""
-    if group_id in st.session_state["persistent"]:
-        st.session_state["persistent"][group_id] = []
-
 # ---------- DEFINE PRIMARY TABS ----------
 tab_labels = [
     "Encounter", "Health", "Mission", "Exploration",
