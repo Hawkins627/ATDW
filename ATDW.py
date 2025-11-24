@@ -1063,7 +1063,7 @@ with tabs[4]:
             # persistent
             add_to_persistent(3, f"Designation: {designation}")
             add_to_persistent(3, f"Diameter: {diameter}")
-            add_to_persistent(3, f"Atmosphere: {amtosphere}")
+            add_to_persistent(3, f"Atmosphere: {atmosphere}")
             add_to_persistent(3, f"Climate: {climate}")
             add_to_persistent(3, f"Biome Diversity: {diversity}")
             add_to_persistent(3, f"Sky: {sky}")
