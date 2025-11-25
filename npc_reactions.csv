@@ -1,0 +1,33 @@
+attitude,result
+Hostile,Attacks without warning
+Hostile,Attacks without warning
+Hostile,Threatens or harasses
+Hostile,Threatens or harasses
+Hostile,Demands something
+Hostile,Demands something
+Hostile,Denies access
+Hostile,Denies access
+Hostile,Tries to trick or deceive
+Hostile,Tries to trick or deceive
+
+Neutral,Is uninterested
+Neutral,Is uninterested
+Neutral,Offers a job or needs help with a task
+Neutral,Offers a job or needs help with a task
+Neutral,Opens themself to trade (items or information)
+Neutral,Opens themself to trade (items or information)
+Neutral,Needs a favor or has a job
+Neutral,Needs a favor or has a job
+Neutral,Tries to trick or deceive
+Neutral,Tries to trick or deceive
+
+Friendly,Talks or gossips
+Friendly,Talks or gossips
+Friendly,Offers direct assistance (gear, info, medical care, etc.)
+Friendly,Offers direct assistance (gear, info, medical care, etc.)
+Friendly,Asks to trade
+Friendly,Asks to trade
+Friendly,Offers gifts (basic gear, cash, etc.)
+Friendly,Offers gifts (basic gear, cash, etc.)
+Friendly,Wants to share a lead or clue
+Friendly,Wants to share a lead or clue
