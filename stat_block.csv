@@ -1,0 +1,5 @@
+difficulty,rolls,str,dex,con,wil,int,cha,wounds,awareness,armor,defense,attack_skill_1,damage_1,attack_skill_2,damage_2,range,reactions
+easy,1,8,4,8,6,6,0,1,5,-2,-1,+2,(D10)+5,,,"(D10)+1","[Bloodied] +2 Damage; [Cornered] +2 Defense; [Overwhelmed] Attempts to flee"
+standard,1,12,12,10,10,10,8,1,10,2,2,+5,(D10)+5,"+2","2D12","(D10)+2","[Bloodied] +2 Damage OR Attempts to flee; [Cornered] +2 Defense OR +2 Attack Skill; [Overwhelmed] -2 Defense OR Attempts to flee"
+elite,2,14,14,12,12,8,0,2,15,4,4,+8,2D12,"+4","(2D10)+5","(D10)+3","[Bloodied] +5 Damage OR +2 Defense; [Cornered] +5 Defense OR +5 Attack Skill; [Overwhelmed] -2 Defense OR Attempts to flee"
+overwhelming,3,16,14,15,14,8,0,3,20,5,5,+10,3D12,"+5","(3D10)+5","(D10)+3","[Bloodied] +7 Damage OR +5 Defense; [Cornered] +7 Defense OR +7 Attack Skill; [Overwhelmed] -2 Defense OR Attempts to flee"
