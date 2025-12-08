@@ -56,17 +56,28 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             # fallback if columns differ
             vals = [v for k, v in row.items() if k != row.index.name]
             return " - ".join(str(v) for v in vals)
-    
+
+    # --- Special case: NPC first names ---
+    # npc_name.csv has columns like: name, gender
+    if table_name == "npc_name":
+        # Prefer explicit "name" column if present
+        if "name" in row.index:
+            return str(row["name"])
+        # Fallback: first non-NaN column
+        for c in row.index:
+            val = row[c]
+            if pd.notna(val):
+                return str(val)
+        return "Unknown Name"
+
     # --- Special case handling: Random Site Name ---
     if table_name == "random_site_name":
         first = str(row.get("first_syllable", "")).strip()
         second = str(row.get("second_syllable", "")).strip()
         number = str(row.get("numeric", "")).strip()
-    
-        # Build the final name:
-        # Remove internal hyphen between syllables (you requested no hyphen)
-        combined = f"{first}{second}-{number}"
 
+        # Build the final name (no internal hyphen between syllables)
+        combined = f"{first}{second}-{number}"
         return combined
 
     # Preferred formatting if present
@@ -105,11 +116,11 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
 
         # 1. Terrain difficulty tables with previous_hex
         if "previous_hex" in df.columns:
-            df = df[df["previous_hex"].str.lower() == option.lower()]
+            df = df[df["previous_hex"].str.lower() == str(option).lower()]
 
         # 2. Creature type filters
         elif "creature_type" in df.columns:
-            df = df[df["creature_type"].str.lower() == option.lower()]
+            df = df[df["creature_type"].str.lower() == str(option).lower()]
 
         # 3. Difficulty filters (used by hacking)
         elif "difficulty" in df.columns:
@@ -117,7 +128,11 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
 
         # 4. Category-based filters (Situation Nouns, etc.)
         elif "category" in df.columns:
-            df = df[df["category"].str.lower() == option.lower()]
+            df = df[df["category"].str.lower() == str(option).lower()]
+
+        # 5. Gender-based filters (npc_name)
+        elif "gender" in df.columns:
+            df = df[df["gender"].str.lower() == str(option).lower()]
 
     # =====================================================
     # Handle empty dataframe
@@ -1331,6 +1346,18 @@ with tabs[5]:
             return "npc_angry", "Angry"
         return None, None
 
+        # Helper to map rolled npc_gender text → name-gender key in npc_name.csv
+    def resolve_name_gender_key(gender_text: str):
+        txt = gender_text.lower()
+        if "male" in txt:
+            return "male"
+        if "female" in txt:
+            return "female"
+        if "andro" in txt:
+            return "androgynous"
+        # Fallback: no filter, use any name
+        return None
+
     # Convenience: store a labeled line in Persistent 6
     def persist_npc(label: str, value: str):
         add_to_persistent(6, f"{label}: {value}")
@@ -1343,7 +1370,7 @@ with tabs[5]:
 
         col_left, col_right = st.columns(2)
 
-        # ---------- LEFT: Behavior, Attitude, Reactions, Gender, Age ----------
+        # ---------- LEFT: Behavior, Attitude, Reaction, Gender, Age ----------
         with col_left:
 
             if st.button("Behavior", key="btn_npc_behavior"):
@@ -1351,12 +1378,18 @@ with tabs[5]:
                 persist_npc("Behavior", result)
                 st.success(result)
 
-            if st.button("Attitude + Reaction", key="btn_npc_attitude_reaction"):
+            if st.button("Attitude", key="btn_npc_attitude"):
                 attitude = roll_table("npc_attitude", log=True)
-                reaction = roll_table("npc_reactions", log=True)
                 persist_npc("Attitude", attitude)
+                st.success(attitude)
+
+            # Reaction is explicitly "at the table" / interaction-based
+            if st.button("Reaction (On-the-spot)", key="btn_npc_reaction"):
+                reaction = roll_table("npc_reactions", log=True)
+                # You can keep or remove this from persistent;
+                # leaving it in can be nice to remember how they responded
                 persist_npc("Reaction", reaction)
-                st.success(f"Attitude: {attitude}\nReaction: {reaction}")
+                st.success(reaction)
 
             if st.button("Gender", key="btn_npc_gender"):
                 result = roll_table("npc_gender", log=True)
@@ -1402,25 +1435,28 @@ with tabs[5]:
         st.markdown("### Full NPC Identity (Combined 13)")
 
         if st.button("ROLL FULL NPC IDENTITY", key="btn_full_npc_identity"):
-
             behavior = roll_table("npc_behavior", log=False)
             attitude = roll_table("npc_attitude", log=False)
-            reaction = roll_table("npc_reactions", log=False)
             gender = roll_table("npc_gender", log=False)
             age = roll_table("npc_age", log=False)
             descriptor = roll_table("npc_descriptor", log=False)
-            first = roll_table("npc_name", log=False)
+
+            # Use gender result to choose appropriate first name
+            gender_key = resolve_name_gender_key(gender)
+            if gender_key:
+                first = roll_table("npc_name", log=False, option=gender_key)
+            else:
+                first = roll_table("npc_name", log=False)
+
             last = roll_table("npc_surname", log=False)
             nature = roll_table("npc_nature", log=False)
             quirks = roll_table("npc_quirks", log=False)
-
             full_name = f"{first} {last}"
 
             # Persist with labels
             persist_npc("Name", full_name)
             persist_npc("Behavior", behavior)
             persist_npc("Attitude", attitude)
-            persist_npc("Reaction", reaction)
             persist_npc("Gender", gender)
             persist_npc("Age", age)
             persist_npc("Descriptor", descriptor)
@@ -1435,7 +1471,6 @@ with tabs[5]:
 • **Descriptor:** {descriptor}  
 • **Behavior:** {behavior}  
 • **Attitude:** {attitude}  
-• **Reaction:** {reaction}  
 • **Nature:** {nature}  
 • **Quirks:** {quirks}  
 """
@@ -1604,11 +1639,16 @@ with tabs[5]:
             # ---------- Identity ----------
             behavior = roll_table("npc_behavior", log=False)
             attitude = roll_table("npc_attitude", log=False)
-            reaction = roll_table("npc_reactions", log=False)
             gender = roll_table("npc_gender", log=False)
             age = roll_table("npc_age", log=False)
             descriptor = roll_table("npc_descriptor", log=False)
-            first = roll_table("npc_name", log=False)
+
+            gender_key = resolve_name_gender_key(gender)
+            if gender_key:
+                first = roll_table("npc_name", log=False, option=gender_key)
+            else:
+                first = roll_table("npc_name", log=False)
+
             last = roll_table("npc_surname", log=False)
             nature = roll_table("npc_nature", log=False)
             quirks = roll_table("npc_quirks", log=False)
@@ -1617,7 +1657,6 @@ with tabs[5]:
             persist_npc("Name", full_name)
             persist_npc("Behavior", behavior)
             persist_npc("Attitude", attitude)
-            persist_npc("Reaction", reaction)
             persist_npc("Gender", gender)
             persist_npc("Age", age)
             persist_npc("Descriptor", descriptor)
@@ -1659,7 +1698,6 @@ with tabs[5]:
 - **Descriptor:** {descriptor}
 - **Behavior:** {behavior}
 - **Attitude:** {attitude}
-- **Reaction:** {reaction}
 - **Nature:** {nature}
 - **Quirks:** {quirks}
 
