@@ -1714,11 +1714,341 @@ with tabs[5]:
 
 # ---------- TAB: ANTAGONIST ----------
 with tabs[6]:
+
     st.header("Antagonist Generator")
-    if st.button("Generate Antagonist"):
-        st.success(roll_table("Antagonist", group=6, log=True))
-    if st.button("Generate Stat Block"):
-        st.success(roll_table("Stat Block", group=6))
+    ensure_state()
+
+    # Convenience: store labeled lines in Persistent 5
+    def persist_antagonist(label: str, value: str):
+        add_to_persistent(5, f"{label}: {value}")
+
+    # --------------------------------------------------
+    # Global options that drive several tables
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Antagonist Options")
+
+        opt_col1, opt_col2, opt_col3 = st.columns(3)
+
+        with opt_col1:
+            env_choice = st.selectbox(
+                "Environment (for Creature Type)",
+                ["Planet Surface", "Off-Planet"],
+                index=0,
+                help="Used to filter the creature_type table."
+            )
+
+        with opt_col2:
+            diff_choice = st.selectbox(
+                "Threat Level / Difficulty",
+                ["Easy", "Standard", "Elite", "Overwhelming"],
+                index=1,
+                help="Used by stat_block, enemy_role, guardian, known threats, and unique traits."
+            )
+
+        with opt_col3:
+            limb_env_choice = st.selectbox(
+                "Locomotion (for Limbs)",
+                ["Terrestrial", "Aquatic"],
+                index=0,
+                help="Used to filter the creature_limbs table."
+            )
+
+    # --------------------------------------------------
+    # SECTION 1 — CREATURE BASICS & STAT BLOCK
+    # creature_type, size, stat_block, drive, intelligence, enemy_role
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Creature Basics & Stat Block")
+
+        basics_left, basics_right = st.columns(2)
+
+        with basics_left:
+            if st.button("Creature Type", key="btn_creature_type"):
+                result = roll_table("creature_type", group=5, log=True, option=env_choice)
+                persist_antagonist("Creature Type", result)
+                st.success(result)
+
+            if st.button("Size", key="btn_creature_size"):
+                result = roll_table("size", group=5, log=True)
+                persist_antagonist("Size", result)
+                st.success(result)
+
+            if st.button("Creature Drive", key="btn_creature_drive"):
+                result = roll_table("creature_drive", group=5, log=True)
+                persist_antagonist("Drive", result)
+                st.success(result)
+
+            if st.button("Creature Intelligence", key="btn_creature_intelligence"):
+                result = roll_table("creature_intelligence", group=5, log=True)
+                persist_antagonist("Intelligence", result)
+                st.success(result)
+
+        with basics_right:
+            if st.button("Stat Block", key="btn_creature_stat_block"):
+                result = roll_table("stat_block", group=5, log=True, option=diff_choice)
+                persist_antagonist(f"{diff_choice} Stat Block", result)
+                st.success(result)
+
+            if st.button("Enemy Role", key="btn_enemy_role"):
+                # enemy_role depends on the chosen difficulty / stat block
+                result = roll_table("enemy_role", group=5, log=True, option=diff_choice)
+                persist_antagonist("Enemy Role", result)
+                st.success(result)
+
+    # --------------------------------------------------
+    # SECTION 2 — TRAITS, ABILITIES, PSYCHIC POWERS
+    # unique_trait, enemy_ability, psychic, psychic_ability
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Traits, Abilities & Psychic Powers")
+
+        traits_left, traits_right = st.columns(2)
+
+        # Easy vs Other for unique trait is driven by difficulty
+        trait_option = "Easy" if diff_choice == "Easy" else "Other"
+
+        with traits_left:
+            if st.button("Unique Trait", key="btn_unique_trait"):
+                result = roll_table("unique_trait", group=5, log=True, option=trait_option)
+                persist_antagonist("Unique Trait", result)
+                st.success(result)
+
+            if st.button("Enemy Ability", key="btn_enemy_ability"):
+                result = roll_table("enemy_ability", group=5, log=True)
+                persist_antagonist("Enemy Ability", result)
+                st.success(result)
+
+        with traits_right:
+            if st.button("Psychic Template", key="btn_psychic_template"):
+                # This is the general psychic creature table (Combined 18)
+                result = roll_table("psychic", group=5, log=True)
+                persist_antagonist("Psychic Template", result)
+                st.success(result)
+
+            if st.button("Psychic Ability", key="btn_psychic_ability"):
+                result = roll_table("psychic_ability", group=5, log=True)
+                persist_antagonist("Psychic Ability", result)
+                st.success(result)
+
+    # --------------------------------------------------
+    # SECTION 3 — APPEARANCE & ANATOMY
+    # creature_appearance, cover, unique_feature, limbs, mouth, eyes_number, eyes
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Appearance & Anatomy")
+
+        app_left, app_right = st.columns(2)
+
+        with app_left:
+            if st.button("Overall Appearance", key="btn_creature_appearance"):
+                result = roll_table("creature_appearance", group=5, log=True)
+                persist_antagonist("Appearance", result)
+                st.success(result)
+
+            if st.button("Cover / Natural Armor", key="btn_creature_cover"):
+                result = roll_table("creature_cover", group=5, log=True)
+                persist_antagonist("Cover", result)
+                st.success(result)
+
+            if st.button("Unique Feature", key="btn_creature_unique_feature"):
+                result = roll_table("creature_unique_feature", group=5, log=True)
+                persist_antagonist("Unique Feature", result)
+                st.success(result)
+
+        with app_right:
+            if st.button("Limbs", key="btn_creature_limbs"):
+                result = roll_table("creature_limbs", group=5, log=True, option=limb_env_choice)
+                persist_antagonist("Limbs", result)
+                st.success(result)
+
+            if st.button("Mouth", key="btn_creature_mouth"):
+                result = roll_table("creature_mouth", group=5, log=True)
+                persist_antagonist("Mouth", result)
+                st.success(result)
+
+            if st.button("Eyes (Number + Detail)", key="btn_creature_eyes"):
+                eyes_number = roll_table("creature_eyes_number", group=5, log=True)
+                eyes_detail = roll_table("creature_eyes", group=5, log=True, option=eyes_number)
+                persist_antagonist("Eyes", f"{eyes_number} — {eyes_detail}")
+                st.success(f"{eyes_number} — {eyes_detail}")
+
+    # --------------------------------------------------
+    # SECTION 4 — NAMES
+    # creature_name_syllables, creature_name
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Creature Names")
+
+        name_left, name_right = st.columns(2)
+
+        with name_left:
+            if st.button("Random Creature Name", key="btn_creature_name"):
+                result = roll_table("creature_name", group=5, log=True)
+                persist_antagonist("Name", result)
+                st.success(result)
+
+        with name_right:
+            if st.button("Name Syllables (DIY)", key="btn_creature_name_syllables"):
+                # For GMs who want to assemble their own names
+                result = roll_table("creature_name_syllables", group=5, log=True)
+                st.success(result)
+
+    # --------------------------------------------------
+    # SECTION 5 — GUARDIANS & KNOWN THREATS
+    # guardian, known_threat, plus behavior tables for the named threats
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Guardians & Known Threats")
+
+        guard_col, threat_col = st.columns(2)
+
+        with guard_col:
+            guardian_diff = st.selectbox(
+                "Guardian Difficulty",
+                ["Easy", "Standard", "Elite", "Overwhelming"],
+                index=1,
+                key="guardian_diff"
+            )
+            if st.button("Roll Guardian", key="btn_guardian"):
+                result = roll_table("guardian", group=5, log=True, option=guardian_diff)
+                persist_antagonist("Guardian", result)
+                st.success(result)
+
+        with threat_col:
+            threat_choice = st.selectbox(
+                "Known Threat",
+                ["Spitter", "Clobber", "Taker", "Psybane", "Bomber", "Cecaelia"],
+                key="known_threat_choice"
+            )
+            if st.button("Roll Known Threat", key="btn_known_threat"):
+                result = roll_table("known_threat", group=5, log=True, option=threat_choice)
+                persist_antagonist("Known Threat", result)
+                st.success(result)
+
+            # Optional: specific behavior tables for each named threat
+            if st.button("Threat Behavior", key="btn_threat_behavior"):
+                behavior_table_map = {
+                    "Spitter": "spitter_behavior",
+                    "Clobber": "clobber_behavior",
+                    "Taker": "taker_behavior",
+                    "Psybane": "psybane_behavior",
+                    "Bomber": "bomber_behavior",
+                    "Cecaelia": "cecaelia_behavior",
+                }
+                table_name = behavior_table_map.get(threat_choice)
+                if table_name:
+                    result = roll_table(table_name, group=None, log=False)
+                    st.success(result)
+                else:
+                    st.error("No behavior table found for that threat.")
+
+    # --------------------------------------------------
+    # SECTION 6 — DEMORALIZED REACTIONS
+    # demoralized_reaction_humanoid, demoralized_reaction_other
+    # (no persistent storage or logging)
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Demoralized Reactions")
+
+        demo_h, demo_o = st.columns(2)
+
+        with demo_h:
+            if st.button("Humanoid", key="btn_demo_humanoid"):
+                result = roll_table("demoralized_reaction_humanoid", log=False)
+                st.success(result)
+
+        with demo_o:
+            if st.button("Other Creature", key="btn_demo_other"):
+                result = roll_table("demoralized_reaction_other", log=False)
+                st.success(result)
+
+    # --------------------------------------------------
+    # SECTION 7 — FULL ANTAGONIST (Combined 16)
+    # Chains all the core tables into one creature and logs a single summary.
+    # --------------------------------------------------
+    st.markdown("---")
+    st.markdown("### Full Antagonist (Combined 16)")
+
+    if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
+
+        # ----- Core identity & stats -----
+        creature_type = roll_table("creature_type", log=False, option=env_choice)
+        size = roll_table("size", log=False)
+        drive = roll_table("creature_drive", log=False)
+        intelligence = roll_table("creature_intelligence", log=False)
+        stat_block = roll_table("stat_block", log=False, option=diff_choice)
+        enemy_role = roll_table("enemy_role", log=False, option=diff_choice)
+
+        # Traits / abilities
+        trait_option = "Easy" if diff_choice == "Easy" else "Other"
+        unique_trait = roll_table("unique_trait", log=False, option=trait_option)
+        enemy_ability = roll_table("enemy_ability", log=False)
+        psychic_template = roll_table("psychic", log=False)
+        psychic_ability = roll_table("psychic_ability", log=False)
+
+        # Appearance & anatomy
+        appearance = roll_table("creature_appearance", log=False)
+        cover = roll_table("creature_cover", log=False)
+        unique_feature = roll_table("creature_unique_feature", log=False)
+        limbs = roll_table("creature_limbs", log=False, option=limb_env_choice)
+        mouth = roll_table("creature_mouth", log=False)
+        eyes_number = roll_table("creature_eyes_number", log=False)
+        eyes_detail = roll_table("creature_eyes", log=False, option=eyes_number)
+
+        # Name
+        creature_name = roll_table("creature_name", log=False)
+
+        # ----- Persist key fields to pool 5 -----
+        persist_antagonist("Name", creature_name)
+        persist_antagonist("Creature Type", creature_type)
+        persist_antagonist("Size", size)
+        persist_antagonist(f"{diff_choice} Stat Block", stat_block)
+        persist_antagonist("Drive", drive)
+        persist_antagonist("Intelligence", intelligence)
+        persist_antagonist("Enemy Role", enemy_role)
+        persist_antagonist("Unique Trait", unique_trait)
+        persist_antagonist("Enemy Ability", enemy_ability)
+        persist_antagonist("Psychic Template", psychic_template)
+        persist_antagonist("Psychic Ability", psychic_ability)
+        persist_antagonist("Appearance", appearance)
+        persist_antagonist("Cover", cover)
+        persist_antagonist("Unique Feature", unique_feature)
+        persist_antagonist("Limbs", limbs)
+        persist_antagonist("Mouth", mouth)
+        persist_antagonist("Eyes", f"{eyes_number} — {eyes_detail}")
+
+        # ----- Build a stat-block-style summary -----
+        summary = f"""
+### {creature_name.upper()}
+
+**Creature Type:** {creature_type}  
+**Size:** {size}  
+
+**Drive:** {drive}  
+**Intelligence:** {intelligence}  
+**Enemy Role:** {enemy_role}  
+
+**Stat Block — {diff_choice}**  
+{stat_block}
+
+**Traits & Abilities**  
+- **Unique Trait:** {unique_trait}  
+- **Enemy Ability:** {enemy_ability}  
+- **Psychic Template:** {psychic_template}  
+- **Psychic Ability:** {psychic_ability}  
+
+**Appearance**  
+- **Overall Appearance:** {appearance}  
+- **Cover / Natural Armor:** {cover}  
+- **Unique Feature:** {unique_feature}  
+- **Limbs:** {limbs}  
+- **Mouth:** {mouth}  
+- **Eyes:** {eyes_number} — {eyes_detail}  
+"""
+
+        st.success(summary)
+        add_to_log(summary)
 
 # ---------- TAB: RETURN TO BASE ----------
 with tabs[7]:
