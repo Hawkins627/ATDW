@@ -1335,65 +1335,6 @@ with tabs[5]:
     def persist_npc(label: str, value: str):
         add_to_persistent(6, f"{label}: {value}")
 
-    # ---------- NEW HELPERS: gender-aware, cleaned first names ----------
-
-    def clean_first_name(raw: str) -> str:
-        """Remove gender tags like '– female' from the first-name entry."""
-        if not isinstance(raw, str):
-            raw = str(raw)
-
-        # Strip everything after an en-dash or hyphen
-        for sep in ["–", "-"]:
-            if sep in raw:
-                raw = raw.split(sep)[0]
-        return raw.strip()
-
-    def normalize_gender_for_name(gender_text: str | None):
-        """Map rolled gender string → allowed name tags in npc_name."""
-        if not gender_text:
-            return None
-        g = gender_text.lower()
-
-        # Adjust these tag lists to match the second column of npc_name.csv
-        if "male" in g:
-            return ["male", "masc", "androgynous", "neutral", "nb"]
-        if "female" in g or "fem" in g:
-            return ["female", "fem", "androgynous", "neutral", "nb"]
-        if "andro" in g or "non-binary" in g or "nonbinary" in g:
-            return ["androgynous", "neutral", "nb"]
-
-        # Fallback: don't filter by tag
-        return None
-
-    def roll_first_name_for_gender(gender_text: str | None) -> str:
-        """
-        Roll a first name from npc_name.csv using the gender column (2nd col)
-        when possible, and strip out any '– male/female' markers.
-        """
-        df = load_table("npc_name")  # uses your existing table loader
-        cols = list(df.columns)
-        if not cols:
-            return "Unknown"
-
-        name_col = cols[0]
-        tag_col = cols[1] if len(cols) > 1 else None
-
-        allowed_tags = normalize_gender_for_name(gender_text)
-
-        if tag_col and allowed_tags is not None:
-            # Case-insensitive filter by tag column
-            lower_tags = df[tag_col].astype(str).str.lower()
-            mask = lower_tags.isin([t.lower() for t in allowed_tags])
-            candidates = df[mask]
-            if candidates.empty:
-                candidates = df  # fallback to whole table
-        else:
-            candidates = df
-
-        row = candidates.sample(1).iloc[0]
-        raw_name = str(row[name_col])
-        return clean_first_name(raw_name)
-
     # =====================================================
     # SECTION 1 — NPC IDENTITY (Combined 13)
     # =====================================================
@@ -1402,7 +1343,7 @@ with tabs[5]:
 
         col_left, col_right = st.columns(2)
 
-        # ---------- LEFT: Behavior, Attitude, Reaction, Gender, Age ----------
+        # ---------- LEFT: Behavior, Attitude, Reactions, Gender, Age ----------
         with col_left:
 
             if st.button("Behavior", key="btn_npc_behavior"):
@@ -1410,22 +1351,17 @@ with tabs[5]:
                 persist_npc("Behavior", result)
                 st.success(result)
 
-            # Attitude and Reaction are now fully separate
-            if st.button("Attitude", key="btn_npc_attitude"):
-                result = roll_table("npc_attitude", log=True)
-                persist_npc("Attitude", result)
-                st.success(result)
-
-            if st.button("Reaction (to PCs)", key="btn_npc_reaction"):
-                result = roll_table("npc_reactions", log=True)
-                persist_npc("Reaction", result)
-                st.success(result)
+            if st.button("Attitude + Reaction", key="btn_npc_attitude_reaction"):
+                attitude = roll_table("npc_attitude", log=True)
+                reaction = roll_table("npc_reactions", log=True)
+                persist_npc("Attitude", attitude)
+                persist_npc("Reaction", reaction)
+                st.success(f"Attitude: {attitude}\nReaction: {reaction}")
 
             if st.button("Gender", key="btn_npc_gender"):
-                gender = roll_table("npc_gender", log=True)
-                persist_npc("Gender", gender)
-                st.session_state["npc_gender_current"] = gender
-                st.success(gender)
+                result = roll_table("npc_gender", log=True)
+                persist_npc("Gender", result)
+                st.success(result)
 
             if st.button("Age", key="btn_npc_age"):
                 result = roll_table("npc_age", log=True)
@@ -1436,10 +1372,7 @@ with tabs[5]:
         with col_right:
 
             if st.button("First Name", key="btn_npc_name"):
-                gender = st.session_state.get("npc_gender_current")
-                if not gender:
-                    st.warning("Roll Gender first so the name can match it.")
-                first = roll_first_name_for_gender(gender)
+                first = roll_table("npc_name", log=True)
                 persist_npc("First Name", first)
                 st.success(first)
 
@@ -1472,18 +1405,12 @@ with tabs[5]:
 
             behavior = roll_table("npc_behavior", log=False)
             attitude = roll_table("npc_attitude", log=False)
-            # Reaction is intentionally NOT rolled here anymore
-
+            reaction = roll_table("npc_reactions", log=False)
             gender = roll_table("npc_gender", log=False)
-            st.session_state["npc_gender_current"] = gender
-
             age = roll_table("npc_age", log=False)
             descriptor = roll_table("npc_descriptor", log=False)
-
-            # Gender-aware, cleaned first name
-            first = roll_first_name_for_gender(gender)
+            first = roll_table("npc_name", log=False)
             last = roll_table("npc_surname", log=False)
-
             nature = roll_table("npc_nature", log=False)
             quirks = roll_table("npc_quirks", log=False)
 
@@ -1493,13 +1420,14 @@ with tabs[5]:
             persist_npc("Name", full_name)
             persist_npc("Behavior", behavior)
             persist_npc("Attitude", attitude)
+            persist_npc("Reaction", reaction)
             persist_npc("Gender", gender)
             persist_npc("Age", age)
             persist_npc("Descriptor", descriptor)
             persist_npc("Nature", nature)
             persist_npc("Quirks", quirks)
 
-            # Display nicely (name on top) — no Reaction line
+            # Display nicely (name on top)
             identity_block = f"""
 • **Name:** {full_name}  
 • **Gender:** {gender}  
@@ -1507,6 +1435,7 @@ with tabs[5]:
 • **Descriptor:** {descriptor}  
 • **Behavior:** {behavior}  
 • **Attitude:** {attitude}  
+• **Reaction:** {reaction}  
 • **Nature:** {nature}  
 • **Quirks:** {quirks}  
 """
@@ -1521,6 +1450,7 @@ with tabs[5]:
 - **Descriptor:** {descriptor}
 - **Behavior:** {behavior}
 - **Attitude:** {attitude}
+- **Reaction:** {reaction}
 - **Nature:** {nature}
 - **Quirks:** {quirks}
 """
@@ -1674,17 +1604,12 @@ with tabs[5]:
             # ---------- Identity ----------
             behavior = roll_table("npc_behavior", log=False)
             attitude = roll_table("npc_attitude", log=False)
-            # Reaction deliberately not rolled here
-
+            reaction = roll_table("npc_reactions", log=False)
             gender = roll_table("npc_gender", log=False)
-            st.session_state["npc_gender_current"] = gender
-
             age = roll_table("npc_age", log=False)
             descriptor = roll_table("npc_descriptor", log=False)
-
-            first = roll_first_name_for_gender(gender)
+            first = roll_table("npc_name", log=False)
             last = roll_table("npc_surname", log=False)
-
             nature = roll_table("npc_nature", log=False)
             quirks = roll_table("npc_quirks", log=False)
             full_name = f"{first} {last}"
@@ -1692,6 +1617,7 @@ with tabs[5]:
             persist_npc("Name", full_name)
             persist_npc("Behavior", behavior)
             persist_npc("Attitude", attitude)
+            persist_npc("Reaction", reaction)
             persist_npc("Gender", gender)
             persist_npc("Age", age)
             persist_npc("Descriptor", descriptor)
@@ -1733,6 +1659,7 @@ with tabs[5]:
 - **Descriptor:** {descriptor}
 - **Behavior:** {behavior}
 - **Attitude:** {attitude}
+- **Reaction:** {reaction}
 - **Nature:** {nature}
 - **Quirks:** {quirks}
 
