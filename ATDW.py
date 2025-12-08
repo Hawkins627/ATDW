@@ -1485,7 +1485,6 @@ with tabs[5]:
 - **Descriptor:** {descriptor}
 - **Behavior:** {behavior}
 - **Attitude:** {attitude}
-- **Reaction:** {reaction}
 - **Nature:** {nature}
 - **Quirks:** {quirks}
 """
