@@ -2239,15 +2239,42 @@ if not st.session_state["persistent"]:
 else:
     for group_id, values in st.session_state["persistent"].items():
         st.sidebar.subheader(f"Persistent {group_id}")
-        html_items = "".join([f"<li>{item}</li>" for item in values])
-        st.sidebar.markdown(
-            f"""
-            <ul class="persist-tight">
-                {html_items}
-            </ul>
-            """,
-            unsafe_allow_html=True
-        )
+
+        # Break the list into "inline" chunks and "block" items.
+        # Inline items stay in a tight <ul>, multi-line items (like stat blocks)
+        # are rendered as full Markdown blocks so tables etc. work.
+        chunks = []
+        current_inline = []
+
+        for item in values:
+            text = str(item)
+            if "\n" in text:
+                # flush any accumulated inline items
+                if current_inline:
+                    chunks.append(("inline", current_inline))
+                    current_inline = []
+                chunks.append(("block", text))
+            else:
+                current_inline.append(text)
+
+        if current_inline:
+            chunks.append(("inline", current_inline))
+
+        # Render each chunk in order, preserving original sequence
+        for kind, content in chunks:
+            if kind == "inline":
+                html_items = "".join([f"<li>{it}</li>" for it in content])
+                st.sidebar.markdown(
+                    f"""
+                    <ul class="persist-tight">
+                        {html_items}
+                    </ul>
+                    """,
+                    unsafe_allow_html=True
+                )
+            else:  # "block"
+                st.sidebar.markdown(content)
+
         if st.sidebar.button(f"Clear Persistent {group_id}"):
             clear_persistent(group_id)
             st.rerun()
