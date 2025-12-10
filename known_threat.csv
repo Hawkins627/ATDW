@@ -1,7 +1,6 @@
-description
-"Spitter"
-"Clobber"
-"Taker"
-"Psybane"
-"Bomber"
-"Cecaelia"
+name,creature_type,str,dex,con,wil,int,cha,wounds,awareness,armor,defense,size,movement,attack_skill,attack_range,target_priority,recovery_reactions,unique_behavior,special_effect
+"Spitter","Aberration",12,12,10,10,8,0,3,3,0,4,"Standard human","3 hexes","+8","10","A Spitter randomly picks one target at the start of combat and attacks them until they're dead, then moves on to the next one.","[Bloodied] +2 Defense | [Cornered] +5 Attack Skill | [Overwhelmed] -2 Defense","Spitters always attempt to stay at least 3 hexes away from enemy combatants.",""
+"Clobber","Aberration",18,10,16,12,4,0,3,"-",6,0,"Larger than human","2 hexes","+8","Melee","A Clobber randomly picks a target at the start of combat as their target, after which it will go after the character that dealt the highest damage in the last round.","[Bloodied] +2 Attack Skill | [Cornered] +5 Attack Skill | [Overwhelmed] -2 Attack Skill","", ""
+"Taker","Aberration",14,14,12,12,12,0,3,3,0,2,"Standard human","3 hexes","+5","Melee","The Taker randomly picks a target at the start of combat, who they attempt to drag out of the Combat Grid.","[Bloodied] +2 Defense | [Cornered] +4 Attack Skill | [Overwhelmed] -2 Defense","", ""
+"Psybane","Aberration",8,8,12,18,18,0,3,"-",2,0,"Standard human","1 hex","+5","12","The Psybane will randomly pick a target at the start of each round.","[Bloodied] +2 Defense | [Cornered] +4 Attack Skill | [Overwhelmed] -2 Attack Skill","All characters adjacent to a Psybane suffer 2 Stress per round.",""
+"Bomber","Aberration",13,16,13,12,10,0,3,3,0,4,"Slightly smaller than a human","3 hexes","+8","10","Bombers always target the largest number of characters possible. If it can only hit a single character, it chooses one at random.","[Bloodied] +2 Defense | [Cornered] +5 Attack Skill | [Overwhelmed] -2 Defense","Bombers always attempt to stay at least 3 hexes away from enemy combatants.",""
