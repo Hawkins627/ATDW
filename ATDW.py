@@ -45,7 +45,7 @@ def load_table_df(table_name: str) -> pd.DataFrame:
 
 def format_row_for_display(table_name: str, row: pd.Series) -> str:
     """
-    Cleaner formatter + special case handling for Random Site Name.
+    Cleaner formatter + special case handling for several tables.
     """
 
     # --- SPECIAL CASE: planet_designation ---
@@ -70,7 +70,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 return str(val)
         return "Unknown Name"
 
-    # --- Special case handling: Random Site Name ---
+    # --- Special case: Random Site Name ---
     if table_name == "random_site_name":
         first = str(row.get("first_syllable", "")).strip()
         second = str(row.get("second_syllable", "")).strip()
@@ -80,7 +80,69 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         combined = f"{first}{second}-{number}"
         return combined
 
-    # Preferred formatting if present
+    # --- Special case: Stat Block (nice, labeled combat output) ---
+    if table_name == "stat_block":
+        def fmt(v):
+            if pd.isna(v):
+                return ""
+            if isinstance(v, float) and v.is_integer():
+                return str(int(v))
+            return str(v)
+
+        lines: list[str] = []
+
+        # Core attributes
+        lines.append("| STR | DEX | CON | WIL | INT | CHA |")
+        lines.append("| --- | --- | --- | --- | --- | --- |")
+        lines.append(
+            "| "
+            + " | ".join(
+                fmt(row.get(k, "")) for k in ["str", "dex", "con", "wil", "int", "cha"]
+            )
+            + " |"
+        )
+        lines.append("")
+
+        # Derived stats
+        lines.append("| Wounds | Awareness | Armor | Defense |")
+        lines.append("| --- | --- | --- | --- |")
+        lines.append(
+            "| "
+            + " | ".join(
+                fmt(row.get(k, "")) for k in ["wounds", "awareness", "armor", "defense"]
+            )
+            + " |"
+        )
+        lines.append("")
+
+        # Attacks
+        atk1 = row.get("attack_skill_1")
+        dmg1 = row.get("damage_1")
+        atk2 = row.get("attack_skill_2")
+        dmg2 = row.get("damage_2")
+        rng = row.get("range")
+
+        if pd.notna(atk1) or pd.notna(dmg1):
+            line = f"**Primary Attack:** +{fmt(atk1)} to hit, {fmt(dmg1)} damage"
+            if pd.notna(rng):
+                line += f", Range {fmt(rng)}"
+            lines.append(line)
+
+        if pd.notna(atk2) or pd.notna(dmg2):
+            line = f"**Secondary Attack:** +{fmt(atk2)} to hit, {fmt(dmg2)} damage"
+            if pd.notna(rng):
+                line += f", Range {fmt(rng)}"
+            lines.append(line)
+
+        # Recovery reactions
+        reactions = row.get("reactions")
+        if pd.notna(reactions):
+            lines.append("")
+            lines.append(f"**Recovery Reactions:** {reactions}")
+
+        return "\n".join(lines)
+
+    # --- Generic "title: description" formatting if present ---
     if "title" in row and "description" in row:
         title = str(row["title"]) if pd.notna(row["title"]) else ""
         desc = str(row["description"]) if pd.notna(row["description"]) else ""
@@ -91,7 +153,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         elif desc:
             return desc
 
-    # Fallback: ignore filter columns
+    # --- Fallback: ignore filter columns and join the rest ---
     ignore_cols = {"difficulty", "creature_type"}
     parts = [
         str(row[c])
