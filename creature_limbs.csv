@@ -1,0 +1,28 @@
+description,category
+None,number
+"Bipedal, mostly upright",number
+Quadrupedal,number
+Sexapedal,number
+None,aquatic
+None,aquatic
+Tentacles,aquatic
+Tentacles,aquatic
+Flippers,aquatic
+Flippers,aquatic
+None,hind
+Claws,hind
+Hooves,hind
+Feet,hind
+Talons,hind
+Tentacles,hind
+Same as Hind Limbs,fore
+Same as Hind Limbs,fore
+Same as Hind Limbs,fore
+Same as Hind Limbs,fore
+Same as Hind Limbs,fore
+None,fore
+Claws,fore
+Talons,fore
+Tentacles,fore
+Pincers,fore
+
