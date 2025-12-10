@@ -110,29 +110,58 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         return f"[ERROR] CSV for '{table_name}' not found."
 
     # =====================================================
-    # Apply option filters – in correct priority order
+    # Apply option filters – now with table-specific logic
     # =====================================================
     if option is not None:
+        opt_str = str(option)
 
-        # 1. Terrain difficulty tables with previous_hex
-        if "previous_hex" in df.columns:
-            df = df[df["previous_hex"].str.lower() == str(option).lower()]
+        # helper for category names: ignore spaces + hyphens, case-insensitive
+        def norm(s: str) -> str:
+            return "".join(str(s).lower().replace("-", " ").split())
 
-        # 2. Creature type filters
-        elif "creature_type" in df.columns:
-            df = df[df["creature_type"].str.lower() == str(option).lower()]
+        # ---------- Table-specific handling ----------
 
-        # 3. Difficulty filters (used by hacking)
-        elif "difficulty" in df.columns:
-            df = df[df["difficulty"] == option]
+        # STAT BLOCK: difficulty names like "Easy", "Standard", etc.
+        if table_name == "stat_block" and "difficulty" in df.columns:
+            df = df[df["difficulty"].str.lower() == opt_str.lower()]
 
-        # 4. Category-based filters (Situation Nouns, etc.)
-        elif "category" in df.columns:
-            df = df[df["category"].str.lower() == str(option).lower()]
+        # CREATURE TYPE: category values like "offplanet" / "planetsurface"
+        elif table_name == "creature_type" and "category" in df.columns:
+            norm_opt = norm(opt_str)
+            df = df[df["category"].apply(norm) == norm_opt]
 
-        # 5. Gender-based filters (npc_name)
-        elif "gender" in df.columns:
-            df = df[df["gender"].str.lower() == str(option).lower()]
+        # CREATURE LIMBS: "Terrestrial" vs "Aquatic"
+        elif table_name == "creature_limbs" and "category" in df.columns:
+            opt_low = opt_str.lower()
+            if opt_low.startswith("aquatic"):
+                # only aquatic rows
+                df = df[df["category"].str.lower() == "aquatic"]
+            else:
+                # "Terrestrial" (or anything else) → use the whole table
+                # (no category filter), so we still get a result.
+                pass
+
+        # ---------- Generic handling for all other tables ----------
+        else:
+            # 1. Terrain difficulty tables with previous_hex
+            if "previous_hex" in df.columns:
+                df = df[df["previous_hex"].str.lower() == opt_str.lower()]
+
+            # 2. Creature type filters
+            elif "creature_type" in df.columns:
+                df = df[df["creature_type"].str.lower() == opt_str.lower()]
+
+            # 3. Difficulty filters (used by hacking and others)
+            elif "difficulty" in df.columns:
+                df = df[df["difficulty"] == opt_str]
+
+            # 4. Category-based filters (Situation Nouns, etc.)
+            elif "category" in df.columns:
+                df = df[df["category"].str.lower() == opt_str.lower()]
+
+            # 5. Gender-based filters (npc_name)
+            elif "gender" in df.columns:
+                df = df[df["gender"].str.lower() == opt_str.lower()]
 
     # =====================================================
     # Handle empty dataframe
