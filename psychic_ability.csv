@@ -1,0 +1,11 @@
+description
+"BUFFER (Active): The next time the creature is hit by an attack, they suffer 50% less damage."
+"CONTROL (Active): The creature attempts to control the actions of its target. The target must pass a WIL check to avoid being controlled. A controlled creature may only attempt to free themselves every 2 rounds."
+"DISTRESSING (Passive): Any character in combat against this creature gains 1 Stress/round."
+"DREAD (Active): The creature triggers a roll on the Dread table."
+"INSPIRE TERROR (Active): The creature causes all characters within 30’ to gain 5 Stress."
+"MIND LASH (Active): The creature assaults its target’s mind—pass a WIL check or be Knocked Down."
+"ORGANIZE (Passive): This creature grants +2 Attack Skill and +1 WIL to all surrounding creatures (except the PCs)."
+"STUN (Active): This attack stuns the target for D4 rounds (target has 50% Stamina and can only take actions to move)."
+"SUFFOCATE (Active): The target suffers the effects of Suffocation (page 90)."
+"TELEKINETIC PUSH (Active): The creature pushes its target away with its mind, slamming them against the nearest solid object and causing 2D10 damage."
