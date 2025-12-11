@@ -18,6 +18,37 @@ def ensure_state():
     # Flat damage modifier from Size (and later other effects)
     if "damage_flat_modifier" not in st.session_state:
         st.session_state["damage_flat_modifier"] = 0
+    # INT override from creature_intelligence
+    if "int_stat_override" not in st.session_state:
+        st.session_state["int_stat_override"] = None
+
+def roll_int_from_expression(expr: str) -> int:
+    """
+    Roll expressions like '6-1D4' or '6+1D8' into a single INT value.
+    If parsing fails, returns 0.
+    """
+    s = str(expr).strip().upper()
+    if not s:
+        return 0
+
+    # Match things like '6-1D4' or '6+1D8'
+    m = re.match(r'^(\d+)\s*([+-])\s*(\d+)D(\d+)$', s)
+    if m:
+        base = int(m.group(1))
+        sign = 1 if m.group(2) == "+" else -1
+        num_dice = int(m.group(3))
+        die_size = int(m.group(4))
+
+        total = base
+        for _ in range(num_dice):
+            total += sign * random.randint(1, die_size)
+        return total
+
+    # Fallback: plain integer
+    try:
+        return int(s)
+    except ValueError:
+        return 0
 
 def add_to_persistent(group_id, text):
     """Store a text entry in a numbered persistent pool."""
@@ -94,6 +125,11 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         ]
         return " – ".join(parts) if parts else ""
 
+    # --- Special case: Creature Intelligence (hide numeric value) ---
+    if table_name == "creature_intelligence":
+        desc = str(row.get("description", "")).strip()
+        return desc
+        
     # --- Special case: Creature Name (combine syllables, no hyphens) ---
     if table_name == "creature_name":
         # Ignore any filter-ish columns if present
@@ -128,6 +164,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         # Flat damage modifier from Size (and future sources)
         ensure_state()
         flat_mod = st.session_state.get("damage_flat_modifier", 0)
+        int_override = st.session_state.get("int_stat_override", None)
 
         def adjust_damage_str(val):
             """Take a damage string like '(D10)+5' and apply flat_mod."""
@@ -172,16 +209,18 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
         lines: list[str] = []
 
-        # Core attributes
+        # Core attributes (INT can be overridden by creature_intelligence)
+        stat_keys = ["str", "dex", "con", "wil", "int", "cha"]
+        stat_values = []
+        for key in stat_keys:
+            if key == "int" and int_override is not None:
+                stat_values.append(fmt(int_override))
+            else:
+                stat_values.append(fmt(row.get(key, "")))
+
         lines.append("| STR | DEX | CON | WIL | INT | CHA |")
         lines.append("| --- | --- | --- | --- | --- | --- |")
-        lines.append(
-            "| "
-            + " | ".join(
-                fmt(row.get(k, "")) for k in ["str", "dex", "con", "wil", "int", "cha"]
-            )
-            + " |"
-        )
+        lines.append("| " + " | ".join(stat_values) + " |")
         lines.append("")
 
         # Derived stats
@@ -327,6 +366,11 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
             st.session_state["damage_flat_modifier"] = int(row["modifier"])
         except (TypeError, ValueError):
             st.session_state["damage_flat_modifier"] = 0
+
+    if table_name == "creature_intelligence" and "value" in row.index:
+        # Roll INT from the value expression (e.g. 6-1D4) and store override
+        ensure_state()
+        st.session_state["int_stat_override"] = roll_int_from_expression(row["value"])
 
     result = format_row_for_display(table_name, row)
 
@@ -2164,7 +2208,10 @@ with tabs[6]:
     st.markdown("### Full Antagonist (Combined 16)")
 
     if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
-
+        
+        ensure_state()
+        st.session_state["int_stat_override"] = None
+        
         # ----- Core identity & stats -----
         size = roll_table("size", log=False)  # sets damage_flat_modifier
         creature_type = roll_table("creature_type", log=False, option=env_choice)
