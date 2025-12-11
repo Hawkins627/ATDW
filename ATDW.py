@@ -1833,8 +1833,16 @@ with tabs[6]:
 
     # Convenience: store labeled lines in Persistent 5
     def persist_antagonist(label: str, value: str):
-        # Put the label on its own line, then the table Markdown
-        add_to_persistent(5, f"**{label}:**\n\n{value}")
+        """Store Antagonist pieces in Persistent 5.
+        - For the Stat Block, keep label on its own line so the Markdown table renders.
+        - For everything else, keep label and value on a single line to save space.
+        """
+        if "Stat Block" in label:
+            # Stat blocks include Markdown tables and need a blank line after the label
+            add_to_persistent(5, f"**{label}:**\n\n{value}")
+        else:
+            # Use HTML <strong> so bold works inside the <ul> we render later
+            add_to_persistent(5, f"<strong>{label}:</strong> {value}")
 
     # --------------------------------------------------
     # Global options that drive several tables
