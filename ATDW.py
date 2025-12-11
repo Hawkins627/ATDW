@@ -80,6 +80,28 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         combined = f"{first}{second}-{number}"
         return combined
 
+    # --- Special case: Creature Name (combine syllables, no hyphens) ---
+    if table_name == "creature_name":
+        # Ignore any filter-ish columns if present
+        ignore_cols = {"difficulty", "creature_type", "category"}
+
+        syllables = [
+            str(row[c])
+            for c in row.index
+            if c not in ignore_cols and pd.notna(row[c])
+        ]
+
+        raw = "".join(syllables)
+
+        # Strip spaces / hyphens and normalize capitalization
+        name = raw.replace(" ", "").replace("-", "").strip()
+        if not name:
+            return ""
+
+        name = name.lower()
+        return name[0].upper() + name[1:]
+
+    
     # --- Special case: Stat Block (nice, labeled combat output) ---
     if table_name == "stat_block":
         def fmt(v):
