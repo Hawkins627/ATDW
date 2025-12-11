@@ -401,19 +401,19 @@ st.markdown("""
 st.markdown("""
 <style>
 
-    /* EXTRA TIGHTENING — sidebar paragraphs */
+    /* Sidebar paragraphs – a bit tighter than default, but readable */
     section[data-testid="stSidebar"] p {
         margin-top: 0px !important;
-        margin-bottom: -6px !important;   /* yes, negative margin */
-        line-height: 0.9 !important;
+        margin-bottom: 2px !important;
+        line-height: 1.15 !important;
         padding: 0 !important;
     }
 
-    /* Reduce spacing inside sidebar text blocks */
+    /* Sidebar text blocks */
     section[data-testid="stSidebar"] .stText {
         margin: 0 !important;
         padding: 0 !important;
-        line-height: 0.9 !important;
+        line-height: 1.15 !important;
     }
 
 </style>
@@ -427,9 +427,9 @@ st.markdown(
             padding-left: 20px !important;
         }
         ul.persist-tight li {
-            margin: 0px !important;
+            margin: 0 0 2px 0 !important;   /* small gap between lines */
             padding: 0px !important;
-            line-height: 0.9em !important;   /* VERY tight */
+            line-height: 1.1em !important;  /* slightly taller lines */
         }
     </style>
     """,
