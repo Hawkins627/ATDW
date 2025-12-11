@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 import os
+import re
 from pathlib import Path
 
 # Folder that holds ALL your CSV tables, like:
@@ -14,6 +15,9 @@ def ensure_state():
         st.session_state["persistent"] = {}
     if "log" not in st.session_state:
         st.session_state["log"] = []
+    # Flat damage modifier from Size (and later other effects)
+    if "damage_flat_modifier" not in st.session_state:
+        st.session_state["damage_flat_modifier"] = 0
 
 def add_to_persistent(group_id, text):
     """Store a text entry in a numbered persistent pool."""
@@ -80,6 +84,16 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         combined = f"{first}{second}-{number}"
         return combined
 
+    # --- Special case: Size (hide modifier; we apply it to damage instead) ---
+    if table_name == "size":
+        ignore_cols = {"modifier"}
+        parts = [
+            str(row[c])
+            for c in row.index
+            if c not in ignore_cols and pd.notna(row[c])
+        ]
+        return " – ".join(parts) if parts else ""
+
     # --- Special case: Creature Name (combine syllables, no hyphens) ---
     if table_name == "creature_name":
         # Ignore any filter-ish columns if present
@@ -110,6 +124,51 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             if isinstance(v, float) and v.is_integer():
                 return str(int(v))
             return str(v)
+
+        # Flat damage modifier from Size (and future sources)
+        ensure_state()
+        flat_mod = st.session_state.get("damage_flat_modifier", 0)
+
+        def adjust_damage_str(val):
+            """Take a damage string like '(D10)+5' and apply flat_mod."""
+            s = fmt(val)
+            if not s or not flat_mod:
+                return s  # nothing to change
+
+            try:
+                mod = int(flat_mod)
+            except (TypeError, ValueError):
+                return s
+
+            s_clean = s.strip()
+
+            # Look for a trailing +N or -N
+            m = re.search(r'([+-])(\d+)\s*$', s_clean)
+            if m:
+                sign = m.group(1)
+                base_n = int(m.group(2))
+                if sign == "-":
+                    base_n = -base_n
+
+                new_n = base_n + mod
+
+                if new_n == 0:
+                    tail = ""
+                elif new_n > 0:
+                    tail = f"+{new_n}"
+                else:
+                    tail = str(new_n)  # includes '-'
+
+                base = s_clean[:m.start()]
+                return base + tail
+
+            # No existing flat term (e.g. '2D12') → just append the modifier
+            if mod > 0:
+                return f"{s_clean}+{mod}"
+            elif mod < 0:
+                return f"{s_clean}{mod}"
+            else:
+                return s_clean
 
         lines: list[str] = []
 
@@ -144,14 +203,17 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         dmg2 = row.get("damage_2")
         rng = row.get("range")
 
+        dmg1_text = adjust_damage_str(dmg1)
+        dmg2_text = adjust_damage_str(dmg2)
+
         if pd.notna(atk1) or pd.notna(dmg1):
-            line = f"**Primary Attack:** +{fmt(atk1)} to hit, {fmt(dmg1)} damage"
+            line = f"**Primary Attack:** +{fmt(atk1)} to hit, {dmg1_text} damage"
             if pd.notna(rng):
                 line += f", Range {fmt(rng)}"
             lines.append(line)
 
         if pd.notna(atk2) or pd.notna(dmg2):
-            line = f"**Secondary Attack:** +{fmt(atk2)} to hit, {fmt(dmg2)} damage"
+            line = f"**Secondary Attack:** +{fmt(atk2)} to hit, {dmg2_text} damage"
             if pd.notna(rng):
                 line += f", Range {fmt(rng)}"
             lines.append(line)
@@ -257,6 +319,15 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     # Random row → formatted text
     # =====================================================
     row = df.sample(1).iloc[0]
+
+    # Table-specific side effects BEFORE formatting
+    if table_name == "size" and "modifier" in row.index:
+        # Store this as the current flat damage modifier
+        try:
+            st.session_state["damage_flat_modifier"] = int(row["modifier"])
+        except (TypeError, ValueError):
+            st.session_state["damage_flat_modifier"] = 0
+
     result = format_row_for_display(table_name, row)
 
     # =====================================================
@@ -2095,8 +2166,8 @@ with tabs[6]:
     if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
 
         # ----- Core identity & stats -----
+        size = roll_table("size", log=False)  # sets damage_flat_modifier
         creature_type = roll_table("creature_type", log=False, option=env_choice)
-        size = roll_table("size", log=False)
         drive = roll_table("creature_drive", log=False)
         intelligence = roll_table("creature_intelligence", log=False)
         stat_block = roll_table("stat_block", log=False, option=diff_choice)
