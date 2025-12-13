@@ -207,6 +207,32 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             else:
                 return s_clean
 
+        def parse_randomize_reactions(text: str):
+            """
+            Split '[Bloodied] A OR B; [Cornered] C OR D; ...'
+            into bullet lines, picking ONE option per status.
+            """
+            if not isinstance(text, str) or not text.strip():
+                return []
+
+            segments = [seg.strip() for seg in text.split(";") if seg.strip()]
+            out = []
+
+            for seg in segments:
+                m = re.match(r"\[(.*?)\]\s*(.*)", seg)
+                if not m:
+                    continue
+                status = m.group(1).strip()
+                rest = m.group(2).strip()
+                if not rest:
+                    continue
+
+                options = [opt.strip() for opt in rest.split(" OR ") if opt.strip()]
+                choice = random.choice(options) if options else rest
+                out.append(f"- **[{status}]** {choice}")
+
+            return out
+
         lines: list[str] = []
 
         # Core attributes (INT can be overridden by creature_intelligence)
@@ -245,23 +271,38 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         dmg1_text = adjust_damage_str(dmg1)
         dmg2_text = adjust_damage_str(dmg2)
 
+        attack_lines = []
+
         if pd.notna(atk1) or pd.notna(dmg1):
-            line = f"**Primary Attack:** +{fmt(atk1)} to hit, {dmg1_text} damage"
+            line1 = f"**Primary Attack:** +{fmt(atk1)} to hit, {dmg1_text} damage"
             if pd.notna(rng):
-                line += f", Range {fmt(rng)}"
-            lines.append(line)
+                line1 += f", Range {fmt(rng)}"
+            attack_lines.append(line1)
 
         if pd.notna(atk2) or pd.notna(dmg2):
-            line = f"**Secondary Attack:** +{fmt(atk2)} to hit, {dmg2_text} damage"
+            line2 = f"**Secondary Attack:** +{fmt(atk2)} to hit, {dmg2_text} damage"
             if pd.notna(rng):
-                line += f", Range {fmt(rng)}"
-            lines.append(line)
+                line2 += f", Range {fmt(rng)}"
+            # Ensure a blank line between primary and secondary
+            if attack_lines:
+                attack_lines.append("")
+            attack_lines.append(line2)
 
-        # Recovery reactions
+        if attack_lines:
+            lines.extend(attack_lines)
+
+        # Recovery Reactions – one line per status, random OR choice
         reactions = row.get("reactions")
         if pd.notna(reactions):
             lines.append("")
-            lines.append(f"**Recovery Reactions:** {reactions}")
+            rr_lines = parse_randomize_reactions(reactions)
+
+            if rr_lines:
+                lines.append("**Recovery Reactions:**")
+                lines.extend(rr_lines)
+            else:
+                # Fallback: if parsing fails for some reason, show raw text
+                lines.append(f"**Recovery Reactions:** {reactions}")
 
         return "\n".join(lines)
 
