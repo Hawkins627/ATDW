@@ -15,12 +15,20 @@ def ensure_state():
         st.session_state["persistent"] = {}
     if "log" not in st.session_state:
         st.session_state["log"] = []
+
     # Flat damage modifier from Size (and later other effects)
     if "damage_flat_modifier" not in st.session_state:
         st.session_state["damage_flat_modifier"] = 0
+
     # INT override from creature_intelligence
     if "int_stat_override" not in st.session_state:
         st.session_state["int_stat_override"] = None
+
+    # Enemy role modifiers (from roles.csv)
+    if "role_mods" not in st.session_state:
+        st.session_state["role_mods"] = None
+    if "current_enemy_role" not in st.session_state:
+        st.session_state["current_enemy_role"] = None
 
 def roll_int_from_expression(expr: str) -> int:
     """
@@ -49,6 +57,42 @@ def roll_int_from_expression(expr: str) -> int:
         return int(s)
     except ValueError:
         return 0
+
+def set_role_modifiers_from_text(role_text: str):
+    """
+    Look up the matching row in roles.csv for the given enemy role text
+    and store its modifiers in st.session_state["role_mods"].
+    Matching is case-insensitive against the 'role' column.
+    """
+    ensure_state()
+
+    try:
+        df = load_table_df("roles")
+    except FileNotFoundError:
+        # If the roles.csv file isn't present, just clear any old mods.
+        st.session_state["role_mods"] = None
+        return
+
+    text = str(role_text).lower().strip()
+    if not text:
+        st.session_state["role_mods"] = None
+        return
+
+    # Try to find a keyword like "brute", "lurker", "ranged", "swarm", "psychic"
+    candidates = [str(r).lower() for r in df["role"].dropna().unique()]
+    found_key = None
+    for key in candidates:
+        if key in text:
+            found_key = key
+            break
+
+    if not found_key:
+        st.session_state["role_mods"] = None
+        return
+
+    role_row = df[df["role"].str.lower() == found_key].iloc[0]
+    st.session_state["role_mods"] = role_row.to_dict()
+    st.session_state["current_enemy_role"] = role_text
 
 def add_to_persistent(group_id, text):
     """Store a text entry in a numbered persistent pool."""
@@ -161,19 +205,30 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 return str(int(v))
             return str(v)
 
-        # Flat damage modifier from Size (and future sources)
         ensure_state()
-        flat_mod = st.session_state.get("damage_flat_modifier", 0)
+
+        # From Size
+        size_flat_mod = st.session_state.get("damage_flat_modifier", 0) or 0
+        # From creature_intelligence
         int_override = st.session_state.get("int_stat_override", None)
+        # From enemy role (roles.csv)
+        role_mods = st.session_state.get("role_mods") or {}
+
+        # Total flat damage modifier = Size + Role
+        try:
+            role_flat = int(role_mods.get("damage_flat_mod", 0) or 0)
+        except (TypeError, ValueError):
+            role_flat = 0
+        flat_mod_total = size_flat_mod + role_flat
 
         def adjust_damage_str(val):
-            """Take a damage string like '(D10)+5' and apply flat_mod."""
+            """Take a damage string like '(D10)+5' and apply flat_mod_total."""
             s = fmt(val)
-            if not s or not flat_mod:
+            if not s or not flat_mod_total:
                 return s  # nothing to change
 
             try:
-                mod = int(flat_mod)
+                mod = int(flat_mod_total)
             except (TypeError, ValueError):
                 return s
 
@@ -207,64 +262,108 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             else:
                 return s_clean
 
-        def parse_randomize_reactions(text: str):
-            """
-            Split '[Bloodied] A OR B; [Cornered] C OR D; ...'
-            into bullet lines, picking ONE option per status.
-            """
-            if not isinstance(text, str) or not text.strip():
-                return []
+        def apply_numeric_mod(base_val, mod_key):
+            """Return base_val + role_mods[mod_key] if numeric; otherwise base_val."""
+            if pd.isna(base_val):
+                return base_val
+            try:
+                base_int = int(base_val)
+            except (TypeError, ValueError):
+                return base_val
 
-            segments = [seg.strip() for seg in text.split(";") if seg.strip()]
-            out = []
+            try:
+                delta = int(role_mods.get(mod_key, 0) or 0)
+            except (TypeError, ValueError):
+                delta = 0
 
-            for seg in segments:
-                m = re.match(r"\[(.*?)\]\s*(.*)", seg)
-                if not m:
-                    continue
-                status = m.group(1).strip()
-                rest = m.group(2).strip()
-                if not rest:
-                    continue
-
-                options = [opt.strip() for opt in rest.split(" OR ") if opt.strip()]
-                choice = random.choice(options) if options else rest
-                out.append(f"- **[{status}]** {choice}")
-
-            return out
+            return base_int + delta
 
         lines: list[str] = []
 
-        # Core attributes (INT can be overridden by creature_intelligence)
+        # ---------------- Core attributes ----------------
         stat_keys = ["str", "dex", "con", "wil", "int", "cha"]
-        stat_values = []
+        effective_stats = []
         for key in stat_keys:
+            base_val = row.get(key, "")
+
+            # INT override from creature_intelligence first
             if key == "int" and int_override is not None:
-                stat_values.append(fmt(int_override))
-            else:
-                stat_values.append(fmt(row.get(key, "")))
+                base_val = int_override
+
+            # Then apply role modifiers (str_mod, dex_mod, etc.)
+            if key in ["str", "dex", "con", "wil", "int", "cha"]:
+                base_val = apply_numeric_mod(base_val, f"{key}_mod")
+
+            effective_stats.append(fmt(base_val))
 
         lines.append("| STR | DEX | CON | WIL | INT | CHA |")
         lines.append("| --- | --- | --- | --- | --- | --- |")
-        lines.append("| " + " | ".join(stat_values) + " |")
+        lines.append("| " + " | ".join(effective_stats) + " |")
         lines.append("")
 
-        # Derived stats
+        # ---------------- Derived stats ----------------
+        derived_effective = []
+        for key in ["wounds", "awareness", "armor", "defense"]:
+            base_val = row.get(key, "")
+            mod_key = None
+            if key == "awareness":
+                mod_key = "awareness_mod"
+            elif key == "armor":
+                mod_key = "armor_mod"
+            elif key == "defense":
+                mod_key = "defense_mod"
+
+            if mod_key:
+                base_val = apply_numeric_mod(base_val, mod_key)
+
+            derived_effective.append(fmt(base_val))
+
         lines.append("| Wounds | Awareness | Armor | Defense |")
         lines.append("| --- | --- | --- | --- |")
-        lines.append(
-            "| "
-            + " | ".join(
-                fmt(row.get(k, "")) for k in ["wounds", "awareness", "armor", "defense"]
-            )
-            + " |"
-        )
+        lines.append("| " + " | ".join(derived_effective) + " |")
         lines.append("")
 
-        # Attacks
+        # ---------------- Attacks ----------------
         atk1 = row.get("attack_skill_1")
-        dmg1 = row.get("damage_1")
         atk2 = row.get("attack_skill_2")
+
+        def eff_attack(base_val, slot):
+            """
+            slot 1 = primary (treated as melee)
+            slot 2 = secondary (treated as ranged)
+            """
+            if pd.isna(base_val):
+                return base_val
+            try:
+                base_int = int(base_val)
+            except (TypeError, ValueError):
+                return base_val
+
+            # Base attack modifier plus melee/ranged bias from role
+            try:
+                atk_mod = int(role_mods.get("attack_skill_mod", 0) or 0)
+            except (TypeError, ValueError):
+                atk_mod = 0
+            try:
+                melee_mod = int(role_mods.get("melee_attack_skill_mod", 0) or 0)
+            except (TypeError, ValueError):
+                melee_mod = 0
+            try:
+                ranged_mod = int(role_mods.get("ranged_attack_skill_mod", 0) or 0)
+            except (TypeError, ValueError):
+                ranged_mod = 0
+
+            if slot == 1:
+                delta = atk_mod + melee_mod
+            else:
+                delta = atk_mod + ranged_mod
+
+            return base_int + delta
+
+        atk1_eff = eff_attack(atk1, 1)
+        atk2_eff = eff_attack(atk2, 2)
+
+        dmg1 = row.get("damage_1")
         dmg2 = row.get("damage_2")
         rng = row.get("range")
 
@@ -274,24 +373,23 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         attack_lines = []
 
         if pd.notna(atk1) or pd.notna(dmg1):
-            line1 = f"**Primary Attack:** +{fmt(atk1)} to hit, {dmg1_text} damage"
+            line1 = f"**Primary Attack:** +{fmt(atk1_eff)} to hit, {dmg1_text} damage"
             if pd.notna(rng):
                 line1 += f", Range {fmt(rng)}"
             attack_lines.append(line1)
 
         if pd.notna(atk2) or pd.notna(dmg2):
-            line2 = f"**Secondary Attack:** +{fmt(atk2)} to hit, {dmg2_text} damage"
+            line2 = f"**Secondary Attack:** +{fmt(atk2_eff)} to hit, {dmg2_text} damage"
             if pd.notna(rng):
                 line2 += f", Range {fmt(rng)}"
-            # Ensure a blank line between primary and secondary
             if attack_lines:
-                attack_lines.append("")
+                attack_lines.append("")  # blank line between attacks
             attack_lines.append(line2)
 
         if attack_lines:
             lines.extend(attack_lines)
 
-        # Recovery Reactions – one line per status, random OR choice
+        # ---------------- Recovery Reactions (your new randomized version) ----------------
         reactions = row.get("reactions")
         if pd.notna(reactions):
             lines.append("")
@@ -414,6 +512,11 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         st.session_state["int_stat_override"] = roll_int_from_expression(row["value"])
 
     result = format_row_for_display(table_name, row)
+
+    # If we just rolled an enemy role, capture its modifiers for later stat blocks
+    if table_name == "enemy_role":
+        set_role_modifiers_from_text(result)
+
 
     # =====================================================
     # Persistent storage
@@ -2251,15 +2354,23 @@ with tabs[6]:
     if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
         
         ensure_state()
+        # Reset per-creature overrides
         st.session_state["int_stat_override"] = None
-        
+        st.session_state["damage_flat_modifier"] = 0
+        st.session_state["role_mods"] = None
+        st.session_state["current_enemy_role"] = None
+
         # ----- Core identity & stats -----
-        size = roll_table("size", log=False)  # sets damage_flat_modifier
+        size = roll_table("size", log=False)  # sets damage_flat_modifier (Size)
         creature_type = roll_table("creature_type", log=False, option=env_choice)
         drive = roll_table("creature_drive", log=False)
         intelligence = roll_table("creature_intelligence", log=False)
-        stat_block = roll_table("stat_block", log=False, option=diff_choice)
+
+        # Roll role BEFORE stat block so its modifiers are applied
         enemy_role = roll_table("enemy_role", log=False, option=diff_choice)
+
+        # Stat block now sees both Size + Role modifiers in session_state
+        stat_block = roll_table("stat_block", log=False, option=diff_choice)
 
         # Traits / abilities
         trait_option = "Easy" if diff_choice == "Easy" else "Other"
