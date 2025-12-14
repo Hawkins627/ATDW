@@ -1,11 +1,12 @@
-description,armor,defense,attack_skill,damage,str,dex,con,wil,wounds
-"+1 Armor / -1 Defense",1,-1,,,,,,,
-"+1 Defense / -1 Armor",-1,1,,,,,,,
-"+5 Attack Skill / -5 Damage",,,5,-5,,,,,
-"+5 Damage / -5 Attack Skill",,,-5,5,,,,,
-"+1 Wound / -1 Ability",,,,,,,,,1
-"+2 CON / -2 WIL",,,,,,,2,-2,
-"+2 WIL / -2 CON",,,,,,,-2,2,
-"+2 STR / -2 DEX",2,-2,,,,,,,
-"+2 DEX / -2 STR",-2,2,,,,,,,
-"+1 Wound / -1 CON / -1 WIL",,,,,,,-1,-1,1
+description,armor,defense,attack_skill,damage,str,dex,con,wil,wounds,ability
+"+1 Armor / -1 Defense",1,-1,,,,,,,,
+"+1 Defense / -1 Armor",-1,1,,,,,,,,
+"+5 Attack Skill / -5 Damage",,,5,-5,,,,,,
+"+5 Damage / -5 Attack Skill",,,-5,5,,,,,,
+"+1 Wound / -1 Ability",,,,,,,,,1,-1
+"+2 CON / -2 WIL",,,,,,,2,-2,,
+"+2 WIL / -2 CON",,,,,,,-2,2,,
+"+2 STR / -2 DEX",2,-2,,,,,,,,
+"+2 DEX / -2 STR",-2,2,,,,,,,,
+"+1 Wound / -1 CON / -1 WIL",,,,,,,-1,-1,1,
+
