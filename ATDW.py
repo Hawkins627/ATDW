@@ -2707,7 +2707,7 @@ with tabs[6]:
     st.markdown("---")
     st.markdown("### Full Antagonist (Combined 16)")
 
-if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
+    if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
         
         ensure_state()
         # Reset per-creature overrides
