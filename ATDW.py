@@ -631,11 +631,9 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         elif table_name == "creature_limbs" and "category" in df.columns:
             opt_low = opt_str.lower()
             if opt_low.startswith("aquatic"):
-                # only aquatic rows
                 df = df[df["category"].str.lower() == "aquatic"]
             else:
-                # "Terrestrial" (or anything else) → use the whole table
-                # (no category filter), so we still get a result.
+                # Terrestrial (or anything else) -> no filter
                 pass
 
         # ---------- Generic handling for all other tables ----------
@@ -667,34 +665,46 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         return f"[ERROR] No rows found for '{table_name}' with option '{option}'."
 
     # =====================================================
-    # Random row → formatted text
+    # Random row → side effects → formatted text
     # =====================================================
     row = df.sample(1).iloc[0]
 
-    # Table-specific side effects BEFORE formatting
+    # --- Side effects BEFORE formatting ---
+    if table_name == "stat_block":
+        # Save the rolled row so later modifiers can re-render it
+        st.session_state["last_stat_block_row"] = row.to_dict()
+        st.session_state["last_stat_block_label"] = f"{option} Stat Block" if option is not None else "Stat Block"
+
+    if table_name == "unique_trait":
+        # Applies background modifiers + may suppress Enemy Ability + may rebuild existing stat block
+        set_unique_trait_modifiers_from_row(row)
+
     if table_name == "size" and "modifier" in row.index:
-        # Store this as the current flat damage modifier
         try:
             st.session_state["damage_flat_modifier"] = int(row["modifier"])
         except (TypeError, ValueError):
             st.session_state["damage_flat_modifier"] = 0
 
     if table_name == "creature_intelligence" and "value" in row.index:
-        # Roll INT from the value expression (e.g. 6-1D4) and store override
-        ensure_state()
         st.session_state["int_stat_override"] = roll_int_from_expression(row["value"])
 
+    # Format for display (unique_trait should return description only, if you added that special case)
     result = format_row_for_display(table_name, row)
 
     # If we just rolled an enemy role, capture its modifiers for later stat blocks
     if table_name == "enemy_role":
         set_role_modifiers_from_text(result)
 
+    # If modifiers changed AFTER we already rolled a stat block, update it in persistent output.
+    # (This is the "run changes in the background" behavior.)
+    if table_name in ("enemy_role", "size", "creature_intelligence"):
+        update_last_stat_block_persistent(group_id=5)
 
     # =====================================================
     # Persistent storage
     # =====================================================
-    if group is not None:
+    # Never persist Unique Trait as its own entry; it’s “background modifiers”
+    if group is not None and table_name != "unique_trait":
         add_to_persistent(group, result)
 
     # =====================================================
@@ -2524,7 +2534,7 @@ with tabs[6]:
     st.markdown("---")
     st.markdown("### Full Antagonist (Combined 16)")
 
-    if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
+if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
         
         ensure_state()
         # Reset per-creature overrides
@@ -2533,47 +2543,57 @@ with tabs[6]:
         st.session_state["role_mods"] = None
         st.session_state["current_enemy_role"] = None
 
+        # Reset unique-trait + stat-block tracking
+        st.session_state["unique_trait_mods"] = {}
+        st.session_state["unique_trait_desc"] = None
+        st.session_state["suppress_enemy_ability"] = False
+        st.session_state["last_stat_block_row"] = None
+        st.session_state["last_stat_block_label"] = None
+
         # ----- Core identity & stats -----
         size = roll_table("size", log=False)  # sets damage_flat_modifier (Size)
         creature_type = roll_table("creature_type", log=False, option=env_choice)
         drive = roll_table("creature_drive", log=False)
         intelligence = roll_table("creature_intelligence", log=False)
 
-        # Roll role BEFORE stat block so its modifiers are applied
+        # Roll role BEFORE trait/stat block so its modifiers are applied
         enemy_role = roll_table("enemy_role", log=False, option=diff_choice)
 
-        # Stat block now sees both Size + Role modifiers in session_state
+        # Traits first (unique_trait sets background modifiers and may suppress enemy ability)
+        trait_option = "Easy" if diff_choice == "Easy" else "Other"
+        _ = roll_table("unique_trait", log=False, option=trait_option)  # applies modifiers in background
+        unique_trait_desc = st.session_state.get("unique_trait_desc")
+
+        # Stat block now sees Size + Role + Unique Trait modifiers in session_state
         stat_block = roll_table("stat_block", log=False, option=diff_choice)
 
-        # Traits / abilities
-        trait_option = "Easy" if diff_choice == "Easy" else "Other"
-        unique_trait = roll_table("unique_trait", log=False, option=trait_option)
-        enemy_ability = roll_table("enemy_ability", log=False)
+        # Enemy ability (skip if suppressed by unique trait)
+        enemy_ability = None
+        if not st.session_state.get("suppress_enemy_ability", False):
+            enemy_ability = roll_table("enemy_ability", log=False)
+
         psychic_template = roll_table("psychic", log=False)
         psychic_ability = roll_table("psychic_ability", log=False)
 
         # Appearance & anatomy
         appearance = roll_table("creature_appearance", log=False)
-        cover = roll_table("creature_cover", log=False)
-        unique_feature = roll_table("creature_unique_feature", log=False)
-        limbs = roll_table("creature_limbs", log=False, option=limb_env_choice)
-        mouth = roll_table("creature_mouth", log=False)
-        eyes_number = roll_table("creature_eyes_number", log=False)
-        eyes_detail = roll_table("creature_eyes", log=False, option=eyes_number)
+        cover = roll_table("cover", log=False)
+        unique_feature = roll_table("unique_feature", log=False)
+        limbs = roll_table("limbs", log=False)
+        mouth = roll_table("mouth", log=False)
+        eyes_number = roll_table("eyes_number", log=False)
+        eyes_detail = roll_table("eyes_detail", log=False)
 
-        # Name
-        creature_name = roll_table("creature_name", log=False)
-
-        # ----- Persist key fields to pool 5 -----
-        persist_antagonist("Name", creature_name)
-        persist_antagonist("Creature Type", creature_type)
+        # ----- Persist entries (Unique Trait NOT persisted) -----
         persist_antagonist("Size", size)
         persist_antagonist(f"{diff_choice} Stat Block", stat_block)
         persist_antagonist("Drive", drive)
         persist_antagonist("Intelligence", intelligence)
         persist_antagonist("Enemy Role", enemy_role)
-        persist_antagonist("Unique Trait", unique_trait)
-        persist_antagonist("Enemy Ability", enemy_ability)
+
+        if enemy_ability is not None:
+            persist_antagonist("Enemy Ability", enemy_ability)
+
         persist_antagonist("Psychic Template", psychic_template)
         persist_antagonist("Psychic Ability", psychic_ability)
         persist_antagonist("Appearance", appearance)
@@ -2598,8 +2618,7 @@ with tabs[6]:
 {stat_block}
 
 **Traits & Abilities**  
-- **Unique Trait:** {unique_trait}  
-- **Enemy Ability:** {enemy_ability}  
+{f'- **Enemy Ability:** {enemy_ability}  ' if enemy_ability else ''}  
 - **Psychic Template:** {psychic_template}  
 - **Psychic Ability:** {psychic_ability}  
 
