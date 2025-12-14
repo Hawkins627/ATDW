@@ -237,7 +237,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
         ensure_state()
 
-        # From Size
+        # From Size (already set when size table is rolled)
         size_flat_mod = st.session_state.get("damage_flat_modifier", 0) or 0
         # From creature_intelligence
         int_override = st.session_state.get("int_stat_override", None)
@@ -251,11 +251,72 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             role_flat = 0
         flat_mod_total = size_flat_mod + role_flat
 
+        # Damage dice modifier from role (e.g. "-1D10")
+        raw_ddm = role_mods.get("damage_dice_mod", "")
+        dice_mod_expr = str(raw_ddm).strip().upper() if pd.notna(raw_ddm) else ""
+
+        def apply_damage_dice_modifier(base_expr: str, dice_mod_expr: str) -> str:
+            """
+            Apply a dice-count modifier like '-1D10' to an expression such as
+            '2D10', '(D10)+5', '(2D10)+5'. If parsing fails, returns base_expr.
+            """
+            base = str(base_expr).strip()
+            dm = str(dice_mod_expr).strip()
+            if not base or not dm:
+                return base_expr
+
+            # Parse leading dice term from the base expression
+            m_base = re.match(r'^\(?(\d*)D(\d+)\)?(.*)$', base, re.IGNORECASE)
+            # Parse something like '+1D10' or '-1D10'
+            m_mod = re.match(r'^([+-])\s*(\d*)D(\d+)$', dm, re.IGNORECASE)
+
+            if not m_base or not m_mod:
+                # If we can't understand the format, don't break the string
+                return base_expr
+
+            num_str = m_base.group(1)
+            num = int(num_str) if num_str else 1
+            die = int(m_base.group(2))
+            tail = m_base.group(3)
+
+            sign = m_mod.group(1)
+            mod_num_str = m_mod.group(2)
+            mod_num = int(mod_num_str) if mod_num_str else 1
+            mod_die = int(m_mod.group(3))
+
+            # If the die sizes don't match, safest is just to append the note
+            if mod_die != die:
+                return base_expr + f" {dice_mod_expr}"
+
+            if sign == "-":
+                num_new = num - mod_num
+            else:
+                num_new = num + mod_num
+
+            # Never go below 1 die
+            if num_new < 1:
+                num_new = 1
+
+            has_paren = base.lstrip().startswith("(")
+            body = f"{num_new}D{die}"
+            if has_paren:
+                body = f"({body})"
+
+            return f"{body}{tail}"
+
         def adjust_damage_str(val):
-            """Take a damage string like '(D10)+5' and apply flat_mod_total."""
+            """Take a damage string like '(D10)+5' and apply role/size modifiers."""
             s = fmt(val)
-            if not s or not flat_mod_total:
-                return s  # nothing to change
+            if not s:
+                return s
+
+            # First, dice-count changes from the role (e.g. '-1D10')
+            if dice_mod_expr:
+                s = apply_damage_dice_modifier(s, dice_mod_expr)
+
+            # Then, flat damage modifiers from Size + Role
+            if not flat_mod_total:
+                return s  # nothing else to change
 
             try:
                 mod = int(flat_mod_total)
@@ -321,9 +382,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 base_val = int_override
 
             # Then apply role modifiers (str_mod, dex_mod, etc.)
-            if key in ["str", "dex", "con", "wil", "int", "cha"]:
-                base_val = apply_numeric_mod(base_val, f"{key}_mod")
-
+            base_val = apply_numeric_mod(base_val, f"{key}_mod")
             effective_stats.append(fmt(base_val))
 
         lines.append("| STR | DEX | CON | WIL | INT | CHA |")
@@ -408,9 +467,11 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 line1 += f", Range {fmt(rng)}"
             attack_lines.append(line1)
 
+        # Respect roles that forbid ranged attacks in the text
+        no_ranged = bool(role_mods.get("no_ranged_attacks"))
         if pd.notna(atk2) or pd.notna(dmg2):
             line2 = f"**Secondary Attack:** +{fmt(atk2_eff)} to hit, {dmg2_text} damage"
-            if pd.notna(rng):
+            if pd.notna(rng) and not no_ranged:
                 line2 += f", Range {fmt(rng)}"
             if attack_lines:
                 attack_lines.append("")  # blank line between attacks
@@ -419,7 +480,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         if attack_lines:
             lines.extend(attack_lines)
 
-        # ---------------- Recovery Reactions (your new randomized version) ----------------
+        # ---------------- Recovery Reactions (randomized options) ----------------
         reactions = row.get("reactions")
         if pd.notna(reactions):
             lines.append("")
@@ -431,6 +492,85 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             else:
                 # Fallback: if parsing fails for some reason, show raw text
                 lines.append(f"**Recovery Reactions:** {reactions}")
+
+        # ---------------- Role details block (from roles.csv) ----------------
+        if role_mods:
+            role_lines = []
+            role_label = st.session_state.get("current_enemy_role")
+
+            summary = str(role_mods.get("role_summary", "") or "").strip()
+            if role_label:
+                if summary:
+                    role_lines.append(f"**Role:** {role_label} — {summary}")
+                else:
+                    role_lines.append(f"**Role:** {role_label}")
+            elif summary:
+                role_lines.append(f"**Role Summary:** {summary}")
+
+            # Hit-location adjustments
+            try:
+                hl_mod = int(role_mods.get("hit_location_roll_mod", 0) or 0)
+            except (TypeError, ValueError):
+                hl_mod = 0
+            if hl_mod != 0:
+                sign = "+" if hl_mod > 0 else ""
+                role_lines.append(f"- Hit Location roll {sign}{hl_mod}")
+
+            if bool(role_mods.get("disable_hit_location_table_when_attacked")):
+                role_lines.append("- Ignore Hit Location table when this creature is attacked")
+
+            # Movement / opportunity attacks
+            if bool(role_mods.get("move_twice_per_turn")):
+                role_lines.append("- Moves twice per turn")
+            if bool(role_mods.get("disengage_no_opportunity_attack")):
+                role_lines.append("- Can disengage without provoking opportunity attacks")
+
+            # Ranged / swarm behavior
+            if bool(role_mods.get("no_ranged_attacks")):
+                role_lines.append("- Cannot make ranged attacks")
+            if bool(role_mods.get("swarm_attacks_all_targets")):
+                role_lines.append("- Swarm: attacks all characters in reach each round")
+
+            swarm_override = str(role_mods.get("swarm_size_override", "") or "").strip()
+            if swarm_override:
+                role_lines.append(f"- Swarm Size Override: {swarm_override}")
+
+            # Damage taken modifier (resistance or vulnerability)
+            try:
+                dmg_taken_mod = int(role_mods.get("damage_taken_flat_mod", 0) or 0)
+            except (TypeError, ValueError):
+                dmg_taken_mod = 0
+            if dmg_taken_mod != 0:
+                sign = "+" if dmg_taken_mod > 0 else ""
+                role_lines.append(f"- Incoming damage {sign}{dmg_taken_mod}")
+
+            # Conditional attack bonus text
+            try:
+                cond_bonus = int(role_mods.get("conditional_attack_skill_mod", 0) or 0)
+            except (TypeError, ValueError):
+                cond_bonus = 0
+            cond_cond = str(role_mods.get("conditional_attack_skill_condition", "") or "").strip()
+            if cond_bonus and cond_cond:
+                sign = "+" if cond_bonus > 0 else ""
+                role_lines.append(f"- Conditional Attack: {sign}{cond_bonus} Attack Skill {cond_cond}")
+
+            # Psychic-ability behavior
+            if bool(role_mods.get("use_psychic_ability_table")):
+                role_lines.append("- Uses the Psychic Ability table for primary attacks")
+
+            # Favor text + freeform notes
+            favor = str(role_mods.get("favor_text", "") or "").strip()
+            if favor:
+                role_lines.append(f"- Favors: {favor}")
+
+            extra = str(role_mods.get("notes", "") or "").strip()
+            if extra:
+                role_lines.append(f"- {extra}")
+
+            if role_lines:
+                lines.append("")
+                lines.append("**Role Details:**")
+                lines.extend(role_lines)
 
         return "\n".join(lines)
 
