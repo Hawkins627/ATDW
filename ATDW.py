@@ -30,6 +30,20 @@ def ensure_state():
     if "current_enemy_role" not in st.session_state:
         st.session_state["current_enemy_role"] = None
 
+    # Unique Trait modifiers (from unique_trait.csv)
+    if "unique_trait_mods" not in st.session_state:
+        st.session_state["unique_trait_mods"] = {}
+    if "unique_trait_desc" not in st.session_state:
+        st.session_state["unique_trait_desc"] = None
+    if "suppress_enemy_ability" not in st.session_state:
+        st.session_state["suppress_enemy_ability"] = False
+
+    # Track last rolled stat block row so we can re-render it after modifiers change
+    if "last_stat_block_row" not in st.session_state:
+        st.session_state["last_stat_block_row"] = None
+    if "last_stat_block_label" not in st.session_state:
+        st.session_state["last_stat_block_label"] = None
+
 def parse_randomize_reactions(text: str):
     """
     Split '[Bloodied] A OR B; [Cornered] C OR D; ...'
@@ -584,6 +598,168 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
     ]
 
     return " – ".join(parts) if parts else table_name
+
+def _safe_int(val, default: int = 0) -> int:
+    """Best-effort int conversion. Blank/NaN/non-numeric -> default."""
+    try:
+        if pd.isna(val):
+            return default
+    except Exception:
+        pass
+    try:
+        s = str(val).strip()
+        if s == "":
+            return default
+        f = float(s)
+        return int(f)
+    except Exception:
+        return default
+
+
+def remove_persistent_items(group_id: int, contains_any=None, startswith_any=None) -> int:
+    """
+    Remove items from st.session_state['persistent'][group_id] that match.
+    Returns count removed.
+    """
+    ensure_state()
+    if group_id not in st.session_state["persistent"]:
+        return 0
+
+    contains_any = contains_any or []
+    startswith_any = startswith_any or []
+
+    before = st.session_state["persistent"][group_id]
+    after = []
+
+    for item in before:
+        s = str(item)
+        if any(tok in s for tok in contains_any):
+            continue
+        if any(s.startswith(tok) for tok in startswith_any):
+            continue
+        after.append(item)
+
+    st.session_state["persistent"][group_id] = after
+    return len(before) - len(after)
+
+
+def update_last_stat_block_persistent(group_id: int = 5) -> bool:
+    """
+    If a stat block has been rolled, rebuild it using current modifiers and
+    replace the most recent stat block entry in Persistent[group_id].
+    Returns True if it updated something.
+    """
+    ensure_state()
+    last_row = st.session_state.get("last_stat_block_row")
+    if not last_row:
+        return False
+
+    # rebuild stat block text using current modifiers
+    try:
+        rebuilt = format_row_for_display("stat_block", pd.Series(last_row))
+    except Exception:
+        return False
+
+    label = st.session_state.get("last_stat_block_label")
+
+    pool = st.session_state["persistent"].get(group_id, [])
+    if not pool:
+        return False
+
+    idx = None
+
+    # Prefer to replace the last matching labeled block if possible
+    if label:
+        needle = f"**{label}:**"
+        for i in range(len(pool) - 1, -1, -1):
+            if str(pool[i]).startswith(needle):
+                idx = i
+                break
+
+    # Fallback: last entry that looks like a stat block
+    if idx is None:
+        for i in range(len(pool) - 1, -1, -1):
+            s = str(pool[i])
+            if "Stat Block" in s and "| STR |" in s:
+                idx = i
+                break
+
+    if idx is None:
+        return False
+
+    # Preserve existing header line, replace the stat block body
+    parts = str(pool[idx]).split("\n\n", 1)
+    if len(parts) == 2:
+        pool[idx] = parts[0] + "\n\n" + rebuilt
+    else:
+        pool[idx] = str(pool[idx]) + "\n\n" + rebuilt
+
+    st.session_state["persistent"][group_id] = pool
+    return True
+
+
+def set_unique_trait_modifiers_from_row(row: pd.Series):
+    """
+    Read a row from unique_trait.csv and store its numeric modifiers in session state.
+    If ability == -1, suppress enemy_ability output and remove any already persisted.
+    """
+    ensure_state()
+
+    desc = str(row.get("description", "")).strip()
+    st.session_state["unique_trait_desc"] = desc
+
+    armor = row.get("armor")
+    defense = row.get("defense")
+    attack_skill = row.get("attack_skill")
+    damage = row.get("damage")
+    strength = row.get("str")
+    dexterity = row.get("dex")
+    constitution = row.get("con")
+    willpower = row.get("wil")
+    wounds = row.get("wounds")
+
+    # Your CSV has STR/DEX rows incorrectly stored under armor/defense columns.
+    # Auto-correct those two rows without forcing you to edit the CSV.
+    if (pd.isna(strength) and pd.isna(dexterity)
+        and ("STR" in desc.upper() and "DEX" in desc.upper())
+        and (pd.notna(armor) or pd.notna(defense))):
+        strength = armor
+        dexterity = defense
+        armor = 0
+        defense = 0
+
+    mods = {
+        "armor_mod": _safe_int(armor, 0),
+        "defense_mod": _safe_int(defense, 0),
+        "attack_skill_mod": _safe_int(attack_skill, 0),
+        "damage_flat_mod": _safe_int(damage, 0),
+        "str_mod": _safe_int(strength, 0),
+        "dex_mod": _safe_int(dexterity, 0),
+        "con_mod": _safe_int(constitution, 0),
+        "wil_mod": _safe_int(willpower, 0),
+        "wounds_mod": _safe_int(wounds, 0),
+    }
+
+    st.session_state["unique_trait_mods"] = mods
+
+    ability_flag = _safe_int(row.get("ability"), 0)
+    st.session_state["suppress_enemy_ability"] = (ability_flag == -1)
+
+    # If this trait suppresses enemy abilities, remove any already-persisted Enemy Ability lines
+    if st.session_state["suppress_enemy_ability"]:
+        remove_persistent_items(
+            group_id=5,
+            contains_any=["<strong>Enemy Ability:</strong>", "**Enemy Ability:**", "Enemy Ability:"]
+        )
+
+    # Also remove any previously persisted "Unique Trait" lines (legacy behavior)
+    remove_persistent_items(
+        group_id=5,
+        contains_any=["<strong>Unique Trait:</strong>", "**Unique Trait:**", "Unique Trait:"]
+    )
+
+    # If a Stat Block has already been rolled & persisted, rebuild it now with the new modifiers
+    update_last_stat_block_persistent(group_id=5)
 
 def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     ensure_state()
@@ -2361,14 +2537,24 @@ with tabs[6]:
 
         with traits_left:
             if st.button("Unique Trait", key="btn_unique_trait"):
-                result = roll_table("unique_trait", group=5, log=True, option=trait_option)
-                persist_antagonist("Unique Trait", result)
-                st.success(result)
+                # Roll it (shows description), but treat it as background modifiers
+                result = roll_table("unique_trait", group=None, log=True, option=trait_option)
+                st.success(result if result else "Unique Trait applied.")
+
+                if st.session_state.get("suppress_enemy_ability", False):
+                    st.warning("Enemy Ability suppressed by this Unique Trait (-1 Ability). Any existing Enemy Ability entry was removed.")
+
+                # If a stat block is already in Persistent, refresh it
+                if update_last_stat_block_persistent(group_id=5):
+                    st.info("Stat Block updated with Unique Trait modifiers.")
 
             if st.button("Enemy Ability", key="btn_enemy_ability"):
-                result = roll_table("enemy_ability", group=5, log=True)
-                persist_antagonist("Enemy Ability", result)
-                st.success(result)
+                if st.session_state.get("suppress_enemy_ability", False):
+                    st.warning("Enemy Ability suppressed by Unique Trait (-1 Ability).")
+                else:
+                    result = roll_table("enemy_ability", group=5, log=True)
+                    persist_antagonist("Enemy Ability", result)
+                    st.success(result)
 
         with traits_right:
             if st.button("Psychic Template", key="btn_psychic_template"):
