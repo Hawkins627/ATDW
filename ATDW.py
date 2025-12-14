@@ -530,8 +530,15 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 role_lines.append("- Cannot make ranged attacks")
             if bool(role_mods.get("swarm_attacks_all_targets")):
                 role_lines.append("- Swarm: attacks all characters in reach each round")
+            
+            # Only show swarm size override when it has a real value
+            raw_swarm = role_mods.get("swarm_size_override", "")
+            swarm_override = ""
+            if isinstance(raw_swarm, str):
+                swarm_override = raw_swarm.strip()
+            elif not pd.isna(raw_swarm):
+                swarm_override = str(raw_swarm).strip()
 
-            swarm_override = str(role_mods.get("swarm_size_override", "") or "").strip()
             if swarm_override:
                 role_lines.append(f"- Swarm Size Override: {swarm_override}")
 
@@ -562,10 +569,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             favor = str(role_mods.get("favor_text", "") or "").strip()
             if favor:
                 role_lines.append(f"- Favors: {favor}")
-
-            extra = str(role_mods.get("notes", "") or "").strip()
-            if extra:
-                role_lines.append(f"- {extra}")
 
             if role_lines:
                 lines.append("")
