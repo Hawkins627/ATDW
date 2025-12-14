@@ -30,6 +30,36 @@ def ensure_state():
     if "current_enemy_role" not in st.session_state:
         st.session_state["current_enemy_role"] = None
 
+def parse_randomize_reactions(text: str):
+    """
+    Split '[Bloodied] A OR B; [Cornered] C OR D; ...'
+    into bullet lines, picking ONE option per status.
+    Returns a list of markdown strings like '- **[Bloodied]** Attempts to flee'.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return []
+
+    # Split into segments like "[Bloodied] +2 Damage OR Attempts to flee"
+    segments = [seg.strip() for seg in text.split(";") if seg.strip()]
+    out = []
+
+    for seg in segments:
+        # Grab the status in [brackets] and the rest of the line
+        m = re.match(r"\[(.*?)\]\s*(.*)", seg)
+        if not m:
+            continue
+        status = m.group(1).strip()
+        rest = m.group(2).strip()
+        if not rest:
+            continue
+
+        # Split "A OR B" into options, pick one
+        options = [opt.strip() for opt in rest.split(" OR ") if opt.strip()]
+        choice = random.choice(options) if options else rest
+        out.append(f"- **[{status}]** {choice}")
+
+    return out
+
 def roll_int_from_expression(expr: str) -> int:
     """
     Roll expressions like '6-1D4' or '6+1D8' into a single INT value.
