@@ -162,17 +162,13 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         try:
             return f"{row['letter']} - {row['noun']} - {row['number']}"
         except KeyError:
-            # fallback if columns differ
             vals = [v for k, v in row.items() if k != row.index.name]
             return " - ".join(str(v) for v in vals)
 
     # --- Special case: NPC first names ---
-    # npc_name.csv has columns like: name, gender
     if table_name == "npc_name":
-        # Prefer explicit "name" column if present
         if "name" in row.index:
             return str(row["name"])
-        # Fallback: first non-NaN column
         for c in row.index:
             val = row[c]
             if pd.notna(val):
@@ -184,8 +180,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         first = str(row.get("first_syllable", "")).strip()
         second = str(row.get("second_syllable", "")).strip()
         number = str(row.get("numeric", "")).strip()
-
-        # Build the final name (no internal hyphen between syllables)
         combined = f"{first}{second}-{number}"
         return combined
 
@@ -203,29 +197,26 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
     if table_name == "creature_intelligence":
         desc = str(row.get("description", "")).strip()
         return desc
-        
+
+    # --- Special case: Unique Trait (show description only; mods apply in background) ---
+    if table_name == "unique_trait":
+        return str(row.get("description", "")).strip()
+
     # --- Special case: Creature Name (combine syllables, no hyphens) ---
     if table_name == "creature_name":
-        # Ignore any filter-ish columns if present
         ignore_cols = {"difficulty", "creature_type", "category"}
-
         syllables = [
             str(row[c])
             for c in row.index
             if c not in ignore_cols and pd.notna(row[c])
         ]
-
         raw = "".join(syllables)
-
-        # Strip spaces / hyphens and normalize capitalization
         name = raw.replace(" ", "").replace("-", "").strip()
         if not name:
             return ""
-
         name = name.lower()
         return name[0].upper() + name[1:]
 
-    
     # --- Special case: Stat Block (nice, labeled combat output) ---
     if table_name == "stat_block":
         def fmt(v):
@@ -243,35 +234,35 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         int_override = st.session_state.get("int_stat_override", None)
         # From enemy role (roles.csv)
         role_mods = st.session_state.get("role_mods") or {}
+        # From unique trait (unique_trait.csv)
+        trait_mods = st.session_state.get("unique_trait_mods", {}) or {}
 
-        # Total flat damage modifier = Size + Role
+        # Total flat damage modifier = Size + Role + Unique Trait
         try:
             role_flat = int(role_mods.get("damage_flat_mod", 0) or 0)
         except (TypeError, ValueError):
             role_flat = 0
-        flat_mod_total = size_flat_mod + role_flat
+        try:
+            trait_flat = int(trait_mods.get("damage_flat_mod", 0) or 0)
+        except (TypeError, ValueError):
+            trait_flat = 0
+
+        flat_mod_total = size_flat_mod + role_flat + trait_flat
 
         # Damage dice modifier from role (e.g. "-1D10")
         raw_ddm = role_mods.get("damage_dice_mod", "")
         dice_mod_expr = str(raw_ddm).strip().upper() if pd.notna(raw_ddm) else ""
 
         def apply_damage_dice_modifier(base_expr: str, dice_mod_expr: str) -> str:
-            """
-            Apply a dice-count modifier like '-1D10' to an expression such as
-            '2D10', '(D10)+5', '(2D10)+5'. If parsing fails, returns base_expr.
-            """
             base = str(base_expr).strip()
             dm = str(dice_mod_expr).strip()
             if not base or not dm:
                 return base_expr
 
-            # Parse leading dice term from the base expression
             m_base = re.match(r'^\(?(\d*)D(\d+)\)?(.*)$', base, re.IGNORECASE)
-            # Parse something like '+1D10' or '-1D10'
             m_mod = re.match(r'^([+-])\s*(\d*)D(\d+)$', dm, re.IGNORECASE)
 
             if not m_base or not m_mod:
-                # If we can't understand the format, don't break the string
                 return base_expr
 
             num_str = m_base.group(1)
@@ -284,16 +275,10 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             mod_num = int(mod_num_str) if mod_num_str else 1
             mod_die = int(m_mod.group(3))
 
-            # If the die sizes don't match, safest is just to append the note
             if mod_die != die:
                 return base_expr + f" {dice_mod_expr}"
 
-            if sign == "-":
-                num_new = num - mod_num
-            else:
-                num_new = num + mod_num
-
-            # Never go below 1 die
+            num_new = num - mod_num if sign == "-" else num + mod_num
             if num_new < 1:
                 num_new = 1
 
@@ -305,18 +290,18 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             return f"{body}{tail}"
 
         def adjust_damage_str(val):
-            """Take a damage string like '(D10)+5' and apply role/size modifiers."""
+            """Take a damage string like '(D10)+5' and apply role/trait/size modifiers."""
             s = fmt(val)
             if not s:
                 return s
 
-            # First, dice-count changes from the role (e.g. '-1D10')
+            # Dice-count changes from role (e.g. '-1D10')
             if dice_mod_expr:
                 s = apply_damage_dice_modifier(s, dice_mod_expr)
 
-            # Then, flat damage modifiers from Size + Role
+            # Flat damage modifiers from Size + Role + Unique Trait
             if not flat_mod_total:
-                return s  # nothing else to change
+                return s
 
             try:
                 mod = int(flat_mod_total)
@@ -325,7 +310,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
             s_clean = s.strip()
 
-            # Look for a trailing +N or -N
+            # Look for trailing +N or -N
             m = re.search(r'([+-])(\d+)\s*$', s_clean)
             if m:
                 sign = m.group(1)
@@ -340,21 +325,20 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 elif new_n > 0:
                     tail = f"+{new_n}"
                 else:
-                    tail = str(new_n)  # includes '-'
+                    tail = str(new_n)
 
                 base = s_clean[:m.start()]
                 return base + tail
 
-            # No existing flat term (e.g. '2D12') → just append the modifier
+            # No existing flat term -> append
             if mod > 0:
                 return f"{s_clean}+{mod}"
             elif mod < 0:
                 return f"{s_clean}{mod}"
-            else:
-                return s_clean
+            return s_clean
 
         def apply_numeric_mod(base_val, mod_key):
-            """Return base_val + role_mods[mod_key] if numeric; otherwise base_val."""
+            """Return base_val + role_mods[mod_key] + trait_mods[mod_key] if numeric; else base_val."""
             if pd.isna(base_val):
                 return base_val
             try:
@@ -363,11 +347,16 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 return base_val
 
             try:
-                delta = int(role_mods.get(mod_key, 0) or 0)
+                role_delta = int(role_mods.get(mod_key, 0) or 0)
             except (TypeError, ValueError):
-                delta = 0
+                role_delta = 0
 
-            return base_int + delta
+            try:
+                trait_delta = int(trait_mods.get(mod_key, 0) or 0)
+            except (TypeError, ValueError):
+                trait_delta = 0
+
+            return base_int + role_delta + trait_delta
 
         lines: list[str] = []
 
@@ -381,7 +370,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             if key == "int" and int_override is not None:
                 base_val = int_override
 
-            # Then apply role modifiers (str_mod, dex_mod, etc.)
+            # Apply role + trait mods (str_mod, dex_mod, etc.)
             base_val = apply_numeric_mod(base_val, f"{key}_mod")
             effective_stats.append(fmt(base_val))
 
@@ -395,7 +384,10 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         for key in ["wounds", "awareness", "armor", "defense"]:
             base_val = row.get(key, "")
             mod_key = None
-            if key == "awareness":
+
+            if key == "wounds":
+                mod_key = "wounds_mod"
+            elif key == "awareness":
                 mod_key = "awareness_mod"
             elif key == "armor":
                 mod_key = "armor_mod"
@@ -442,10 +434,16 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             except (TypeError, ValueError):
                 ranged_mod = 0
 
+            # Unique Trait can also modify attack skill
+            try:
+                trait_atk_mod = int(trait_mods.get("attack_skill_mod", 0) or 0)
+            except (TypeError, ValueError):
+                trait_atk_mod = 0
+
             if slot == 1:
-                delta = atk_mod + melee_mod
+                delta = atk_mod + melee_mod + trait_atk_mod
             else:
-                delta = atk_mod + ranged_mod
+                delta = atk_mod + ranged_mod + trait_atk_mod
 
             return base_int + delta
 
@@ -467,33 +465,30 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 line1 += f", Range {fmt(rng)}"
             attack_lines.append(line1)
 
-        # Respect roles that forbid ranged attacks in the text
         no_ranged = bool(role_mods.get("no_ranged_attacks"))
         if pd.notna(atk2) or pd.notna(dmg2):
             line2 = f"**Secondary Attack:** +{fmt(atk2_eff)} to hit, {dmg2_text} damage"
             if pd.notna(rng) and not no_ranged:
                 line2 += f", Range {fmt(rng)}"
             if attack_lines:
-                attack_lines.append("")  # blank line between attacks
+                attack_lines.append("")
             attack_lines.append(line2)
 
         if attack_lines:
             lines.extend(attack_lines)
 
-        # ---------------- Recovery Reactions (randomized options) ----------------
+        # ---------------- Recovery Reactions ----------------
         reactions = row.get("reactions")
         if pd.notna(reactions):
             lines.append("")
             rr_lines = parse_randomize_reactions(reactions)
-
             if rr_lines:
                 lines.append("**Recovery Reactions:**")
                 lines.extend(rr_lines)
             else:
-                # Fallback: if parsing fails for some reason, show raw text
                 lines.append(f"**Recovery Reactions:** {reactions}")
 
-        # ---------------- Role details block (from roles.csv) ----------------
+        # ---------------- Role details block ----------------
         if role_mods:
             role_lines = []
             role_label = st.session_state.get("current_enemy_role")
@@ -507,7 +502,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             elif summary:
                 role_lines.append(f"**Role Summary:** {summary}")
 
-            # Hit-location adjustments
             try:
                 hl_mod = int(role_mods.get("hit_location_roll_mod", 0) or 0)
             except (TypeError, ValueError):
@@ -519,19 +513,16 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             if bool(role_mods.get("disable_hit_location_table_when_attacked")):
                 role_lines.append("- Ignore Hit Location table when this creature is attacked")
 
-            # Movement / opportunity attacks
             if bool(role_mods.get("move_twice_per_turn")):
                 role_lines.append("- Moves twice per turn")
             if bool(role_mods.get("disengage_no_opportunity_attack")):
                 role_lines.append("- Can disengage without provoking opportunity attacks")
 
-            # Ranged / swarm behavior
             if bool(role_mods.get("no_ranged_attacks")):
                 role_lines.append("- Cannot make ranged attacks")
             if bool(role_mods.get("swarm_attacks_all_targets")):
                 role_lines.append("- Swarm: attacks all characters in reach each round")
-            
-            # Only show swarm size override when it has a real value
+
             raw_swarm = role_mods.get("swarm_size_override", "")
             swarm_override = ""
             if isinstance(raw_swarm, str):
@@ -542,7 +533,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             if swarm_override:
                 role_lines.append(f"- Swarm Size Override: {swarm_override}")
 
-            # Damage taken modifier (resistance or vulnerability)
             try:
                 dmg_taken_mod = int(role_mods.get("damage_taken_flat_mod", 0) or 0)
             except (TypeError, ValueError):
@@ -551,7 +541,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 sign = "+" if dmg_taken_mod > 0 else ""
                 role_lines.append(f"- Incoming damage {sign}{dmg_taken_mod}")
 
-            # Conditional attack bonus text
             try:
                 cond_bonus = int(role_mods.get("conditional_attack_skill_mod", 0) or 0)
             except (TypeError, ValueError):
@@ -561,11 +550,9 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 sign = "+" if cond_bonus > 0 else ""
                 role_lines.append(f"- Conditional Attack: {sign}{cond_bonus} Attack Skill {cond_cond}")
 
-            # Psychic-ability behavior
             if bool(role_mods.get("use_psychic_ability_table")):
                 role_lines.append("- Uses the Psychic Ability table for primary attacks")
 
-            # Favor text + freeform notes
             favor = str(role_mods.get("favor_text", "") or "").strip()
             if favor:
                 role_lines.append(f"- Favors: {favor}")
