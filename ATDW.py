@@ -2724,6 +2724,7 @@ if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
         st.session_state["last_stat_block_label"] = None
 
         # ----- Core identity & stats -----
+        creature_name = roll_table("creature_name", log=False) or "Unknown Creature"
         size = roll_table("size", log=False)  # sets damage_flat_modifier (Size)
         creature_type = roll_table("creature_type", log=False, option=env_choice)
         drive = roll_table("creature_drive", log=False)
@@ -2758,6 +2759,7 @@ if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
         eyes_detail = roll_table("eyes_detail", log=False)
 
         # ----- Persist entries (Unique Trait NOT persisted) -----
+        persist_antagonist("Creature Name", creature_name)
         persist_antagonist("Size", size)
         persist_antagonist(f"{diff_choice} Stat Block", stat_block)
         persist_antagonist("Drive", drive)
