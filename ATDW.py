@@ -918,6 +918,13 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
     if table_name == "enemy_role":
         set_role_modifiers_from_text(result)
 
+    if table_name == "size":
+    # Save the displayed size text too (handy for debugging)
+    st.session_state["current_size_text"] = result
+
+    # Swarm rule: only “all targets” when Size-table roll is 19–20
+    st.session_state["swarm_all_targets"] = bool(st.session_state.get("size_roll") in (19, 20))
+
     # If modifiers changed AFTER we already rolled a stat block, update it in persistent output.
     # (This is the "run changes in the background" behavior.)
     if table_name in ("enemy_role", "size", "creature_intelligence"):
