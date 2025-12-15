@@ -573,6 +573,14 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             if bool(role_mods.get("swarm_attacks_all_targets")):
                 role_lines.append("- Swarm: attacks all characters in reach each round")
 
+            favor = str(role_mods.get("favor_text", "") or "").strip()
+            if favor:
+                # Only show if it isn't already covered by the other role bullets
+                joined = " ".join(role_lines).lower()
+                if favor.lower() not in joined:
+                    role_lines.append(f"- Favors: {favor}")
+
+
             raw_swarm = role_mods.get("swarm_size_override", "")
             swarm_override = ""
             if isinstance(raw_swarm, str):
