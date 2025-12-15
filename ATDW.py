@@ -422,10 +422,20 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         atk1 = row.get("attack_skill_1")
         atk2 = row.get("attack_skill_2")
 
+        def fmt_signed(v):
+            """Return +N / -N formatting for attack skill values."""
+            if pd.isna(v):
+                return ""
+            try:
+                i = int(v)
+            except (TypeError, ValueError):
+                return str(v)
+            return f"{i:+d}"
+
         def eff_attack(base_val, slot):
             """
-            slot 1 = primary (treated as melee)
-            slot 2 = secondary (treated as ranged)
+            slot 1 = melee modifiers
+            slot 2 = ranged modifiers
             """
             if pd.isna(base_val):
                 return base_val
@@ -461,9 +471,7 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
             return base_int + delta
 
-        atk1_eff = eff_attack(atk1, 1)
-        atk2_eff = eff_attack(atk2, 2)
-
+        # Pull damage/range
         dmg1 = row.get("damage_1")
         dmg2 = row.get("damage_2")
         rng = row.get("range")
@@ -471,22 +479,55 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         dmg1_text = adjust_damage_str(dmg1)
         dmg2_text = adjust_damage_str(dmg2)
 
+        # Role rule: brutes (and others) can forbid ranged entirely
+        no_ranged = bool(role_mods.get("no_ranged_attacks"))
+
+        # Does this stat block have a usable range value?
+        has_range = (pd.notna(rng) and str(rng).strip() != "") and (not no_ranged)
+
+        # Is there a second attack profile in the row?
+        has_two_profiles = (pd.notna(atk2) or pd.notna(dmg2))
+
         attack_lines = []
 
+        # --- Melee profile is always the first profile ---
         if pd.notna(atk1) or pd.notna(dmg1):
-            line1 = f"**Primary Attack:** +{fmt(atk1_eff)} to hit, {dmg1_text} damage"
-            if pd.notna(rng):
-                line1 += f", Range {fmt(rng)}"
-            attack_lines.append(line1)
+            atk1_melee = eff_attack(atk1, 1)
+            attack_lines.append(
+                f"**Melee Attack:** Attack Skill {fmt_signed(atk1_melee)}, Damage {dmg1_text}"
+            )
 
-        no_ranged = bool(role_mods.get("no_ranged_attacks"))
-        if pd.notna(atk2) or pd.notna(dmg2):
-            line2 = f"**Secondary Attack:** +{fmt(atk2_eff)} to hit, {dmg2_text} damage"
-            if pd.notna(rng) and not no_ranged:
-                line2 += f", Range {fmt(rng)}"
+        # --- If ranged is allowed and range exists, show a ranged profile ---
+        if has_range:
+            if has_two_profiles:
+                # Profile 2 is the ranged profile
+                atk2_ranged = eff_attack(atk2, 2)
+                ranged_dmg = dmg2_text
+                ranged_atk = atk2_ranged
+            else:
+                # Only one profile exists (Easy often looks like this):
+                # ranged uses profile 1's damage, but ranged attack modifiers
+                atk1_ranged = eff_attack(atk1, 2)
+                ranged_dmg = dmg1_text
+                ranged_atk = atk1_ranged
+
             if attack_lines:
-                attack_lines.append("")
-            attack_lines.append(line2)
+                attack_lines.append("**OR**")
+
+            attack_lines.append(
+                f"**Ranged Attack:** Attack Skill {fmt_signed(ranged_atk)}, Damage {ranged_dmg}, Range {fmt(rng)}"
+            )
+
+        else:
+            # No ranged (either no range stat, or role forbids ranged).
+            # If a 2nd profile exists, treat it as an alternate MELEE option (not “secondary attack”).
+            if has_two_profiles:
+                atk2_melee = eff_attack(atk2, 1)
+                if attack_lines:
+                    attack_lines.append("**OR**")
+                attack_lines.append(
+                    f"**Alternate Melee:** Attack Skill {fmt_signed(atk2_melee)}, Damage {dmg2_text}"
+                )
 
         if attack_lines:
             lines.extend(attack_lines)
