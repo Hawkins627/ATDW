@@ -2744,7 +2744,7 @@ with tabs[6]:
     st.markdown("### Full Antagonist (Combined 16)")
 
     if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
-        
+
         ensure_state()
         # Reset per-creature overrides
         st.session_state["int_stat_override"] = None
@@ -2759,6 +2759,9 @@ with tabs[6]:
         st.session_state["last_stat_block_row"] = None
         st.session_state["last_stat_block_label"] = None
 
+        # Make sure old psychic lines can’t “stick”
+        remove_persistent_items(5, startswith_any=["Psychic Template", "Psychic Ability"])
+
         # ----- Core identity & stats -----
         creature_name = roll_table("creature_name", log=False) or "Unknown Creature"
         size = roll_table("size", log=False)  # sets damage_flat_modifier (Size)
@@ -2772,7 +2775,6 @@ with tabs[6]:
         # Traits first (unique_trait sets background modifiers and may suppress enemy ability)
         trait_option = "Easy" if diff_choice == "Easy" else "Other"
         _ = roll_table("unique_trait", log=False, option=trait_option)  # applies modifiers in background
-        unique_trait_desc = st.session_state.get("unique_trait_desc")
 
         # Stat block now sees Size + Role + Unique Trait modifiers in session_state
         stat_block = roll_table("stat_block", log=False, option=diff_choice)
@@ -2782,17 +2784,20 @@ with tabs[6]:
         if not st.session_state.get("suppress_enemy_ability", False):
             enemy_ability = roll_table("enemy_ability", log=False)
 
-        psychic_template = roll_table("psychic", log=False)
-        psychic_ability = roll_table("psychic_ability", log=False)
+        # Psychic ability ONLY if the rolled role is Psychic (role flag)
+        psychic_ability = None
+        role_mods = st.session_state.get("role_mods") or {}
+        if bool(role_mods.get("use_psychic_ability_table")):
+            psychic_ability = roll_table("psychic_ability", log=False)
 
-        # Appearance & anatomy
+        # Appearance & anatomy (use the creature_* tables)
         appearance = roll_table("creature_appearance", log=False)
-        cover = roll_table("cover", log=False)
-        unique_feature = roll_table("unique_feature", log=False)
-        limbs = roll_table("limbs", log=False)
-        mouth = roll_table("mouth", log=False)
-        eyes_number = roll_table("eyes_number", log=False)
-        eyes_detail = roll_table("eyes_detail", log=False)
+        cover = roll_table("creature_cover", log=False)
+        unique_feature = roll_table("creature_unique_feature", log=False)
+        limbs = roll_table("creature_limbs", log=False, option=limb_env_choice)
+        mouth = roll_table("creature_mouth", log=False)
+        eyes_number = roll_table("creature_eyes_number", log=False)
+        eyes_detail = roll_table("creature_eyes", log=False, option=eyes_number)
 
         # ----- Persist entries (Unique Trait NOT persisted) -----
         persist_antagonist("Creature Name", creature_name)
@@ -2805,8 +2810,9 @@ with tabs[6]:
         if enemy_ability is not None:
             persist_antagonist("Enemy Ability", enemy_ability)
 
-        persist_antagonist("Psychic Template", psychic_template)
-        persist_antagonist("Psychic Ability", psychic_ability)
+        if psychic_ability is not None:
+            persist_antagonist("Psychic Ability", psychic_ability)
+
         persist_antagonist("Appearance", appearance)
         persist_antagonist("Cover", cover)
         persist_antagonist("Unique Feature", unique_feature)
@@ -2815,6 +2821,8 @@ with tabs[6]:
         persist_antagonist("Eyes", f"{eyes_number} — {eyes_detail}")
 
         # ----- Build a stat-block-style summary -----
+        psychic_line = f"- **Psychic Ability:** {psychic_ability}  " if psychic_ability else ""
+
         summary = f"""
 ### {creature_name.upper()}
 
@@ -2830,8 +2838,7 @@ with tabs[6]:
 
 **Traits & Abilities**  
 {f'- **Enemy Ability:** {enemy_ability}  ' if enemy_ability else ''}  
-- **Psychic Template:** {psychic_template}  
-- **Psychic Ability:** {psychic_ability}  
+{psychic_line}
 
 **Appearance**  
 - **Overall Appearance:** {appearance}  
@@ -2844,6 +2851,7 @@ with tabs[6]:
 
         st.success(summary)
         add_to_log(summary)
+
 
 # ---------- TAB: RETURN TO BASE ----------
 with tabs[7]:
