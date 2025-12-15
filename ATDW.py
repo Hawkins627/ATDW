@@ -570,18 +570,10 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
             if bool(role_mods.get("no_ranged_attacks")):
                 role_lines.append("- Cannot make ranged attacks")
-            if bool(role_mods.get("swarm_attacks_all_targets")):
+
+            # Swarm rule: only the largest swarms (Size 19–20) attack everyone at once
+            if role_label == "Swarm" and st.session_state.get("swarm_all_targets", False):
                 role_lines.append("- Swarm: attacks all characters in reach each round")
-
-            raw_swarm = role_mods.get("swarm_size_override", "")
-            swarm_override = ""
-            if isinstance(raw_swarm, str):
-                swarm_override = raw_swarm.strip()
-            elif not pd.isna(raw_swarm):
-                swarm_override = str(raw_swarm).strip()
-
-            if swarm_override:
-                role_lines.append(f"- Swarm Size Override: {swarm_override}")
 
             try:
                 dmg_taken_mod = int(role_mods.get("damage_taken_flat_mod", 0) or 0)
