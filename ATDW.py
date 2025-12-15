@@ -647,7 +647,6 @@ def _safe_int(val, default: int = 0) -> int:
     except Exception:
         return default
 
-
 def remove_persistent_items(group_id: int, contains_any=None, startswith_any=None) -> int:
     """
     Remove items from st.session_state['persistent'][group_id] that match.
@@ -673,7 +672,6 @@ def remove_persistent_items(group_id: int, contains_any=None, startswith_any=Non
 
     st.session_state["persistent"][group_id] = after
     return len(before) - len(after)
-
 
 def update_last_stat_block_persistent(group_id: int = 5) -> bool:
     """
@@ -874,12 +872,42 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
         # Applies background modifiers + may suppress Enemy Ability + may rebuild existing stat block
         set_unique_trait_modifiers_from_row(row)
 
-    if table_name == "size" and "modifier" in row.index:
+    if table_name == "size":
+        # Store this as the current flat damage modifier
         try:
-            st.session_state["damage_flat_modifier"] = int(row["modifier"])
+            st.session_state["damage_flat_modifier"] = int(row.get("modifier", 0) or 0)
         except (TypeError, ValueError):
             st.session_state["damage_flat_modifier"] = 0
 
+        # Try to infer which Size-table roll this row represents (for Swarm 19–20 logic)
+        size_roll = None
+
+        # Preferred: explicit roll column if your CSV has it
+        for col in ("d20", "roll", "result", "range"):
+            if col in row.index and pd.notna(row[col]):
+                raw = str(row[col]).strip()
+                m = re.match(r"^(\d+)\s*[-–]\s*(\d+)$", raw)  # accepts "19-20" or "19–20"
+                if m:
+                    size_roll = int(m.group(2))  # take the high end
+                else:
+                    try:
+                        size_roll = int(raw)
+                    except ValueError:
+                        size_roll = None
+                if size_roll is not None:
+                    break
+
+        # Fallback: if size.csv is a 20-row D20 table in order, use row position as the roll
+        if size_roll is None:
+            try:
+                pos = df.index.get_loc(row.name)  # 0-based position
+                if len(df) == 20:
+                    size_roll = pos + 1
+            except Exception:
+                size_roll = None
+
+        st.session_state["size_roll"] = size_roll
+  
     if table_name == "creature_intelligence" and "value" in row.index:
         st.session_state["int_stat_override"] = roll_int_from_expression(row["value"])
 
