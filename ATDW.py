@@ -2554,9 +2554,22 @@ with tabs[6]:
                 st.success(result)
 
             if st.button("Enemy Role", key="btn_enemy_role"):
-                # enemy_role depends on the chosen difficulty / stat block
+                ensure_state()
+                st.session_state["role_mods"] = None
+                st.session_state["current_enemy_role"] = None
+    
+                # If the last thing you rolled was Psychic, don’t let it “stick”
+                remove_persistent_items(5, startswith_any=["Psychic Template", "Psychic Ability"])
+    
                 result = roll_table("enemy_role", group=5, log=True, option=diff_choice)
                 persist_antagonist("Enemy Role", result)
+    
+                role_mods = st.session_state.get("role_mods") or {}
+                if bool(role_mods.get("use_psychic_ability_table")):
+                    psychic_ability = roll_table("psychic_ability", group=5, log=True)
+                    persist_antagonist("Psychic Ability", psychic_ability)
+                    st.info("Psychic role rolled → Psychic Ability added.")
+
                 st.success(result)
 
     # --------------------------------------------------
