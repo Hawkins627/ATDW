@@ -2606,12 +2606,45 @@ with tabs[6]:
                     st.success(result)
 
         with traits_right:
-            if st.button("Psychic Template", key="btn_psychic_template"):
-                # This is the general psychic creature table (Combined 18)
-                result = roll_table("psychic", group=5, log=True)
-                persist_antagonist("Psychic Template", result)
-                st.success(result)
+            st.markdown("##### Combat Behavior (optional)")
 
+            behavior_role = st.selectbox(
+                "Role for behavior",
+                ["Brute", "Lurker", "Ranged", "Swarm", "Psychic"],
+                key="behavior_role_select"
+            )
+
+            if st.button("Roll Combat Behavior", key="btn_combat_behavior"):
+                role_key = behavior_role.lower()
+
+                # These are the filenames/table names we will try.
+                # Keep the first one that exists.
+                candidates = [
+                    role_key,                       # brute.csv, lurker.csv, etc.
+                    f"{role_key}_behavior",         # brute_behavior.csv
+                    f"combat_behavior_{role_key}"   # combat_behavior_brute.csv
+                ]
+
+                table_name = None
+                for t in candidates:
+                    try:
+                        _ = load_table_df(t)   # just testing if file exists
+                        table_name = t
+                        break
+                    except FileNotFoundError:
+                        continue
+    
+                if table_name is None:
+                    st.error(
+                        f"No behavior CSV found for {behavior_role}. "
+                        f"Tried: {', '.join(candidates)}"
+                    )
+                else:
+                    result = roll_table(table_name, group=5, log=True)
+                    persist_antagonist(f"Combat Behavior ({behavior_role})", result)
+                    st.success(result)
+
+            st.markdown("##### Psychic Ability (Psychic role only)")
             if st.button("Psychic Ability", key="btn_psychic_ability"):
                 result = roll_table("psychic_ability", group=5, log=True)
                 persist_antagonist("Psychic Ability", result)
