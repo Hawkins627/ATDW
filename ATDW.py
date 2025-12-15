@@ -511,9 +511,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 ranged_dmg = dmg1_text
                 ranged_atk = atk1_ranged
 
-            if attack_lines:
-                attack_lines.append("- **OR**")
-
             attack_lines.append(
                 f"- **Ranged Attack:** Attack Skill {fmt_signed(ranged_atk)}, Damage {ranged_dmg}, Range {fmt(rng)}"
             )
@@ -523,8 +520,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             # If a 2nd profile exists, treat it as an alternate MELEE option (not “secondary attack”).
             if has_two_profiles:
                 atk2_melee = eff_attack(atk2, 1)
-                if attack_lines:
-                    attack_lines.append("**OR**")
             attack_lines.append(
                 f"- **Alternate Melee:** Attack Skill {fmt_signed(atk2_melee)}, Damage {dmg2_text}"
             )
