@@ -493,9 +493,9 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         # --- Melee profile is always the first profile ---
         if pd.notna(atk1) or pd.notna(dmg1):
             atk1_melee = eff_attack(atk1, 1)
-            attack_lines.append(
-                f"**Melee Attack:** Attack Skill {fmt_signed(atk1_melee)}, Damage {dmg1_text}"
-            )
+        attack_lines.append(
+            f"- **Melee Attack:** Attack Skill {fmt_signed(atk1_melee)}, Damage {dmg1_text}"
+        )
 
         # --- If ranged is allowed and range exists, show a ranged profile ---
         if has_range:
@@ -512,10 +512,10 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 ranged_atk = atk1_ranged
 
             if attack_lines:
-                attack_lines.append("**OR**")
+                attack_lines.append("- **OR**")
 
             attack_lines.append(
-                f"**Ranged Attack:** Attack Skill {fmt_signed(ranged_atk)}, Damage {ranged_dmg}, Range {fmt(rng)}"
+                f"- **Ranged Attack:** Attack Skill {fmt_signed(ranged_atk)}, Damage {ranged_dmg}, Range {fmt(rng)}"
             )
 
         else:
@@ -525,9 +525,9 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
                 atk2_melee = eff_attack(atk2, 1)
                 if attack_lines:
                     attack_lines.append("**OR**")
-                attack_lines.append(
-                    f"**Alternate Melee:** Attack Skill {fmt_signed(atk2_melee)}, Damage {dmg2_text}"
-                )
+            attack_lines.append(
+                f"- **Alternate Melee:** Attack Skill {fmt_signed(atk2_melee)}, Damage {dmg2_text}"
+            )
 
         if attack_lines:
             lines.extend(attack_lines)
