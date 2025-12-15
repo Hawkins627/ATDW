@@ -603,13 +603,6 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             if bool(role_mods.get("use_psychic_ability_table")):
                 role_lines.append("- Uses the Psychic Ability table for primary attacks")
 
-            favor = str(role_mods.get("favor_text", "") or "").strip()
-            if favor:
-                # Only show if it isn't already covered by the other role bullets
-                joined = " ".join(role_lines).lower()
-                if favor.lower() not in joined:
-                    role_lines.append(f"- Favors: {favor}")
-
             if role_lines:
                 lines.append("")
                 lines.append("**Role Details:**")
