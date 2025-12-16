@@ -3010,11 +3010,13 @@ with tabs[6]:
 
         # Stat block now sees Size + Role + Unique Trait modifiers in session_state
         stat_block = roll_table("stat_block", log=False, option=diff_choice)
-
-        # Enemy ability (skip if suppressed by unique trait)
-        enemy_ability = None
+        
+        # Enemy abilities (roll count depends on difficulty; skip if suppressed by unique trait)
+        enemy_abilities = []
         if not st.session_state.get("suppress_enemy_ability", False):
-            enemy_ability = roll_table("enemy_ability", log=False)
+            n_ability = {"Easy": 1, "Standard": 1, "Elite": 2, "Overwhelming": 3}.get(diff_choice, 1)
+            for _ in range(n_ability):
+                enemy_abilities.append(roll_table("enemy_ability", log=False))
 
         # Psychic ability ONLY if the rolled role is Psychic (role flag)
         psychic_ability = None
@@ -3033,8 +3035,12 @@ with tabs[6]:
         persist_antagonist("Intelligence", intelligence)
         persist_antagonist("Enemy Role", enemy_role)
 
-        if enemy_ability is not None:
-            persist_antagonist("Enemy Ability", enemy_ability)
+        if enemy_abilities:
+            if len(enemy_abilities) == 1:
+                persist_antagonist("Enemy Ability", enemy_abilities[0])
+            else:
+                for i, ab in enumerate(enemy_abilities, 1):
+                    persist_antagonist(f"Enemy Ability {i}", ab)
 
         if psychic_ability is not None:
             persist_antagonist("Psychic Ability", psychic_ability)
@@ -3044,6 +3050,15 @@ with tabs[6]:
         # ----- Build a stat-block-style summary -----
         psychic_line = f"- **Psychic Ability:** {psychic_ability}  " if psychic_ability else ""
 
+        enemy_abilities_md = ""
+        if enemy_abilities:
+            if len(enemy_abilities) == 1:
+                enemy_abilities_md = f"- **Enemy Ability:** {enemy_abilities[0]}  "
+            else:
+                enemy_abilities_md = "\n".join(
+                    [f"- **Enemy Ability {i}:** {ab}  " for i, ab in enumerate(enemy_abilities, 1)]
+                )
+        
         summary = f"""
 ### {creature_name.upper()}
 
@@ -3058,7 +3073,7 @@ with tabs[6]:
 {stat_block}
 
 **Traits & Abilities**  
-{f'- **Enemy Ability:** {enemy_ability}  ' if enemy_ability else ''}  
+{enemy_abilities_md}  
 {psychic_line}
 
 **Appearance**  
