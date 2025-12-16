@@ -623,6 +623,154 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
     return " – ".join(parts) if parts else table_name
 
+def _pick_article(word: str) -> str:
+    w = (word or "").strip().lower()
+    if not w:
+        return "a"
+    return "an" if w[0] in "aeiou" else "a"
+
+
+def _clean_piece(s: str) -> str:
+    """Trim and remove any extra '— category' cruft if it sneaks in."""
+    if s is None:
+        return ""
+    s = str(s).strip()
+    # If you ever get things like "Sexapedal – number", keep left side.
+    for sep in ["—", "–", "-"]:
+        if sep in s:
+            left = s.split(sep, 1)[0].strip()
+            # only take left side if it looks like the real value
+            if left:
+                s = left
+    return s.strip()
+
+
+def _roll_nonempty(table_name: str, option=None, max_tries: int = 30) -> str:
+    """Roll until we get a real value (avoids NaN/blank rows in some CSVs)."""
+    for _ in range(max_tries):
+        val = roll_table(table_name, group=None, log=False, option=option)
+        val = _clean_piece(val)
+
+        bad = (
+            not val
+            or val.lower() in ("nan", "none")
+            or val.startswith("[ERROR]")
+            or val.lower() == table_name.lower()
+        )
+        if not bad:
+            return val
+    return ""
+
+
+def _limbs_phrase(limbs: str, locomotion: str) -> str:
+    l = _clean_piece(limbs)
+    ll = l.lower()
+    loc = (locomotion or "").lower()
+
+    # Terrestrial style
+    if not loc.startswith("aquatic"):
+        if "sexapedal" in ll:
+            return "six legs"
+        if "quadrupedal" in ll:
+            return "four legs"
+        if "bipedal" in ll:
+            # keep “upright” flavor if present
+            return "two legs" + (" and stands mostly upright" if "upright" in ll else "")
+        return ll  # fallback: whatever text you rolled
+
+    # Aquatic style
+    if ll:
+        # e.g. "Tentacles" / "Flippers"
+        return f"{ll.lower()} for locomotion"
+    return ""
+
+
+def _mouth_phrase(mouth: str) -> str:
+    m = _clean_piece(mouth)
+    ml = m.lower()
+    if not ml:
+        return ""
+    if ml == "mouth":
+        return "a simple mouth"
+    if ml == "tentacles":
+        return "a nest of feeding tentacles in place of a mouth"
+    return f"a {ml} for a mouth"
+
+
+def _eyes_phrase(eyes_number: str, eyes_detail: str) -> str:
+    n = _clean_piece(eyes_number).lower()
+    d = _clean_piece(eyes_detail).lower()
+
+    if not n:
+        return ""
+
+    # singular tweak
+    eye_word = "eye" if n == "one" else "eyes"
+
+    if not d:
+        return f"{n} {eye_word}"
+
+    if d == "eyestalks":
+        return f"{n} {eye_word} on eyestalks"
+
+    # front-facing / side-facing / compound, etc.
+    return f"{n} {d} {eye_word}"
+
+
+def _feature_phrase(feature: str) -> str:
+    f = _clean_piece(feature).lower()
+    if not f:
+        return ""
+    if f in ("tail", "mane"):
+        return f"a {f}"
+    # "horns", "wings", "tendrils", "bright colors", etc.
+    return f
+
+
+def build_appearance_description(locomotion_choice: str) -> str:
+    """
+    Rolls creature appearance parts and returns ONE nice sentence.
+    Uses locomotion_choice ("Terrestrial" / "Aquatic") to shape the limbs phrasing.
+    """
+    appearance = _roll_nonempty("creature_appearance")
+    cover = _roll_nonempty("creature_cover")
+    feature = _roll_nonempty("creature_unique_feature")
+    limbs = _roll_nonempty("creature_limbs", option=locomotion_choice)
+    mouth = _roll_nonempty("creature_mouth")
+    eyes_n = _roll_nonempty("creature_eyes_number")
+    eyes_d = _roll_nonempty("creature_eyes")
+
+    ap = appearance.lower() if appearance else "creature"
+    art = _pick_article(ap)
+
+    intro = f"The creature is {art} {ap}"
+    if (locomotion_choice or "").lower().startswith("aquatic"):
+        intro += " adapted for aquatic life"
+
+    parts = []
+    if cover:
+        parts.append(f"{cover.lower()} covering its body")
+    lp = _limbs_phrase(limbs, locomotion_choice)
+    if lp:
+        parts.append(lp)
+    mp = _mouth_phrase(mouth)
+    if mp:
+        parts.append(mp)
+    ep = _eyes_phrase(eyes_n, eyes_d)
+    if ep:
+        parts.append(ep)
+    fp = _feature_phrase(feature)
+    if fp:
+        parts.append(fp)
+
+    if not parts:
+        return intro + "."
+
+    if len(parts) == 1:
+        return intro + " with " + parts[0] + "."
+
+    return intro + " with " + ", ".join(parts[:-1]) + f", and {parts[-1]}."
+
 def _safe_int(val, default: int = 0) -> int:
     """Best-effort int conversion. Blank/NaN/non-numeric -> default."""
     try:
@@ -2859,14 +3007,8 @@ with tabs[6]:
         if bool(role_mods.get("use_psychic_ability_table")):
             psychic_ability = roll_table("psychic_ability", log=False)
 
-        # Appearance & anatomy (use the creature_* tables)
-        appearance = roll_table("creature_appearance", log=False)
-        cover = roll_table("creature_cover", log=False)
-        unique_feature = roll_table("creature_unique_feature", log=False)
-        limbs = roll_table("creature_limbs", log=False, option=limb_env_choice)
-        mouth = roll_table("creature_mouth", log=False)
-        eyes_number = roll_table("creature_eyes_number", log=False)
-        eyes_detail = roll_table("creature_eyes", log=False, option=eyes_number)
+        # Appearance & anatomy (combined into one description)
+        appearance_desc = build_appearance_description(limb_env_choice)
 
         # ----- Persist entries (Unique Trait NOT persisted) -----
         persist_antagonist("Creature Name", creature_name)
@@ -2882,12 +3024,7 @@ with tabs[6]:
         if psychic_ability is not None:
             persist_antagonist("Psychic Ability", psychic_ability)
 
-        persist_antagonist("Appearance", appearance)
-        persist_antagonist("Cover", cover)
-        persist_antagonist("Unique Feature", unique_feature)
-        persist_antagonist("Limbs", limbs)
-        persist_antagonist("Mouth", mouth)
-        persist_antagonist("Eyes", f"{eyes_number} — {eyes_detail}")
+        persist_antagonist("Appearance", appearance_desc)
 
         # ----- Build a stat-block-style summary -----
         psychic_line = f"- **Psychic Ability:** {psychic_ability}  " if psychic_ability else ""
@@ -2910,12 +3047,8 @@ with tabs[6]:
 {psychic_line}
 
 **Appearance**  
-- **Overall Appearance:** {appearance}  
-- **Cover / Natural Armor:** {cover}  
-- **Unique Feature:** {unique_feature}  
-- **Limbs:** {limbs}  
-- **Mouth:** {mouth}  
-- **Eyes:** {eyes_number} — {eyes_detail}  
+- {appearance_desc}  
+
 """
 
         st.success(summary)
