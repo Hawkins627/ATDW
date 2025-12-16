@@ -179,6 +179,13 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             vals = [v for k, v in row.items() if k != row.index.name]
             return " - ".join(str(v) for v in vals)
 
+    # --- Special case: Creature Limbs (only show description; never the category) ---
+    if table_name == "creature_limbs":
+        val = row.get("description", "")
+        if pd.isna(val):
+            return ""
+        return str(val).strip()
+
     # --- Special case: NPC first names ---
     if table_name == "npc_name":
         if "name" in row.index:
@@ -960,14 +967,22 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
             norm_opt = norm(opt_str)
             df = df[df["category"].apply(norm) == norm_opt]
 
-        # CREATURE LIMBS: "Terrestrial" vs "Aquatic"
+        # CREATURE LIMBS: locomotion drives which limb-set we roll from
         elif table_name == "creature_limbs" and "category" in df.columns:
-            opt_low = opt_str.lower()
+            opt_low = opt_str.strip().lower()
+
+            # Map your locomotion dropdown into the correct limbs category
             if opt_low.startswith("aquatic"):
-                df = df[df["category"].str.lower() == "aquatic"]
+                wanted = "aquatic"
             else:
-                # Terrestrial (or anything else) -> no filter
-                pass
+                # Terrestrial (or anything else) => roll only leg-count rows
+                wanted = "number"
+
+            df = df[df["category"].astype(str).str.lower() == wanted]
+
+            # Also drop blank/NaN descriptions (some tables have spacer rows)
+            if "description" in df.columns:
+                df = df[df["description"].notna() & (df["description"].astype(str).str.strip() != "")]
 
         # ---------- Generic handling for all other tables ----------
         else:
