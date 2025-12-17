@@ -1372,6 +1372,9 @@ def roll_table(table_name: str, group=None, log=False, option=None) -> str:
             if "description" in df.columns:
                 df = df[df["description"].notna() & (df["description"].astype(str).str.strip() != "")]
 
+        elif table_name == "known_threat" and "name" in df.columns:
+            df = df[df["name"].astype(str).str.lower() == opt_str.lower()]
+        
         # ---------- Generic handling for all other tables ----------
         else:
             # 1. Terrain difficulty tables with previous_hex
