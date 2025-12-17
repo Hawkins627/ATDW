@@ -3494,18 +3494,6 @@ with tabs[7]:
     st.header("Return to Base (RTB)")
     ensure_state()
 
-    # ---- Existing RTB buttons ----
-    quick_left, quick_right = st.columns(2)
-
-    with quick_left.container(border=True):
-        if st.button("Generate Post-Mission Event", key="btn_rtb_post_mission_event"):
-            st.success(roll_table("RTB Event", group=7, log=True))
-
-    with quick_right.container(border=True):
-        if st.button("Generate Complication", key="btn_rtb_complication"):
-            st.success(roll_table("RTB Complication", group=7, log=True))
-
-    # ---- New RTB tables (your 5) ----
     col_left, col_right = st.columns(2)
 
     # Artifact Value (p.153)
@@ -3514,17 +3502,17 @@ with tabs[7]:
         if st.button("Roll Artifact Value", key="btn_rtb_artifact_value"):
             st.success(roll_table("artifact_value", log=True))
 
-    # Carousing (p.334–335)
-    with col_left.container(border=True):
-        st.markdown("### Carousing (p.334–335)")
-        if st.button("Roll Carousing", key="btn_rtb_carousing"):
-            st.success(roll_table("Carousing", log=True))
-
     # Red Astroid Event (p.346)
     with col_right.container(border=True):
         st.markdown("### Red Astroid Event (p.346)")
         if st.button("Roll Red Astroid Event", key="btn_rtb_red_astroid_event"):
             st.success(roll_table("red_astroid_event", log=True))
+
+    # Carousing (p.334–335)  ✅ FIXED: uses "carousing" to match carousing.csv
+    with col_left.container(border=True):
+        st.markdown("### Carousing (p.334–335)")
+        if st.button("Roll Carousing", key="btn_rtb_carousing"):
+            st.success(roll_table("carousing", log=True))
 
     # Colorful Locals (p.347)
     with col_right.container(border=True):
