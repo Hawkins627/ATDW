@@ -223,6 +223,149 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
     if table_name == "unique_trait":
         return str(row.get("description", "")).strip()
 
+        # --- Special case: Guardians & Known Threats (stat-block style output) ---
+    if table_name in {"guardian", "known_threat"}:
+        def fmt(v):
+            if pd.isna(v):
+                return ""
+            if isinstance(v, float) and v.is_integer():
+                return str(int(v))
+            return str(v)
+
+        def pretty_damage(expr: str) -> str:
+            s = str(expr).strip()
+            if not s or s.lower() == "nan":
+                return ""
+            s = s.replace(" ", "").upper()
+            m = re.match(r"^(\d*)D(\d+)(.*)$", s)
+            if not m:
+                return str(expr).strip()
+            n = m.group(1)
+            die = m.group(2)
+            tail = m.group(3) or ""
+            dice = f"{n}D{die}" if n and n != "1" else f"D{die}"
+            return f"({dice}){tail}"
+
+        def split_abilities_text(raw: str) -> list[str]:
+            raw = str(raw or "").strip()
+            if not raw or raw.lower() == "nan":
+                return []
+
+            raw = re.sub(r"\s+", " ", raw)
+
+            # Split on explicit separators first
+            chunks = [c.strip() for c in re.split(r"[|;\n]+", raw) if c.strip()]
+
+            parts: list[str] = []
+            for ch in chunks:
+                # Split before glued-on “note starters”
+                for piece in re.split(r"(?<!^)(?=(?:Can|Immune)\b)", ch):
+                    piece = piece.strip()
+                    if not piece:
+                        continue
+                    # Split on “AbilityName The <creature> …”
+                    parts.extend(re.split(r"(?<!^)(?=(?:[A-Z][A-Za-z0-9'’\-]+)\s+The\s)", piece))
+
+            parts = [p.strip() for p in parts if p.strip()]
+
+            # Pretty up "Aim The Arash..." -> "Aim — The Arash..."
+            pretty: list[str] = []
+            for p in parts:
+                p = p.lstrip("-• ").strip()
+                m = re.match(r"^([A-Z][A-Za-z0-9'’\-]+)\s+(The\b.*)$", p)
+                if m:
+                    pretty.append(f"{m.group(1)} — {m.group(2)}")
+                else:
+                    pretty.append(p)
+
+            # De-dupe, preserve order
+            out: list[str] = []
+            seen = set()
+            for p in pretty:
+                key = p.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(p)
+            return out
+
+        # Header line
+        name = ""
+        if "guardian" in row.index:
+            name = str(row.get("guardian", "") or "").strip()
+        elif "name" in row.index:
+            name = str(row.get("name", "") or "").strip()
+        else:
+            for c in row.index:
+                if pd.notna(row[c]):
+                    name = str(row[c]).strip()
+                    break
+
+        role = str(row.get("role", "") or "").strip()
+        diff = str(row.get("difficulty", "") or "").strip()
+
+        if role and diff:
+            header = f"{name} — {role} ({diff})"
+        elif role:
+            header = f"{name} — {role}"
+        elif diff:
+            header = f"{name} ({diff})"
+        else:
+            header = name
+
+        lines: list[str] = [header, ""]
+
+        # Stats (6 columns)
+        stat_keys = ["str", "dex", "con", "wil", "int", "cha"]
+        stats = [fmt(row.get(k, "")) for k in stat_keys]
+        lines.append("| STR | DEX | CON | WIL | INT | CHA |")
+        lines.append("| --- | --- | --- | --- | --- | --- |")
+        lines.append("| " + " | ".join(stats) + " |")
+        lines.append("")
+
+        # Derived
+        derived_keys = ["wounds", "awareness", "armor", "defense"]
+        derived = [fmt(row.get(k, "")) for k in derived_keys]
+        lines.append("| Wounds | Awareness | Armor | Defense |")
+        lines.append("| --- | --- | --- | --- |")
+        lines.append("| " + " | ".join(derived) + " |")
+        lines.append("")
+
+        # Attacks (main + optional alt)
+        atk_main = row.get("attack_skill", "")
+        atk_alt = row.get("attack_skill_alt", "")
+        dmg = pretty_damage(row.get("damage", ""))
+
+        role_low = role.lower()
+        main_label = "Ranged Attack" if role_low == "ranged" else "Melee Attack"
+        alt_label = "Melee Attack" if main_label == "Ranged Attack" else "Ranged Attack"
+
+        if fmt(atk_main) or dmg:
+            lines.append(f"- **{main_label}:** Attack Skill +{fmt(atk_main)}, Damage {dmg}")
+
+        if pd.notna(atk_alt) and str(atk_alt).strip().lower() not in ("", "nan"):
+            cond = str(row.get("attack_skill_alt_condition", "") or "").strip()
+            if cond.lower() == "nan":
+                cond = ""
+            suffix = f" ({cond})" if cond else ""
+            lines.append(f"- **{alt_label}:** Attack Skill +{fmt(atk_alt)}, Damage {dmg}{suffix}")
+
+        # Abilities + notes (one bullet each)
+        abilities = split_abilities_text(row.get("abilities", ""))
+        notes = split_abilities_text(row.get("notes", ""))
+
+        abilities = [a for a in abilities if a.lower() != "no additional abilities at this tier"]
+
+        if abilities or notes:
+            lines.append("")
+            lines.append("**Abilities:**")
+            for a in abilities:
+                lines.append(f"- {a}")
+            for n in notes:
+                lines.append(f"- {n}")
+
+        return "\n".join(lines)
+
     # --- Special case: Creature Name (combine syllables, no hyphens) ---
     if table_name == "creature_name":
         ignore_cols = {"difficulty", "creature_type", "category"}
