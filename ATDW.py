@@ -1,4 +1,4 @@
-import streamlit as st
+    import streamlit as st
 import pandas as pd
 import random
 import os
@@ -278,13 +278,18 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
             lines.append(" ".join(header).strip())
             lines.append("")
 
-        # Core stats
+        # ---------------- Core stats (split into 2 tables so it doesn’t wrap in narrow containers) ----------------
         stat_keys = ["str", "dex", "con", "wil", "int", "cha"]
         stats = [fmt(row.get(k, "")) for k in stat_keys]
 
-        lines.append("| STR | DEX | CON | WIL | INT | CHA |")
-        lines.append("| --- | --- | --- | --- | --- | --- |")
-        lines.append("| " + " | ".join(stats) + " |")
+        lines.append("| STR | DEX | CON |")
+        lines.append("| --- | --- | --- |")
+        lines.append("| " + " | ".join(stats[:3]) + " |")
+        lines.append("")
+
+        lines.append("| WIL | INT | CHA |")
+        lines.append("| --- | --- | --- |")
+        lines.append("| " + " | ".join(stats[3:]) + " |")
         lines.append("")
 
         # Derived stats
@@ -299,7 +304,10 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         # Attacks
         atk_main = row.get("attack_skill")
         atk_alt = row.get("attack_skill_alt")
-        alt_cond = str(row.get("attack_skill_alt_condition", "") or "").strip()
+        raw_alt_cond = row.get("attack_skill_alt_condition", "")
+        alt_cond = "" if (raw_alt_cond is None or (isinstance(raw_alt_cond, float) and pd.isna(raw_alt_cond))) else str(raw_alt_cond).strip()
+        if alt_cond.lower() == "nan":
+            alt_cond = ""
 
         dmg_main = nice_dice(row.get("damage", ""))
         dmg_alt_raw = row.get("damage_alt", row.get("damage", ""))  # optional future column
