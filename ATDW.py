@@ -238,6 +238,128 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
         name = name.lower()
         return name[0].upper() + name[1:]
 
+    # --- Special case: Guardian (pretty stat block output like Full Antagonist) ---
+    if table_name == "guardian":
+        def fmt(v):
+            if pd.isna(v):
+                return ""
+            if isinstance(v, float) and v.is_integer():
+                return str(int(v))
+            return str(v)
+
+        def nice_dice(expr):
+            s = str(expr).strip()
+            if not s or s.lower() == "nan":
+                return ""
+            m = re.match(r'^(\d*)D(\d+)([+-]\d+)?$', s, re.IGNORECASE)
+            if not m:
+                return s
+            n = m.group(1)
+            die = m.group(2)
+            mod = m.group(3) or ""
+            dice = f"{n}D{die}" if n and n != "1" else f"D{die}"
+            return f"({dice}){mod}" if mod else f"({dice})"
+
+        name = str(row.get("guardian", "") or "").strip()
+        role = str(row.get("role", "") or "").strip()
+        diff = str(row.get("difficulty", "") or "").strip()
+
+        lines: list[str] = []
+
+        header = []
+        if name:
+            header.append(name)
+        if role:
+            header.append(f"— {role}")
+        if diff:
+            header.append(f"({diff})")
+
+        if header:
+            lines.append(" ".join(header).strip())
+            lines.append("")
+
+        # Core stats
+        stat_keys = ["str", "dex", "con", "wil", "int", "cha"]
+        stats = [fmt(row.get(k, "")) for k in stat_keys]
+
+        lines.append("| STR | DEX | CON | WIL | INT | CHA |")
+        lines.append("| --- | --- | --- | --- | --- | --- |")
+        lines.append("| " + " | ".join(stats) + " |")
+        lines.append("")
+
+        # Derived stats
+        derived_keys = ["wounds", "awareness", "armor", "defense"]
+        derived = [fmt(row.get(k, "")) for k in derived_keys]
+
+        lines.append("| Wounds | Awareness | Armor | Defense |")
+        lines.append("| --- | --- | --- | --- |")
+        lines.append("| " + " | ".join(derived) + " |")
+        lines.append("")
+
+        # Attacks
+        atk_main = row.get("attack_skill")
+        atk_alt = row.get("attack_skill_alt")
+        alt_cond = str(row.get("attack_skill_alt_condition", "") or "").strip()
+
+        dmg_main = nice_dice(row.get("damage", ""))
+        dmg_alt_raw = row.get("damage_alt", row.get("damage", ""))  # optional future column
+        dmg_alt = nice_dice(dmg_alt_raw)
+
+        rng_main = row.get("range", "")
+        rng_alt = row.get("range_alt", "")
+
+        abilities_text = str(row.get("abilities", "") or "").strip()
+        notes_text = str(row.get("notes", "") or "").strip()
+
+        # Decide if the alt attack is ranged (handles Arash + Anansi cleanly)
+        sniff = " ".join([role.lower(), abilities_text.lower(), notes_text.lower(), alt_cond.lower()])
+        alt_is_ranged = False
+        if role.strip().lower() == "ranged":
+            alt_is_ranged = True
+        if pd.isna(atk_main) and pd.notna(atk_alt):
+            alt_is_ranged = True
+        if any(k in sniff for k in ["shoot", "dart", "spit", "projectile", "ranged", "beam", "spray", "rifle", "bow"]):
+            alt_is_ranged = True
+        if str(rng_alt).strip() not in ("", "nan"):
+            alt_is_ranged = True
+
+        attack_lines = []
+
+        if pd.notna(atk_main) and dmg_main:
+            line = f"- **Melee Attack:** Attack Skill +{fmt(atk_main)}, Damage {dmg_main}"
+            if str(rng_main).strip() not in ("", "nan"):
+                line += f", Range {nice_dice(rng_main)}"
+            attack_lines.append(line)
+
+        if pd.notna(atk_alt) and dmg_alt:
+            label = "Ranged Attack" if alt_is_ranged else "Alternate Melee"
+            line = f"- **{label}:** Attack Skill +{fmt(atk_alt)}, Damage {dmg_alt}"
+            if alt_cond:
+                line += f" ({alt_cond})"
+            if str(rng_alt).strip() not in ("", "nan"):
+                line += f", Range {nice_dice(rng_alt)}"
+            attack_lines.append(line)
+
+        if attack_lines:
+            lines.extend(attack_lines)
+
+        # Abilities / notes
+        if abilities_text and abilities_text.lower() not in {"no special abilities", "no additional abilities at this tier"}:
+            lines.append("")
+            lines.append("**Abilities:**")
+            parts = [p.strip() for p in re.split(r"[|;]\s*", abilities_text) if p.strip()]
+            if len(parts) <= 1:
+                lines.append(f"- {abilities_text}")
+            else:
+                lines.extend([f"- {p}" for p in parts])
+
+        if notes_text and notes_text.lower() != "nan":
+            lines.append("")
+            lines.append("**Notes:**")
+            lines.append(f"- {notes_text}")
+
+        return "\n".join(lines).strip()
+
     # --- Special case: Stat Block (nice, labeled combat output) ---
     if table_name == "stat_block":
         def fmt(v):
@@ -2661,11 +2783,11 @@ with tabs[6]:
     # Convenience: store labeled lines in Persistent 5
     def persist_antagonist(label: str, value: str):
         """Store Antagonist pieces in Persistent 5.
-        - For the Stat Block, keep label on its own line so the Markdown table renders.
+        - For the Stat Block (and Guardian blocks), keep label on its own line so Markdown tables render.
         - For everything else, keep label and value on a single line to save space.
         """
-        if "Stat Block" in label:
-            # Stat blocks include Markdown tables and need a blank line after the label
+        if "Stat Block" in label or label == "Guardian":
+            # Markdown tables need a blank line after the label
             add_to_persistent(5, f"**{label}:**\n\n{value}")
         else:
             # Use HTML <strong> so bold works inside the <ul> we render later
