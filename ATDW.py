@@ -3095,6 +3095,204 @@ with tabs[6]:
             )
 
     # --------------------------------------------------
+    # SECTION 7 — FULL ANTAGONIST (Combined 16)
+    # Chains all the core tables into one creature and logs a single summary.
+    # --------------------------------------------------
+    st.markdown("---")
+    st.markdown("### Full Antagonist")
+
+    if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
+
+        ensure_state()
+        # Reset per-creature overrides
+        st.session_state["int_stat_override"] = None
+        st.session_state["damage_flat_modifier"] = 0
+        st.session_state["role_mods"] = None
+        st.session_state["current_enemy_role"] = None
+
+        # Reset unique-trait + stat-block tracking
+        st.session_state["unique_trait_mods"] = {}
+        st.session_state["unique_trait_desc"] = None
+        st.session_state["suppress_enemy_ability"] = False
+        st.session_state["last_stat_block_row"] = None
+        st.session_state["last_stat_block_label"] = None
+
+        # Make sure old psychic lines can’t “stick”
+        remove_persistent_items(5, startswith_any=["Psychic Template", "Psychic Ability"])
+
+        # ----- Core identity & stats -----
+        creature_name = roll_table("creature_name", log=False) or "Unknown Creature"
+        size = roll_table("size", log=False)  # sets damage_flat_modifier (Size)
+        creature_type = roll_table("creature_type", log=False, option=env_choice)
+        drive = roll_table("creature_drive", log=False)
+        intelligence = roll_table("creature_intelligence", log=False)
+
+        # Roll role BEFORE trait/stat block so its modifiers are applied
+        enemy_role = roll_table("enemy_role", log=False, option=diff_choice)
+
+        # Traits first (unique_trait sets background modifiers and may suppress enemy ability)
+        trait_option = "Easy" if diff_choice == "Easy" else "Other"
+        _ = roll_table("unique_trait", log=False, option=trait_option)  # applies modifiers in background
+
+        # Stat block now sees Size + Role + Unique Trait modifiers in session_state
+        stat_block = roll_table("stat_block", log=False, option=diff_choice)
+        
+        # Enemy abilities (roll count depends on difficulty; skip if suppressed by unique trait)
+        enemy_abilities = []
+        if not st.session_state.get("suppress_enemy_ability", False):
+            n_ability = {"Easy": 1, "Standard": 1, "Elite": 2, "Overwhelming": 3}.get(diff_choice, 1)
+            for _ in range(n_ability):
+                enemy_abilities.append(roll_table("enemy_ability", log=False))
+
+        # Psychic ability ONLY if the rolled role is Psychic (role flag)
+        psychic_ability = None
+        role_mods = st.session_state.get("role_mods") or {}
+        if bool(role_mods.get("use_psychic_ability_table")):
+            psychic_ability = roll_table("psychic_ability", log=False)
+
+        # Appearance & anatomy (combined into one description)
+        appearance_desc = build_appearance_description(limb_env_choice)
+
+        # ----- Persist entries (Unique Trait NOT persisted) -----
+        persist_antagonist("Creature Name", creature_name)
+        persist_antagonist("Size", size)
+        persist_antagonist(f"{diff_choice} Stat Block", stat_block)
+        persist_antagonist("Drive", drive)
+        persist_antagonist("Intelligence", intelligence)
+        persist_antagonist("Enemy Role", enemy_role)
+
+        if enemy_abilities:
+            if len(enemy_abilities) == 1:
+                persist_antagonist("Enemy Ability", enemy_abilities[0])
+            else:
+                for i, ab in enumerate(enemy_abilities, 1):
+                    persist_antagonist(f"Enemy Ability {i}", ab)
+
+        if psychic_ability is not None:
+            persist_antagonist("Psychic Ability", psychic_ability)
+
+        persist_antagonist("Appearance", appearance_desc)
+
+        # ----- Build a stat-block-style summary -----
+        psychic_line = f"- **Psychic Ability:** {psychic_ability}  " if psychic_ability else ""
+
+        enemy_abilities_md = ""
+        if enemy_abilities:
+            if len(enemy_abilities) == 1:
+                enemy_abilities_md = f"- **Enemy Ability:** {enemy_abilities[0]}  "
+            else:
+                enemy_abilities_md = "\n".join(
+                    [f"- **Enemy Ability {i}:** {ab}  " for i, ab in enumerate(enemy_abilities, 1)]
+                )
+        
+        summary = f"""
+### {creature_name.upper()}
+
+**Creature Type:** {creature_type}  
+**Size:** {size}  
+
+**Drive:** {drive}  
+**Intelligence:** {intelligence}  
+**Enemy Role:** {enemy_role}  
+
+**Stat Block — {diff_choice}**  
+{stat_block}
+
+**Traits & Abilities**  
+{enemy_abilities_md}  
+{psychic_line}
+
+**Appearance**  
+- {appearance_desc}  
+
+"""
+
+        st.success(summary)
+        add_to_log(summary)
+
+    # --------------------------------------------------
+    # SECTION 5 — GUARDIANS & KNOWN THREATS
+    # guardian, known_threat, plus behavior tables for the named threats
+    # --------------------------------------------------
+
+    # One “preview/output” area for whatever you rolled most recently in this section
+    if "section5_preview" not in st.session_state:
+        st.session_state["section5_preview"] = ""
+
+    with st.container(border=True):
+        st.markdown("### Guardians & Known Threats")
+
+        guard_col, threat_col = st.columns(2)
+
+        with guard_col:
+            guardian_diff = st.selectbox(
+                "Guardian Difficulty",
+                ["Easy", "Standard", "Elite", "Overwhelming"],
+                index=1,
+                key="guardian_diff"
+            )
+
+            if st.button("Roll Guardian", key="btn_guardian"):
+                # IMPORTANT: group=None so it DOES NOT auto-add to Persistent 5
+                result = roll_table("guardian", group=None, log=True, option=guardian_diff)
+                persist_antagonist("Guardian", result)  # This is the ONLY persistence
+                st.session_state["section5_preview"] = result
+
+        with threat_col:
+            threat_choice = st.selectbox(
+                "Known Threat",
+                ["Spitter", "Clobber", "Taker", "Psybane", "Bomber", "Cecaelia"],
+                key="known_threat_choice"
+            )
+
+            if st.button("Roll Known Threat", key="btn_known_threat"):
+                # IMPORTANT: group=None so it DOES NOT auto-add to Persistent 5
+                result = roll_table("known_threat", group=None, log=True, option=threat_choice)
+                persist_antagonist("Known Threat", result)  # Only persistence
+                st.session_state["section5_preview"] = result
+
+            # Optional: specific behavior tables for each named threat
+            if st.button("Threat Behavior", key="btn_threat_behavior"):
+                behavior_table_map = {
+                    "Spitter": "spitter_behavior",
+                    "Clobber": "clobber_behavior",
+                    "Taker": "taker_behavior",
+                    "Psybane": "psybane_behavior",
+                    "Bomber": "bomber_behavior",
+                    "Cecaelia": "cecaelia_behavior",
+                }
+                table_name = behavior_table_map.get(threat_choice)
+                if table_name:
+                    result = roll_table(table_name, group=None, log=False)
+                    st.session_state["section5_preview"] = result
+                else:
+                    st.error("No behavior table found for that threat.")
+
+    # FULL-WIDTH output BELOW the section box (and keeps your green success background)
+    if st.session_state.get("section5_preview"):
+        st.success(st.session_state["section5_preview"])
+
+    # --------------------------------------------------
+    # SECTION 6 — DEMORALIZED REACTIONS
+    # demoralized_reaction_humanoid, demoralized_reaction_other
+    # (no persistent storage or logging)
+    # --------------------------------------------------
+    with st.container(border=True):
+        st.markdown("### Demoralized Reactions")
+
+        demo_h, demo_o = st.columns(2)
+
+        with demo_h:
+            if st.button("Humanoid", key="btn_demo_humanoid"):
+                result = roll_table("demoralized_reaction_humanoid", log=False)
+                st.success(result)
+
+        with demo_o:
+            if st.button("Other Creature", key="btn_demo_other"):
+                result = roll_table("demoralized_reaction_other", log=False)
+                st.success(result)
+    
+    # --------------------------------------------------
     # SECTION 1 — CREATURE BASICS & STAT BLOCK
     # creature_type, size, stat_block, drive, intelligence, enemy_role
     # --------------------------------------------------
@@ -3289,205 +3487,6 @@ with tabs[6]:
                 # For GMs who want to assemble their own names
                 result = roll_table("creature_name_syllables", group=5, log=True)
                 st.success(result)
-
-    # --------------------------------------------------
-    # SECTION 5 — GUARDIANS & KNOWN THREATS
-    # guardian, known_threat, plus behavior tables for the named threats
-    # --------------------------------------------------
-
-    # One “preview/output” area for whatever you rolled most recently in this section
-    if "section5_preview" not in st.session_state:
-        st.session_state["section5_preview"] = ""
-
-    with st.container(border=True):
-        st.markdown("### Guardians & Known Threats")
-
-        guard_col, threat_col = st.columns(2)
-
-        with guard_col:
-            guardian_diff = st.selectbox(
-                "Guardian Difficulty",
-                ["Easy", "Standard", "Elite", "Overwhelming"],
-                index=1,
-                key="guardian_diff"
-            )
-
-            if st.button("Roll Guardian", key="btn_guardian"):
-                # IMPORTANT: group=None so it DOES NOT auto-add to Persistent 5
-                result = roll_table("guardian", group=None, log=True, option=guardian_diff)
-                persist_antagonist("Guardian", result)  # This is the ONLY persistence
-                st.session_state["section5_preview"] = result
-
-        with threat_col:
-            threat_choice = st.selectbox(
-                "Known Threat",
-                ["Spitter", "Clobber", "Taker", "Psybane", "Bomber", "Cecaelia"],
-                key="known_threat_choice"
-            )
-
-            if st.button("Roll Known Threat", key="btn_known_threat"):
-                # IMPORTANT: group=None so it DOES NOT auto-add to Persistent 5
-                result = roll_table("known_threat", group=None, log=True, option=threat_choice)
-                persist_antagonist("Known Threat", result)  # Only persistence
-                st.session_state["section5_preview"] = result
-
-            # Optional: specific behavior tables for each named threat
-            if st.button("Threat Behavior", key="btn_threat_behavior"):
-                behavior_table_map = {
-                    "Spitter": "spitter_behavior",
-                    "Clobber": "clobber_behavior",
-                    "Taker": "taker_behavior",
-                    "Psybane": "psybane_behavior",
-                    "Bomber": "bomber_behavior",
-                    "Cecaelia": "cecaelia_behavior",
-                }
-                table_name = behavior_table_map.get(threat_choice)
-                if table_name:
-                    result = roll_table(table_name, group=None, log=False)
-                    st.session_state["section5_preview"] = result
-                else:
-                    st.error("No behavior table found for that threat.")
-
-    # FULL-WIDTH output BELOW the section box (and keeps your green success background)
-    if st.session_state.get("section5_preview"):
-        st.success(st.session_state["section5_preview"])
-
-    # --------------------------------------------------
-    # SECTION 6 — DEMORALIZED REACTIONS
-    # demoralized_reaction_humanoid, demoralized_reaction_other
-    # (no persistent storage or logging)
-    # --------------------------------------------------
-    with st.container(border=True):
-        st.markdown("### Demoralized Reactions")
-
-        demo_h, demo_o = st.columns(2)
-
-        with demo_h:
-            if st.button("Humanoid", key="btn_demo_humanoid"):
-                result = roll_table("demoralized_reaction_humanoid", log=False)
-                st.success(result)
-
-        with demo_o:
-            if st.button("Other Creature", key="btn_demo_other"):
-                result = roll_table("demoralized_reaction_other", log=False)
-                st.success(result)
-
-    # --------------------------------------------------
-    # SECTION 7 — FULL ANTAGONIST (Combined 16)
-    # Chains all the core tables into one creature and logs a single summary.
-    # --------------------------------------------------
-    st.markdown("---")
-    st.markdown("### Full Antagonist (Combined 16)")
-
-    if st.button("ROLL FULL ANTAGONIST", key="btn_full_antagonist"):
-
-        ensure_state()
-        # Reset per-creature overrides
-        st.session_state["int_stat_override"] = None
-        st.session_state["damage_flat_modifier"] = 0
-        st.session_state["role_mods"] = None
-        st.session_state["current_enemy_role"] = None
-
-        # Reset unique-trait + stat-block tracking
-        st.session_state["unique_trait_mods"] = {}
-        st.session_state["unique_trait_desc"] = None
-        st.session_state["suppress_enemy_ability"] = False
-        st.session_state["last_stat_block_row"] = None
-        st.session_state["last_stat_block_label"] = None
-
-        # Make sure old psychic lines can’t “stick”
-        remove_persistent_items(5, startswith_any=["Psychic Template", "Psychic Ability"])
-
-        # ----- Core identity & stats -----
-        creature_name = roll_table("creature_name", log=False) or "Unknown Creature"
-        size = roll_table("size", log=False)  # sets damage_flat_modifier (Size)
-        creature_type = roll_table("creature_type", log=False, option=env_choice)
-        drive = roll_table("creature_drive", log=False)
-        intelligence = roll_table("creature_intelligence", log=False)
-
-        # Roll role BEFORE trait/stat block so its modifiers are applied
-        enemy_role = roll_table("enemy_role", log=False, option=diff_choice)
-
-        # Traits first (unique_trait sets background modifiers and may suppress enemy ability)
-        trait_option = "Easy" if diff_choice == "Easy" else "Other"
-        _ = roll_table("unique_trait", log=False, option=trait_option)  # applies modifiers in background
-
-        # Stat block now sees Size + Role + Unique Trait modifiers in session_state
-        stat_block = roll_table("stat_block", log=False, option=diff_choice)
-        
-        # Enemy abilities (roll count depends on difficulty; skip if suppressed by unique trait)
-        enemy_abilities = []
-        if not st.session_state.get("suppress_enemy_ability", False):
-            n_ability = {"Easy": 1, "Standard": 1, "Elite": 2, "Overwhelming": 3}.get(diff_choice, 1)
-            for _ in range(n_ability):
-                enemy_abilities.append(roll_table("enemy_ability", log=False))
-
-        # Psychic ability ONLY if the rolled role is Psychic (role flag)
-        psychic_ability = None
-        role_mods = st.session_state.get("role_mods") or {}
-        if bool(role_mods.get("use_psychic_ability_table")):
-            psychic_ability = roll_table("psychic_ability", log=False)
-
-        # Appearance & anatomy (combined into one description)
-        appearance_desc = build_appearance_description(limb_env_choice)
-
-        # ----- Persist entries (Unique Trait NOT persisted) -----
-        persist_antagonist("Creature Name", creature_name)
-        persist_antagonist("Size", size)
-        persist_antagonist(f"{diff_choice} Stat Block", stat_block)
-        persist_antagonist("Drive", drive)
-        persist_antagonist("Intelligence", intelligence)
-        persist_antagonist("Enemy Role", enemy_role)
-
-        if enemy_abilities:
-            if len(enemy_abilities) == 1:
-                persist_antagonist("Enemy Ability", enemy_abilities[0])
-            else:
-                for i, ab in enumerate(enemy_abilities, 1):
-                    persist_antagonist(f"Enemy Ability {i}", ab)
-
-        if psychic_ability is not None:
-            persist_antagonist("Psychic Ability", psychic_ability)
-
-        persist_antagonist("Appearance", appearance_desc)
-
-        # ----- Build a stat-block-style summary -----
-        psychic_line = f"- **Psychic Ability:** {psychic_ability}  " if psychic_ability else ""
-
-        enemy_abilities_md = ""
-        if enemy_abilities:
-            if len(enemy_abilities) == 1:
-                enemy_abilities_md = f"- **Enemy Ability:** {enemy_abilities[0]}  "
-            else:
-                enemy_abilities_md = "\n".join(
-                    [f"- **Enemy Ability {i}:** {ab}  " for i, ab in enumerate(enemy_abilities, 1)]
-                )
-        
-        summary = f"""
-### {creature_name.upper()}
-
-**Creature Type:** {creature_type}  
-**Size:** {size}  
-
-**Drive:** {drive}  
-**Intelligence:** {intelligence}  
-**Enemy Role:** {enemy_role}  
-
-**Stat Block — {diff_choice}**  
-{stat_block}
-
-**Traits & Abilities**  
-{enemy_abilities_md}  
-{psychic_line}
-
-**Appearance**  
-- {appearance_desc}  
-
-"""
-
-        st.success(summary)
-        add_to_log(summary)
-
 
 # ---------- TAB: RETURN TO BASE ----------
 with tabs[7]:
