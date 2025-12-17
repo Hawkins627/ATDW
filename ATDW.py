@@ -3038,7 +3038,7 @@ with tabs[6]:
                 key="guardian_diff"
             )
             if st.button("Roll Guardian", key="btn_guardian"):
-                result = roll_table("guardian", group=5, log=True, option=guardian_diff)
+                result = roll_table("guardian", group=None, log=True, option=guardian_diff)
                 persist_antagonist("Guardian", result)
                 st.success(result)
 
