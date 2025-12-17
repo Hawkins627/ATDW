@@ -3144,10 +3144,15 @@ with tabs[6]:
                 result = roll_table("creature_name_syllables", group=5, log=True)
                 st.success(result)
 
-    # --------------------------------------------------
     # SECTION 5 — GUARDIANS & KNOWN THREATS
     # guardian, known_threat, plus behavior tables for the named threats
     # --------------------------------------------------
+
+    # Keep results OUTSIDE the control box (full width below)
+    st.session_state.setdefault("last_guardian_md", "")
+    st.session_state.setdefault("last_known_threat_md", "")
+    st.session_state.setdefault("last_threat_behavior_md", "")
+
     with st.container(border=True):
         st.markdown("### Guardians & Known Threats")
 
@@ -3158,25 +3163,24 @@ with tabs[6]:
                 "Guardian Difficulty",
                 ["Easy", "Standard", "Elite", "Overwhelming"],
                 index=1,
-                key="guardian_diff"
+                key="guardian_diff",
             )
             if st.button("Roll Guardian", key="btn_guardian"):
-                result = roll_table("guardian", group=None, log=True, option=guardian_diff)
+                result = roll_table("guardian", group=5, log=True, option=guardian_diff)
                 persist_antagonist("Guardian", result)
-                st.success(result)
+                st.session_state["last_guardian_md"] = result
 
         with threat_col:
             threat_choice = st.selectbox(
                 "Known Threat",
                 ["Spitter", "Clobber", "Taker", "Psybane", "Bomber", "Cecaelia"],
-                key="known_threat_choice"
+                key="known_threat_choice",
             )
             if st.button("Roll Known Threat", key="btn_known_threat"):
-                result = roll_table("known_threat", group=None, log=True, option=threat_choice)
+                result = roll_table("known_threat", group=5, log=True, option=threat_choice)
                 persist_antagonist("Known Threat", result)
-                st.success(result)
+                st.session_state["last_known_threat_md"] = result
 
-            # Optional: specific behavior tables for each named threat
             if st.button("Threat Behavior", key="btn_threat_behavior"):
                 behavior_table_map = {
                     "Spitter": "spitter_behavior",
@@ -3189,9 +3193,30 @@ with tabs[6]:
                 table_name = behavior_table_map.get(threat_choice)
                 if table_name:
                     result = roll_table(table_name, group=None, log=False)
-                    st.success(result)
+                    st.session_state["last_threat_behavior_md"] = result
                 else:
                     st.error("No behavior table found for that threat.")
+
+    # --- Full-width outputs (right below the box) ---
+    if (
+        st.session_state.get("last_guardian_md")
+        or st.session_state.get("last_known_threat_md")
+        or st.session_state.get("last_threat_behavior_md")
+    ):
+        st.markdown("---")
+
+    if st.session_state.get("last_guardian_md"):
+        with st.container(border=True):
+            st.markdown(st.session_state["last_guardian_md"])
+
+    if st.session_state.get("last_known_threat_md"):
+        with st.container(border=True):
+            st.markdown(st.session_state["last_known_threat_md"])
+
+    if st.session_state.get("last_threat_behavior_md"):
+        with st.container(border=True):
+            st.markdown("**Threat Behavior:**")
+            st.markdown(st.session_state["last_threat_behavior_md"])
 
     # --------------------------------------------------
     # SECTION 6 — DEMORALIZED REACTIONS
