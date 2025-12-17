@@ -360,6 +360,121 @@ def format_row_for_display(table_name: str, row: pd.Series) -> str:
 
         return "\n".join(lines).strip()
 
+    # --- Special case: Guardians & Known Threats (stat-block style output) ---
+    if table_name in {"guardian", "known_threat"}:
+        def fmt(v):
+            if pd.isna(v):
+                return ""
+            if isinstance(v, float) and v.is_integer():
+                return str(int(v))
+            return str(v)
+
+        def split_abilities(raw) -> list[str]:
+            if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+                return []
+            s = str(raw).strip()
+            if not s:
+                return []
+
+            # Treat common "none" phrases as empty
+            if s.lower().startswith("no special") or s.lower().startswith("no additional"):
+                return []
+
+            # Normalize whitespace
+            s = s.replace("\r", "\n")
+            s = re.sub(r"[ \t]+", " ", s).strip()
+
+            # First, split on obvious separators if present
+            parts = [p.strip() for p in re.split(r"(?:\n+|\s*\|\s*|;\s*)", s) if p.strip()]
+
+            # If it's still one blob, split on patterns like "Aim The ..." / "Explosive The ..."
+            if len(parts) == 1:
+                blob = parts[0]
+                chunks = re.split(r"(?<!^)(?=(?:[A-Z][A-Za-z0-9'’\-]+)\s+The\s)", blob)
+                # Also split before "Can ..." (often the last appended clause)
+                parts2 = []
+                for ch in chunks:
+                    parts2.extend(re.split(r"(?<!^)(?=Can\s)", ch))
+                parts = [p.strip() for p in parts2 if p.strip()]
+
+            # Pretty up: "Aim The Arash..." -> "Aim — The Arash..."
+            pretty = []
+            for p in parts:
+                p = p.lstrip("-• ").strip()
+                m = re.match(r"^([A-Z][A-Za-z0-9'’\-]+)\s+(The\s+.+)$", p)
+                if m:
+                    pretty.append(f"{m.group(1)} — {m.group(2)}")
+                else:
+                    pretty.append(p)
+            return pretty
+
+        # Header line
+        name_key = "guardian" if table_name == "guardian" else None
+        name = row.get(name_key) if name_key and name_key in row.index else row.get("name", "")
+        if not name:
+            # fallback: first non-empty cell
+            for c in row.index:
+                if pd.notna(row[c]):
+                    name = row[c]
+                    break
+
+        role = str(row.get("role", "") or "").strip()
+        diff = str(row.get("difficulty", "") or "").strip()
+        header = f"{name} — {role} ({diff})".strip(" —()")
+
+        lines: list[str] = [header, ""]
+
+        # --- Stats: split into two 3-column tables so it won't wrap inside st.success ---
+        stats1 = [fmt(row.get("str", "")), fmt(row.get("dex", "")), fmt(row.get("con", ""))]
+        stats2 = [fmt(row.get("wil", "")), fmt(row.get("int", "")), fmt(row.get("cha", ""))]
+
+        lines.append("| STR | DEX | CON |")
+        lines.append("| --- | --- | --- |")
+        lines.append("| " + " | ".join(stats1) + " |")
+        lines.append("")
+        lines.append("| WIL | INT | CHA |")
+        lines.append("| --- | --- | --- |")
+        lines.append("| " + " | ".join(stats2) + " |")
+        lines.append("")
+
+        # --- Derived ---
+        derived = [fmt(row.get("wounds", "")), fmt(row.get("awareness", "")), fmt(row.get("armor", "")), fmt(row.get("defense", ""))]
+        lines.append("| Wounds | Awareness | Armor | Defense |")
+        lines.append("| --- | --- | --- | --- |")
+        lines.append("| " + " | ".join(derived) + " |")
+        lines.append("")
+
+        # --- Attacks ---
+        melee_skill = row.get("attack_skill", None)
+        ranged_skill = row.get("attack_skill_alt", None)
+        ranged_cond = str(row.get("attack_skill_alt_condition", "") or "").strip()
+        dmg = fmt(row.get("damage", ""))
+
+        if pd.notna(melee_skill):
+            lines.append(f"- **Melee Attack:** Attack Skill +{fmt(melee_skill)}, Damage {dmg}")
+
+        if pd.notna(ranged_skill):
+            line = f"- **Ranged Attack:** Attack Skill +{fmt(ranged_skill)}, Damage {dmg}"
+            if ranged_cond:
+                line += f" ({ranged_cond})"
+            lines.append(line)
+
+        # --- Abilities (split into separate bullets) ---
+        abil_list = split_abilities(row.get("abilities", None))
+        if abil_list:
+            lines.append("")
+            lines.append("**Abilities:**")
+            for a in abil_list:
+                lines.append(f"- {a}")
+
+        # Optional notes
+        notes = str(row.get("notes", "") or "").strip()
+        if notes:
+            lines.append("")
+            lines.append(f"**Notes:** {notes}")
+
+        return "\n".join(lines)
+    
     # --- Special case: Stat Block (nice, labeled combat output) ---
     if table_name == "stat_block":
         def fmt(v):
