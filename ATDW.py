@@ -3049,7 +3049,7 @@ with tabs[6]:
                 key="known_threat_choice"
             )
             if st.button("Roll Known Threat", key="btn_known_threat"):
-                result = roll_table("known_threat", group=5, log=True, option=threat_choice)
+                result = roll_table("known_threat", group=None, log=True, option=threat_choice)
                 persist_antagonist("Known Threat", result)
                 st.success(result)
 
