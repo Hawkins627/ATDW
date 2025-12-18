@@ -3498,31 +3498,31 @@ with tabs[7]:
 
     # Artifact Value (p.153)
     with col_left.container(border=True):
-        st.markdown("### Artifact Value (p.153)")
+        st.markdown("### Artifact Value")
         if st.button("Roll Artifact Value", key="btn_rtb_artifact_value"):
             st.success(roll_table("artifact_value", log=True))
 
     # Red Astroid Event (p.346)
     with col_right.container(border=True):
-        st.markdown("### Red Astroid Event (p.346)")
+        st.markdown("### Red Astroid Event")
         if st.button("Roll Red Astroid Event", key="btn_rtb_red_astroid_event"):
             st.success(roll_table("red_astroid_event", log=True))
 
     # Carousing (p.334–335)  ✅ FIXED: uses "carousing" to match carousing.csv
     with col_left.container(border=True):
-        st.markdown("### Carousing (p.334–335)")
+        st.markdown("### Carousing")
         if st.button("Roll Carousing", key="btn_rtb_carousing"):
             st.success(roll_table("carousing", log=True))
 
     # Colorful Locals (p.347)
     with col_right.container(border=True):
-        st.markdown("### Colorful Locals (p.347)")
+        st.markdown("### Colorful Locals")
         if st.button("Roll Colorful Locals", key="btn_rtb_colorful_locals"):
             st.success(roll_table("colorful_locals", log=True))
 
     # Corporate News & Rumors (p.348–349)
     with col_left.container(border=True):
-        st.markdown("### Corporate News & Rumors (p.348–349)")
+        st.markdown("### Corporate News & Rumors")
         if st.button("Roll Corporate News / Rumor", key="btn_rtb_corporate_news_rumors"):
             st.success(roll_table("corporate_news_rumors", log=True))
 
