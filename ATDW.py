@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import streamlit as st
 import pandas as pd
 import random
@@ -1056,7 +1058,6 @@ def _roll_nonempty(table_name: str, option=None, max_tries: int = 30) -> str:
             return val
     return ""
 
-
 def _limbs_phrase(limbs: str, locomotion: str) -> str:
     l = _clean_piece(limbs)
     ll = l.lower()
@@ -1584,6 +1585,55 @@ def ensure_map_state():
         }
     if "selected_hex" not in st.session_state:
         st.session_state["selected_hex"] = 1
+
+def render_hex_button_map(hex_map: dict, selected_hex: int):
+    """
+    Renders a clickable hex-number layout like your image:
+    Row 1:  1  3  5  7
+    Row 2:  2  4  6  8
+    ...
+    Final partial pair ends at 100.
+    Uses Streamlit buttons (no href links), so it won't open a new app/session.
+    """
+    total_rows = 26  # 12 full pairs (96) + 1 partial pair (97-100)
+
+    for r in range(total_rows):
+        pair = r // 2
+        base = pair * 8
+
+        if r % 2 == 0:
+            nums = [base + 1, base + 3, base + 5, base + 7]
+            slots = [0, 2, 4, 6]
+        else:
+            nums = [base + 2, base + 4, base + 6, base + 8]
+            slots = [1, 3, 5, 7]
+
+        # keep only valid hex ids (1..100); last rows become partial automatically
+        nums = [n for n in nums if 1 <= n <= MAP_HEX_COUNT]
+
+        cols = st.columns(8, gap="small")
+
+        for slot_i, n in zip(slots, nums):
+            d = hex_map.get(n, {})
+
+            # Compact label with simple status markers
+            if n == selected_hex:
+                label = f"▶ {n}"
+            elif d.get("visited"):
+                label = f"✓ {n}"
+            else:
+                label = str(n)
+
+            btn_type = "primary" if n == selected_hex else "secondary"
+
+            if cols[slot_i].button(
+                label,
+                key=f"hexbtn_{n}",
+                type=btn_type,
+                use_container_width=True
+            ):
+                st.session_state["selected_hex"] = n
+                st.rerun()
 
 def _get_query_hex():
     # Works across Streamlit versions
@@ -3737,11 +3787,6 @@ with tabs[9]:
     st.markdown("## Map")
     ensure_map_state()
 
-    # If user clicked a hex (via ?hex=), sync that into session_state
-    q_hex = _get_query_hex()
-    if q_hex is not None:
-        st.session_state["selected_hex"] = q_hex
-
     selected_hex = st.session_state["selected_hex"]
     hex_map = st.session_state["hex_map"]
 
@@ -3749,7 +3794,8 @@ with tabs[9]:
 
     with col_map:
         st.caption("Click a hex to select it.")
-        st.markdown(build_hexmap_html(selected_hex, hex_map), unsafe_allow_html=True)
+        render_hex_button_map(hex_map, selected_hex)
+
 
         st.markdown("---")
         c1, c2, c3 = st.columns(3)
