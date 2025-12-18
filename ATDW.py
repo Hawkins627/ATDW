@@ -1571,6 +1571,103 @@ def roll_hacking(flags: list[str]) -> str:
 
     return result
 
+import json
+
+MAP_HEX_COUNT = 100
+MAP_COLS = 10  # 10x10 layout (easy starting point)
+
+def ensure_map_state():
+    if "hex_map" not in st.session_state:
+        st.session_state["hex_map"] = {
+            i: {"name": "", "biome": "", "visited": False, "notes": "", "last": ""}
+            for i in range(1, MAP_HEX_COUNT + 1)
+        }
+    if "selected_hex" not in st.session_state:
+        st.session_state["selected_hex"] = 1
+
+def _get_query_hex():
+    # Works across Streamlit versions
+    try:
+        val = st.query_params.get("hex", None)
+        if isinstance(val, list):
+            val = val[0] if val else None
+    except Exception:
+        qp = st.experimental_get_query_params()
+        val = (qp.get("hex", [None]) or [None])[0]
+
+    try:
+        n = int(val) if val is not None else None
+        if n and 1 <= n <= MAP_HEX_COUNT:
+            return n
+    except Exception:
+        pass
+    return None
+
+def build_hexmap_html(selected_hex: int, hex_map: dict[int, dict], cols: int = MAP_COLS):
+    # Layout: 10 rows of 10 hexes (row-major numbering). Odd rows are indented.
+    rows = []
+    rcount = (MAP_HEX_COUNT + cols - 1) // cols
+
+    for r in range(rcount):
+        start = r * cols + 1
+        end = min(MAP_HEX_COUNT, start + cols - 1)
+        row_nums = list(range(start, end + 1))
+
+        row_class = "row odd" if (r % 2 == 1) else "row"
+        tiles = []
+        for n in row_nums:
+            d = hex_map.get(n, {})
+            classes = ["hex"]
+            if d.get("visited"):
+                classes.append("visited")
+            if n == selected_hex:
+                classes.append("selected")
+
+            tooltip = f"Hex {n}"
+            if d.get("name"):
+                tooltip += f" — {d['name']}"
+            if d.get("biome"):
+                tooltip += f" ({d['biome']})"
+
+            tiles.append(
+                f'<a class="{" ".join(classes)}" href="?hex={n}" title="{tooltip}">{n}</a>'
+            )
+
+        rows.append(f'<div class="{row_class}">' + "".join(tiles) + "</div>")
+
+    css = """
+<style>
+.atdw-hexmap { user-select: none; }
+.atdw-hexmap .row { display:flex; gap:8px; margin:6px 0; }
+.atdw-hexmap .row.odd { margin-left:26px; } /* half-hex-ish indent */
+
+.atdw-hexmap .hex{
+  width:46px; height:40px;
+  display:flex; align-items:center; justify-content:center;
+  text-decoration:none;
+  font-size:12px; font-weight:600;
+  color:#111;
+  background:#f2f2f2;
+  border:1px solid #666;
+  clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+.atdw-hexmap .hex:hover{ transform: translateY(-1px); }
+
+.atdw-hexmap .hex.visited{
+  background:#d9f2d9;
+  border-color:#3c7a3c;
+}
+
+.atdw-hexmap .hex.selected{
+  outline: 3px solid #ffb000;
+  border-color:#222;
+}
+</style>
+"""
+    return css + '<div class="atdw-hexmap">' + "".join(rows) + "</div>"
+
+
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Across a Thousand Dead Worlds – Generator", layout="wide")
 
@@ -1584,7 +1681,7 @@ if "log" not in st.session_state:
 # ---------- DEFINE PRIMARY TABS ----------
 tab_labels = [
     "Encounter", "Health", "Mission", "Exploration",
-    "Planet", "NPC", "Antagonist", "Return to Base", "Log"
+    "Planet", "NPC", "Antagonist", "Return to Base", "Log", "Map"
 ]
 
 tabs = st.tabs(tab_labels)
@@ -3634,6 +3731,153 @@ with tabs[8]:
             file_name="mission_log.txt",
             mime="text/plain"
         )
+
+# ---------- TAB: Map ----------
+with tabs[9]:
+    st.markdown("## Map")
+    ensure_map_state()
+
+    # If user clicked a hex (via ?hex=), sync that into session_state
+    q_hex = _get_query_hex()
+    if q_hex is not None:
+        st.session_state["selected_hex"] = q_hex
+
+    selected_hex = st.session_state["selected_hex"]
+    hex_map = st.session_state["hex_map"]
+
+    col_map, col_info = st.columns([2, 1], gap="large")
+
+    with col_map:
+        st.caption("Click a hex to select it.")
+        st.markdown(build_hexmap_html(selected_hex, hex_map), unsafe_allow_html=True)
+
+        st.markdown("---")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("Visited", sum(1 for v in hex_map.values() if v.get("visited")))
+        with c2:
+            st.metric("Named", sum(1 for v in hex_map.values() if (v.get("name") or "").strip()))
+        with c3:
+            st.metric("Biome set", sum(1 for v in hex_map.values() if (v.get("biome") or "").strip()))
+
+        # Export / Import
+        export_blob = json.dumps(hex_map, indent=2)
+        st.download_button(
+            "Download Map JSON",
+            data=export_blob,
+            file_name="atdw_hex_map.json",
+            mime="application/json",
+            key="dl_map_json"
+        )
+
+        up = st.file_uploader("Import Map JSON", type=["json"], key="ul_map_json")
+        if up is not None:
+            try:
+                loaded = json.load(up)
+                # keys may come back as strings
+                cleaned = {}
+                for k, v in loaded.items():
+                    kk = int(k)
+                    if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
+                        cleaned[kk] = v
+                # fill missing
+                for i in range(1, MAP_HEX_COUNT + 1):
+                    cleaned.setdefault(i, {"name": "", "biome": "", "visited": False, "notes": "", "last": ""})
+                st.session_state["hex_map"] = cleaned
+                st.success("Map imported.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Could not import JSON: {e}")
+
+    with col_info:
+        d = hex_map[selected_hex]
+
+        st.subheader(f"Hex {selected_hex}")
+
+        visited = st.checkbox("Visited", value=bool(d.get("visited")), key=f"map_v_{selected_hex}")
+
+        name = st.text_input("Name / Label", value=d.get("name",""), key=f"map_name_{selected_hex}")
+
+        biome_list = ["", "Barren","Exotic","Frozen","Irradiated","Lush","Scorched","Toxic","Urban","Volcanic","Water"]
+        biome = st.selectbox(
+            "Biome (for hazard rolls)",
+            biome_list,
+            index=biome_list.index(d.get("biome","")) if d.get("biome","") in biome_list else 0,
+            key=f"map_biome_{selected_hex}",
+        )
+
+        notes = st.text_area("Notes", value=d.get("notes",""), height=200, key=f"map_notes_{selected_hex}")
+
+        cA, cB = st.columns(2)
+        with cA:
+            if st.button("Save Hex", key=f"btn_save_hex_{selected_hex}"):
+                hex_map[selected_hex] = {
+                    **d,
+                    "visited": visited,
+                    "name": name,
+                    "biome": biome,
+                    "notes": notes,
+                }
+                st.session_state["hex_map"] = hex_map
+                st.success("Saved.")
+        with cB:
+            if st.button("Add Hex Summary to Log", key=f"btn_log_hex_{selected_hex}"):
+                hex_map[selected_hex] = {
+                    **d,
+                    "visited": visited,
+                    "name": name,
+                    "biome": biome,
+                    "notes": notes,
+                }
+                st.session_state["hex_map"] = hex_map
+                add_to_log(f"Hex {selected_hex}: {name or '(unnamed)'} | Biome: {biome or '(unset)'} | Visited: {visited}")
+
+        st.markdown("### Planetside Exploration (from this hex)")
+        if st.button("ROLL FULL EXPLORATION (this hex)", key=f"btn_hex_explore_{selected_hex}"):
+            # Save current editor state first
+            hex_map[selected_hex] = {
+                **d,
+                "visited": visited,
+                "name": name,
+                "biome": biome,
+                "notes": notes,
+            }
+            st.session_state["hex_map"] = hex_map
+
+            # Run the same logic you already use in the Planet tab:
+            biome_choice = biome if biome else "Barren"  # fallback so it doesn't crash
+            exploration_result = roll_table("planetside_exploration", log=True)
+            add_to_persistent(4, f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
+            add_to_log(f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
+
+            hex_map[selected_hex]["last"] = exploration_result
+
+            if "findings" in exploration_result.lower():
+                findings_result = roll_table("findings", log=True)
+                add_to_persistent(4, f"Hex {selected_hex} — Findings: {findings_result}")
+                add_to_log(f"Hex {selected_hex} — Findings: {findings_result}")
+                st.success(f"Findings: {findings_result}")
+
+            elif "hazard" in exploration_result.lower():
+                hazard_table = f"{biome_choice.lower()}_hazards"
+                hazard_result = roll_table(hazard_table, log=True)
+                add_to_persistent(4, f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
+                add_to_log(f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
+                st.success(f"Hazard ({biome_choice}): {hazard_result}")
+
+            elif "site" in exploration_result.lower():
+                add_to_log(f"Hex {selected_hex} — Found an Àrsaidh Site. Roll full site in Mission tab.")
+                add_to_persistent(4, f"Hex {selected_hex} — Site Found: Roll full site in Mission tab.")
+                st.success("Site Found! Use the Site Generator in the Mission tab.")
+
+            elif "nothing" in exploration_result.lower():
+                add_to_persistent(4, f"Hex {selected_hex} — Exploration: Nothing found.")
+                st.info("Nothing found in this hex.")
+
+            else:
+                st.warning("Exploration result not recognized — check the CSV formatting.")
+
+            st.session_state["hex_map"] = hex_map
 
 # ---------- SIDEBAR: PERSISTENT POOLS ----------
 st.sidebar.header("Persistent Data Pools")
