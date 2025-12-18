@@ -3546,19 +3546,34 @@ with tabs[8]:
             text = entry["text"]
             note = entry.get("note", "")
 
-            # ROW: icon button + entry text
-            row_left, row_right = st.columns([1, 12])
+            # ROW: icon button + entry text + delete button
+            row_left, row_mid, row_del = st.columns([1, 12, 3])
 
             # ---------- LEFT COLUMN: Notepad icon ----------
             with row_left:
                 if st.button("📝", key=f"note_icon_{idx}", help="Add/Edit Note"):
                     st.session_state["active_note"] = idx
 
-            # ---------- RIGHT COLUMN: Log text with inline note ----------
+            # ---------- MIDDLE COLUMN: Log text with inline note ----------
             if note:
-                row_right.markdown(f"{text}  \n📝 *{note}*")
+                row_mid.markdown(f"{text}  \n📝 *{note}*")
             else:
-                row_right.markdown(text)
+                row_mid.markdown(text)
+
+            # ---------- RIGHT COLUMN: Delete button (far right) ----------
+            with row_del:
+                if st.button("🗑️ Delete", key=f"delete_log_{idx}", help="Delete this log entry"):
+                    st.session_state["log"].pop(idx)
+
+                    # keep the note editor stable if something earlier gets deleted
+                    active = st.session_state.get("active_note")
+                    if active is not None:
+                        if active == idx:
+                            del st.session_state["active_note"]
+                        elif active > idx:
+                            st.session_state["active_note"] = active - 1
+        
+                    st.rerun()
 
             # ---------- INLINE EDITOR BELOW THIS ENTRY ----------
             if st.session_state.get("active_note") == idx:
