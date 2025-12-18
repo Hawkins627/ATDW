@@ -1948,13 +1948,29 @@ with tabs[2]:
 
         st.markdown("### Full Travel Event (Type + Detail)")
         if st.button("ROLL FULL TRAVEL EVENT", key="btn_travel_full"):
-            event_type = roll_table("random_travel_event_type", log=False)
-            subtable = random.choice([
-                "social_travel_event",
-                "ship_malfunction_travel_event",
-                "space_anomaly_travel_event",
-                "mental_physical_travel_event",
-            ])
+            event_type = roll_table("random_travel_event_type", log=False).strip()
+
+            type_to_table = {
+                "Social": "social_travel_event",
+                "Ship Malfunction": "ship_malfunction_travel_event",
+                "Space Anomaly": "space_anomaly_travel_event",
+                "Mental or Physical Issue": "mental_physical_travel_event",
+            }
+
+            subtable = type_to_table.get(event_type)
+
+            # Fuzzy fallback (if wording ever changes)
+            if subtable is None:
+                et_lower = event_type.lower()
+                for k, v in type_to_table.items():
+                    if k.lower() in et_lower:
+                        subtable = v
+                        break
+
+            # Last-resort fallback
+            if subtable is None:
+                subtable = random.choice(list(type_to_table.values()))
+
             detail = roll_table(subtable, log=False)
             combined = f"{event_type} – {detail}"
             add_to_log("Travel Event: " + combined)
