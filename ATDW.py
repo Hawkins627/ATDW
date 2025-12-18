@@ -2969,11 +2969,6 @@ with tabs[5]:
                 persist_npc("Random Conversation", result)
                 st.success(result)
 
-            if st.button("Conversation Topic", key="btn_npc_convo_topic"):
-                result = roll_table("npc_conversation_topic", log=True)
-                persist_npc("Conversation Topic", result)
-                st.success(result)
-
     # =====================================================
     # SECTION 4 — FULL NPC (BIG BUTTON)
     # =====================================================
