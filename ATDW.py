@@ -1600,7 +1600,7 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
     Button-based map (no href links) so clicks do NOT create a new Streamlit session.
     Styles are applied via CSS using the button tooltip ("help") string prefix HEXMAP|.
     """
-    total_rows = 26  # matches your existing staggered pattern
+    total_rows = 26  # 1..100 layout pattern in your template
 
     for r in range(total_rows):
         pair = r // 2
@@ -1614,7 +1614,6 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             slots = [1, 3, 5, 7]
 
         nums = [n for n in nums if 1 <= n <= MAP_HEX_COUNT]
-
         cols = st.columns(8, gap="small")
 
         for slot_i, n in zip(slots, nums):
@@ -1625,18 +1624,21 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             special = bool(d.get("special"))
             is_sel = (n == selected_hex)
 
-            # Small markers that fit inside the hex
-            markers = ""
+            # markers line (space-separated so it's readable)
+            marks = []
             if party:
-                markers += "P"
+                marks.append("P")
             if site:
-                markers += "S"
+                marks.append("S")
             if special:
-                markers += "★"
+                marks.append("★")
 
-            label = f"{n}{markers}"
+            # two-line label: number on top, markers underneath
+            if marks:
+                label = f"{n}\n{' '.join(marks)}"
+            else:
+                label = f"{n}"
 
-            # Tooltip drives CSS selectors (and is handy info when hovering)
             tooltip = (
                 f"HEXMAP|hex={n}|visited={int(visited)}|party={int(party)}|"
                 f"site={int(site)}|special={int(special)}|selected={int(is_sel)}"
@@ -3833,6 +3835,14 @@ button[data-tooltip^="HEXMAP|"]{
   -webkit-clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%) !important;
 
   box-shadow: 0 1px 0 rgba(0,0,0,0.15) !important;
+}
+
+/* Center and stack the label nicely inside the hex */
+button[title^="HEXMAP|"],
+button[aria-label^="HEXMAP|"],
+button[data-tooltip^="HEXMAP|"]{
+  line-height: 1.05 !important;
+  white-space: pre-line !important; /* allow \n newlines in label */
 }
 
 /* Hover lift */
