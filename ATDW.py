@@ -1580,7 +1580,16 @@ MAP_COLS = 10  # 10x10 layout (easy starting point)
 def ensure_map_state():
     if "hex_map" not in st.session_state:
         st.session_state["hex_map"] = {
-            i: {"name": "", "biome": "", "visited": False, "notes": "", "last": ""}
+            i: {
+                "name": "",
+                "biome": "",
+                "visited": False,
+                "party": False,
+                "site": False,
+                "special": False,
+                "notes": "",
+                "last": ""
+            }
             for i in range(1, MAP_HEX_COUNT + 1)
         }
     if "selected_hex" not in st.session_state:
@@ -1588,14 +1597,10 @@ def ensure_map_state():
 
 def render_hex_button_map(hex_map: dict, selected_hex: int):
     """
-    Renders a clickable hex-number layout like your image:
-    Row 1:  1  3  5  7
-    Row 2:  2  4  6  8
-    ...
-    Final partial pair ends at 100.
-    Uses Streamlit buttons (no href links), so it won't open a new app/session.
+    Button-based map (no href links) so clicks do NOT create a new Streamlit session.
+    Styles are applied via CSS using the button tooltip ("help") string prefix HEXMAP|.
     """
-    total_rows = 26  # 12 full pairs (96) + 1 partial pair (97-100)
+    total_rows = 26  # matches your existing staggered pattern
 
     for r in range(total_rows):
         pair = r // 2
@@ -1608,28 +1613,40 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             nums = [base + 2, base + 4, base + 6, base + 8]
             slots = [1, 3, 5, 7]
 
-        # keep only valid hex ids (1..100); last rows become partial automatically
         nums = [n for n in nums if 1 <= n <= MAP_HEX_COUNT]
 
         cols = st.columns(8, gap="small")
 
         for slot_i, n in zip(slots, nums):
             d = hex_map.get(n, {})
+            visited = bool(d.get("visited"))
+            party = bool(d.get("party"))
+            site = bool(d.get("site"))
+            special = bool(d.get("special"))
+            is_sel = (n == selected_hex)
 
-            # Compact label with simple status markers
-            if n == selected_hex:
-                label = f"▶ {n}"
-            elif d.get("visited"):
-                label = f"✓ {n}"
-            else:
-                label = str(n)
+            # Small markers that fit inside the hex
+            markers = ""
+            if party:
+                markers += "P"
+            if site:
+                markers += "S"
+            if special:
+                markers += "★"
 
-            btn_type = "primary" if n == selected_hex else "secondary"
+            label = f"{n}{markers}"
+
+            # Tooltip drives CSS selectors (and is handy info when hovering)
+            tooltip = (
+                f"HEXMAP|hex={n}|visited={int(visited)}|party={int(party)}|"
+                f"site={int(site)}|special={int(special)}|selected={int(is_sel)}"
+            )
 
             if cols[slot_i].button(
                 label,
                 key=f"hexbtn_{n}",
-                type=btn_type,
+                help=tooltip,
+                type="secondary",
                 use_container_width=True
             ):
                 st.session_state["selected_hex"] = n
@@ -3787,6 +3804,69 @@ with tabs[9]:
     st.markdown("## Map")
     ensure_map_state()
 
+    st.markdown(
+        """
+    <style>
+    /* Only style the map buttons (we tag them via help="HEXMAP|...") */
+    button[title^="HEXMAP|"]{
+      width: 54px !important;
+      min-width: 54px !important;
+      max-width: 54px !important;
+      height: 48px !important;
+
+      padding: 0 !important;
+      margin: 0 !important;
+
+      border-radius: 0 !important;
+      border: 2px solid #666 !important;
+
+      background: #f2f2f2 !important;
+      color: #111 !important;
+      font-weight: 700 !important;
+      font-size: 12px !important;
+
+      clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.15) !important;
+    }
+
+    /* Hover lift */
+    button[title^="HEXMAP|"]:hover{
+      transform: translateY(-1px);
+    }
+
+    /* Visited = green fill */
+    button[title^="HEXMAP|"][title*="visited=1"]{
+      background: #d9f2d9 !important;
+      border-color: #3c7a3c !important;
+    }
+
+    /* Party = thicker blue border */
+    button[title^="HEXMAP|"][title*="party=1"]{
+      border-width: 4px !important;
+      border-color: #2b59ff !important;
+    }
+
+    /* Site = dashed border */
+    button[title^="HEXMAP|"][title*="site=1"]{
+      border-style: dashed !important;
+    }
+
+    /* Special = subtle inset ring */
+    button[title^="HEXMAP|"][title*="special=1"]{
+      box-shadow: 0 0 0 3px rgba(176,0,255,0.35) inset, 0 1px 0 rgba(0,0,0,0.15) !important;
+    }
+
+    /* Selected = thick red outline (does NOT hide what's underneath) */
+    button[title^="HEXMAP|"][title*="selected=1"]{
+      outline: 5px solid #d40000 !important;
+      outline-offset: 3px !important;
+    }
+    </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    
     selected_hex = st.session_state["selected_hex"]
     hex_map = st.session_state["hex_map"]
 
@@ -3841,6 +3921,9 @@ with tabs[9]:
         st.subheader(f"Hex {selected_hex}")
 
         visited = st.checkbox("Visited", value=bool(d.get("visited")), key=f"map_v_{selected_hex}")
+        party_here = st.checkbox("Party Here", value=bool(d.get("party")), key=f"map_party_{selected_hex}")
+        site_present = st.checkbox("Site Present", value=bool(d.get("site")), key=f"map_site_{selected_hex}")
+        special_flag = st.checkbox("Special (flag this hex)", value=bool(d.get("special")), key=f"map_special_{selected_hex}")
 
         name = st.text_input("Name / Label", value=d.get("name",""), key=f"map_name_{selected_hex}")
 
