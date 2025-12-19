@@ -3806,15 +3806,29 @@ with tabs[9]:
     st.markdown("## Map")
     ensure_map_state()
 
-    # NOTE: CSS targets map buttons via the help/tooltip string prefix "HEXMAP|"
-    # Streamlit versions differ on which attribute receives that string, so we match several.
+    # Helper: append a block of text to this hex's notes AND sync the text_area widget key
+    def append_to_hex_notes(hex_id: int, text_block: str):
+        current = (st.session_state["hex_map"][hex_id].get("notes") or "").rstrip()
+        new_notes = (current + "\n\n" + text_block).strip() if current else text_block.strip()
+        st.session_state["hex_map"][hex_id]["notes"] = new_notes
+        st.session_state[f"map_notes_{hex_id}"] = new_notes  # keeps the widget in sync
+
+    # --- CSS: robust selectors (tooltip may be on button OR on wrapper div/span) ---
     st.markdown(
         """
 <style>
-/* --- HEX MAP BUTTONS --- */
-button[title^="HEXMAP|"],
-button[aria-label^="HEXMAP|"],
-button[data-tooltip^="HEXMAP|"]{
+/* Target the actual clickable element regardless of where Streamlit puts the tooltip/help text */
+:where(
+  button[title^="HEXMAP|"],
+  button[aria-label^="HEXMAP|"],
+  button[data-tooltip^="HEXMAP|"],
+  div[title^="HEXMAP|"] button,
+  div[aria-label^="HEXMAP|"] button,
+  div[data-tooltip^="HEXMAP|"] button,
+  span[title^="HEXMAP|"] button,
+  span[aria-label^="HEXMAP|"] button,
+  span[data-tooltip^="HEXMAP|"] button
+){
   width: 54px !important;
   min-width: 54px !important;
   max-width: 54px !important;
@@ -3831,61 +3845,105 @@ button[data-tooltip^="HEXMAP|"]{
   font-weight: 700 !important;
   font-size: 12px !important;
 
+  /* allow multi-line labels if you use \n */
+  white-space: pre-line !important;
+  line-height: 1.05 !important;
+
+  /* HEX SHAPE */
   clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%) !important;
   -webkit-clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%) !important;
 
   box-shadow: 0 1px 0 rgba(0,0,0,0.15) !important;
 }
 
-/* Center and stack the label nicely inside the hex */
-button[title^="HEXMAP|"],
-button[aria-label^="HEXMAP|"],
-button[data-tooltip^="HEXMAP|"]{
-  line-height: 1.05 !important;
-  white-space: pre-line !important; /* allow \n newlines in label */
-}
-
-/* Hover lift */
-button[title^="HEXMAP|"]:hover,
-button[aria-label^="HEXMAP|"]:hover,
-button[data-tooltip^="HEXMAP|"]:hover{
+:where(
+  button[title^="HEXMAP|"],
+  button[aria-label^="HEXMAP|"],
+  button[data-tooltip^="HEXMAP|"],
+  div[title^="HEXMAP|"] button,
+  div[aria-label^="HEXMAP|"] button,
+  div[data-tooltip^="HEXMAP|"] button,
+  span[title^="HEXMAP|"] button,
+  span[aria-label^="HEXMAP|"] button,
+  span[data-tooltip^="HEXMAP|"] button
+):hover{
   transform: translateY(-1px);
 }
 
-/* Visited = green fill */
-button[title^="HEXMAP|"][title*="visited=1"],
-button[aria-label^="HEXMAP|"][aria-label*="visited=1"],
-button[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"]{
+/* VISITED = green fill */
+:where(
+  button[title^="HEXMAP|"][title*="visited=1"],
+  button[aria-label^="HEXMAP|"][aria-label*="visited=1"],
+  button[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"],
+  div[title^="HEXMAP|"][title*="visited=1"] button,
+  div[aria-label^="HEXMAP|"][aria-label*="visited=1"] button,
+  div[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"] button,
+  span[title^="HEXMAP|"][title*="visited=1"] button,
+  span[aria-label^="HEXMAP|"][aria-label*="visited=1"] button,
+  span[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"] button
+){
   background: #d9f2d9 !important;
   border-color: #3c7a3c !important;
 }
 
-/* Party = thicker blue border */
-button[title^="HEXMAP|"][title*="party=1"],
-button[aria-label^="HEXMAP|"][aria-label*="party=1"],
-button[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"]{
+/* PARTY = thick blue border */
+:where(
+  button[title^="HEXMAP|"][title*="party=1"],
+  button[aria-label^="HEXMAP|"][aria-label*="party=1"],
+  button[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"],
+  div[title^="HEXMAP|"][title*="party=1"] button,
+  div[aria-label^="HEXMAP|"][aria-label*="party=1"] button,
+  div[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"] button,
+  span[title^="HEXMAP|"][title*="party=1"] button,
+  span[aria-label^="HEXMAP|"][aria-label*="party=1"] button,
+  span[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"] button
+){
   border-width: 4px !important;
   border-color: #2b59ff !important;
 }
 
-/* Site = dashed border */
-button[title^="HEXMAP|"][title*="site=1"],
-button[aria-label^="HEXMAP|"][aria-label*="site=1"],
-button[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"]{
+/* SITE = dashed border */
+:where(
+  button[title^="HEXMAP|"][title*="site=1"],
+  button[aria-label^="HEXMAP|"][aria-label*="site=1"],
+  button[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"],
+  div[title^="HEXMAP|"][title*="site=1"] button,
+  div[aria-label^="HEXMAP|"][aria-label*="site=1"] button,
+  div[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"] button,
+  span[title^="HEXMAP|"][title*="site=1"] button,
+  span[aria-label^="HEXMAP|"][aria-label*="site=1"] button,
+  span[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"] button
+){
   border-style: dashed !important;
 }
 
-/* Special = subtle inset ring */
-button[title^="HEXMAP|"][title*="special=1"],
-button[aria-label^="HEXMAP|"][aria-label*="special=1"],
-button[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"]{
+/* SPECIAL = purple inset ring */
+:where(
+  button[title^="HEXMAP|"][title*="special=1"],
+  button[aria-label^="HEXMAP|"][aria-label*="special=1"],
+  button[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"],
+  div[title^="HEXMAP|"][title*="special=1"] button,
+  div[aria-label^="HEXMAP|"][aria-label*="special=1"] button,
+  div[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"] button,
+  span[title^="HEXMAP|"][title*="special=1"] button,
+  span[aria-label^="HEXMAP|"][aria-label*="special=1"] button,
+  span[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"] button
+){
   box-shadow: 0 0 0 3px rgba(176,0,255,0.35) inset, 0 1px 0 rgba(0,0,0,0.15) !important;
 }
 
-/* Selected = thick red OUTLINE/BORDER (no red fill) */
-button[title^="HEXMAP|"][title*="selected=1"],
-button[aria-label^="HEXMAP|"][aria-label*="selected=1"],
-button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
+/* SELECTED = thick RED BORDER (no fill) */
+:where(
+  button[title^="HEXMAP|"][title*="selected=1"],
+  button[aria-label^="HEXMAP|"][aria-label*="selected=1"],
+  button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"],
+  div[title^="HEXMAP|"][title*="selected=1"] button,
+  div[aria-label^="HEXMAP|"][aria-label*="selected=1"] button,
+  div[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"] button,
+  span[title^="HEXMAP|"][title*="selected=1"] button,
+  span[aria-label^="HEXMAP|"][aria-label*="selected=1"] button,
+  span[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"] button
+){
   border-color: #d40000 !important;
   border-width: 5px !important;
   outline: none !important;
@@ -3916,7 +3974,6 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
         with c3:
             st.metric("Biome set", sum(1 for v in hex_map.values() if (v.get("biome") or "").strip()))
 
-        # Export / Import (exports ALL fields stored in hex_map, including party/site/special)
         export_blob = json.dumps(hex_map, indent=2)
         st.download_button(
             "Download Map JSON",
@@ -3935,7 +3992,7 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
                 for k, v in loaded.items():
                     kk = int(k)
                     if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
-                        # ensure new keys exist on imported hexes
+                        # ensure schema exists
                         v.setdefault("visited", False)
                         v.setdefault("party", False)
                         v.setdefault("site", False)
@@ -3946,7 +4003,6 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
                         v.setdefault("last", "")
                         cleaned[kk] = v
 
-                # fill missing hexes with full default schema
                 for i in range(1, MAP_HEX_COUNT + 1):
                     cleaned.setdefault(i, {
                         "name": "",
@@ -3969,7 +4025,6 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
     # RIGHT: Hex editor
     # -----------------------
     with col_info:
-        # Re-read in case a click/rerun changed selection
         selected_hex = st.session_state["selected_hex"]
         hex_map = st.session_state["hex_map"]
         d = hex_map[selected_hex]
@@ -3991,12 +4046,11 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
             key=f"map_biome_{selected_hex}",
         )
 
-        # Notes UX: always editable, but auto-opens if Special is checked
         with st.expander("Notes (Special opens this automatically)", expanded=bool(special_flag)):
             notes = st.text_area("Notes", value=d.get("notes",""), height=200, key=f"map_notes_{selected_hex}")
 
-        # --- Immediate visual sync (so green/borders update as soon as boxes are ticked) ---
-        # Party should be unique: if party_here is True, clear it from all other hexes.
+        # --- Immediate sync so map updates instantly when toggles change ---
+        # Make Party unique (only one hex can have party=True)
         if party_here:
             for k in hex_map.keys():
                 if k != selected_hex and hex_map[k].get("party"):
@@ -4017,7 +4071,6 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
         cA, cB = st.columns(2)
         with cA:
             if st.button("Save Hex", key=f"btn_save_hex_{selected_hex}"):
-                # (Already synced above; this just gives a confirmation)
                 st.success("Saved.")
         with cB:
             if st.button("Add Hex Summary to Log", key=f"btn_log_hex_{selected_hex}"):
@@ -4030,12 +4083,14 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
 
         st.markdown("### Planetside Exploration (from this hex)")
         if st.button("ROLL FULL EXPLORATION (this hex)", key=f"btn_hex_explore_{selected_hex}"):
-            # State already saved above; now roll
+
             biome_choice = biome if biome else "Barren"  # fallback so it doesn't crash
 
             exploration_result = roll_table("planetside_exploration", log=True)
             add_to_persistent(4, f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
             add_to_log(f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
+
+            note_lines = [f"Planetside Exploration: {exploration_result}"]
 
             hex_map[selected_hex]["last"] = exploration_result
 
@@ -4044,6 +4099,7 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
                 add_to_persistent(4, f"Hex {selected_hex} — Findings: {findings_result}")
                 add_to_log(f"Hex {selected_hex} — Findings: {findings_result}")
                 st.success(f"Findings: {findings_result}")
+                note_lines.append(f"Findings: {findings_result}")
 
             elif "hazard" in exploration_result.lower():
                 hazard_table = f"{biome_choice.lower()}_hazards"
@@ -4051,23 +4107,32 @@ button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"]{
                 add_to_persistent(4, f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
                 add_to_log(f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
                 st.success(f"Hazard ({biome_choice}): {hazard_result}")
+                note_lines.append(f"Hazard ({biome_choice}): {hazard_result}")
 
             elif "site" in exploration_result.lower():
-                # optional: auto-flag site on this hex
+                # Auto-mark site on the map
                 hex_map[selected_hex]["site"] = True
 
                 add_to_log(f"Hex {selected_hex} — Found an Àrsaidh Site. Roll full site in Mission tab.")
                 add_to_persistent(4, f"Hex {selected_hex} — Site Found: Roll full site in Mission tab.")
                 st.success("Site Found! Use the Site Generator in the Mission tab.")
+                note_lines.append("Site Found: Àrsaidh Site (roll full site in Mission tab)")
 
             elif "nothing" in exploration_result.lower():
                 add_to_persistent(4, f"Hex {selected_hex} — Exploration: Nothing found.")
                 st.info("Nothing found in this hex.")
+                note_lines.append("Nothing found.")
 
             else:
                 st.warning("Exploration result not recognized — check the CSV formatting.")
+                note_lines.append("Result not recognized (check CSV formatting).")
+
+            # Append the full roll result block to Notes automatically
+            block = "\n".join(note_lines)
+            append_to_hex_notes(selected_hex, block)
 
             st.session_state["hex_map"] = hex_map
+            st.rerun()
 
 # ---------- SIDEBAR: PERSISTENT POOLS ----------
 st.sidebar.header("Persistent Data Pools")
