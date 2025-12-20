@@ -1823,10 +1823,10 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
 
 def render_hex_button_map(hex_map: dict, selected_hex: int):
     """
-    Compact staggered layout:
-    - Uses 4 real columns per row (no empty slot columns)
-    - Odd rows get a small indent spacer
-    - Fixes the last row so 97 98 99 100 are on the same row (no dangling)
+    Tight staggered layout:
+    - Uses 4 hex columns plus a big "tail" spacer column so the row DOESN'T stretch across the page
+    - Odd rows get a small left indent spacer
+    - Last row renders 97 98 99 100 on the SAME row (no dangling)
     """
     def _draw_hex(n: int, col):
         d = hex_map.get(n, {})
@@ -1841,7 +1841,7 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
         if site: marks.append("S")
         if special: marks.append("★")
 
-        label = f"{n}\n{' '.join(marks)}" if marks else f"{n}"
+        label = f"{n} {' '.join(marks)}".strip()
 
         tooltip = (
             f"HEXMAP|hex={n}|visited={int(visited)}|party={int(party)}|"
@@ -1853,30 +1853,34 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             key=f"hexbtn_{n}",
             help=tooltip,
             type="secondary",
-            use_container_width=False
+            use_container_width=True
         ):
             st.session_state["selected_hex"] = n
             st.rerun()
 
-    # --- 24 rows cover 1..96 (because 12 pairs * 8 = 96) ---
+    # Tuning knobs (these control "tightness")
+    TAIL = 12.0    # bigger tail = tighter cluster on the left
+    INDENT = 0.55  # odd-row indent spacer
+
+    # --- 24 rows cover 1..96 (12 pairs * 8 = 96) ---
     for r in range(24):
         pair = r // 2
         base = pair * 8
 
         if r % 2 == 0:
             nums = [base + 1, base + 3, base + 5, base + 7]
-            cols = st.columns(4, gap="small")
+            cols = st.columns([1, 1, 1, 1, TAIL], gap="small")  # 4 hex cols + tail spacer
             for i, n in enumerate(nums):
                 _draw_hex(n, cols[i])
         else:
             nums = [base + 2, base + 4, base + 6, base + 8]
-            cols = st.columns([0.45, 1, 1, 1, 1], gap="small")  # spacer + 4 columns
+            cols = st.columns([INDENT, 1, 1, 1, 1, TAIL], gap="small")  # indent + 4 hex cols + tail
             for i, n in enumerate(nums):
                 _draw_hex(n, cols[i + 1])
 
     # --- final row 97..100 (single row, aligned) ---
     final_nums = [97, 98, 99, 100]
-    cols = st.columns(4, gap="small")
+    cols = st.columns([1, 1, 1, 1, TAIL], gap="small")
     for i, n in enumerate(final_nums):
         _draw_hex(n, cols[i])
 
