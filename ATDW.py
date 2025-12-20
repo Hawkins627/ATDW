@@ -1616,8 +1616,8 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     # --- Wider hex grid + correct last row (97-100) ---
     # 12 rows cover 1..96 because each 2-row pair contains 16 hexes (8 + 8) => 6 pairs => 96
     MAIN_ROWS = 12
-    x_step = 0.99           # tighten horizontally (try 0.92–1.05)
-    y_step = 0.84           # tighten vertically  (try 0.80–0.92)
+    x_step = 1.00           # tighten horizontally (try 0.92–1.05)
+    y_step = 0.85           # tighten vertically  (try 0.80–0.92)
 
     pos = {}
     render_order = []
