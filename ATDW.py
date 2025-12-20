@@ -4229,7 +4229,11 @@ with tabs[9]:
     with col_map:
         st.caption("Click a hex to select it (Visited=green fill, Party=blue border, Site=dashed, Special=purple ring, Selected=red outline).")
 
-        render_hex_button_map(st.session_state["hex_map"], st.session_state["selected_hex"])
+        picked = render_hex_plotly_map(st.session_state["hex_map"], st.session_state["selected_hex"])
+        if picked is not None and picked != st.session_state["selected_hex"]:
+            st.session_state["selected_hex"] = picked
+            st.rerun()
+
 
         # Fallback if clicking doesn’t select (older Streamlit)
         with st.expander("If clicking doesn’t select a hex, use this dropdown instead"):
