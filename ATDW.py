@@ -1853,7 +1853,7 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             key=f"hexbtn_{n}",
             help=tooltip,
             type="secondary",
-            use_container_width=True
+            use_container_width=False
         ):
             st.session_state["selected_hex"] = n
             st.rerun()
@@ -2029,6 +2029,29 @@ st.markdown("""
     ) > div[data-testid="column"]{
       padding-left: 0px !important;
       padding-right: 0px !important;
+    }
+
+    :where(
+    div[data-testid="stHorizontalBlock"]:has(button[title^="HEXMAP|"], button[aria-label^="HEXMAP|"], button[data-tooltip^="HEXMAP|"])
+    ) button {
+    display: block !important;
+    margin: 0 auto !important;
+    }
+
+    :where(
+      div[data-testid="stHorizontalBlock"]:has(button[title^="HEXMAP|"], button[aria-label^="HEXMAP|"], button[data-tooltip^="HEXMAP|"])
+    ){
+      justify-content: center !important;
+    }
+
+    :where(
+      div[data-testid="stHorizontalBlock"]:has(button[title^="HEXMAP|"], button[aria-label^="HEXMAP|"], button[data-tooltip^="HEXMAP|"])
+    ) > div[data-testid="column"]{
+      flex: 0 0 60px !important;
+      width: 60px !important;
+      max-width: 60px !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
     }
 
     /* Reduce spacing for the subtitles ("Persistent 1" etc.) */
