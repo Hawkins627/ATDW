@@ -1617,6 +1617,10 @@ def ensure_map_state():
         sel = 1
     st.session_state["selected_hex"] = sel
 
+    # Remember the last biome you selected in the map editor (used as default for new/unset hexes)
+    if "map_default_biome" not in st.session_state:
+        st.session_state["map_default_biome"] = ""
+
 def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     """
     Plotly-based hex map with real fill/border colors.
@@ -4185,11 +4189,22 @@ with tabs[9]:
         name = st.text_input("Name / Label", value=d.get("name",""), key=f"map_name_{selected_hex}")
 
         biome_list = ["", "Barren","Exotic","Frozen","Irradiated","Lush","Scorched","Toxic","Urban","Volcanic","Water"]
+
+        # If this hex doesn't have a biome yet, default to the last biome you picked.
+        stored_biome = (d.get("biome", "") or "").strip()
+        default_biome = (st.session_state.get("map_default_biome", "") or "").strip()
+        initial_biome = stored_biome or default_biome
+
+        def _on_map_biome_change(hex_id: int):
+            st.session_state["map_default_biome"] = st.session_state.get(f"map_biome_{hex_id}", "")
+
         biome = st.selectbox(
             "Biome (for hazard rolls)",
             biome_list,
-            index=biome_list.index(d.get("biome","")) if d.get("biome","") in biome_list else 0,
+            index=biome_list.index(initial_biome) if initial_biome in biome_list else 0,
             key=f"map_biome_{selected_hex}",
+            on_change=_on_map_biome_change,
+            args=(selected_hex,),
         )
 
         notes_key = f"map_notes_{selected_hex}"
@@ -4241,7 +4256,7 @@ with tabs[9]:
         st.markdown("### Planetside Exploration (from this hex)")
         if st.button("ROLL FULL EXPLORATION (this hex)", key=f"btn_hex_explore_{selected_hex}"):
 
-            biome_choice = biome if biome else "Barren"
+            biome_choice = biome or (st.session_state.get("map_default_biome") or "") or "Barren"
             exploration_result = roll_table("planetside_exploration", log=True)
 
             add_to_persistent(4, f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
