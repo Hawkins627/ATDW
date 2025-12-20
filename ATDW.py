@@ -1775,14 +1775,28 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             )
         )
 
+    # --- Zoom-out factor: bigger = tighter spacing (hexes closer together) ---
+    xmin, xmax = min(xs), max(xs)
+    ymin, ymax = min(ys), max(ys)
+
+    zoom = 1.35  # try 1.25–1.60 (higher = tighter)
+    xc = (xmin + xmax) / 2
+    yc = (ymin + ymax) / 2
+
+    xr = (xmax - xmin) * zoom
+    yr = (ymax - ymin) * zoom
+
+    x_range = [xc - xr / 2, xc + xr / 2]
+    y_range = [yc - yr / 2, yc + yr / 2]
+    
     fig.update_layout(
         shapes=shapes,
         margin=dict(l=0, r=0, t=0, b=0),
         height=int((MAIN_ROWS + 2) * 52),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(visible=False, fixedrange=True),
-        yaxis=dict(visible=False, fixedrange=True, scaleanchor="x", scaleratio=1),
+        xaxis=dict(visible=False, fixedrange=True, range=x_range),
+        yaxis=dict(visible=False, fixedrange=True, range=y_range, scaleanchor="x", scaleratio=1),
     )
 
     # Render + capture selection (newer Streamlit). Older Streamlit will just render.
