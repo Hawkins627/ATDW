@@ -3046,6 +3046,12 @@ with tabs[4]:
     if "force_notes_refresh_for" not in st.session_state:
         st.session_state["force_notes_refresh_for"] = None
 
+    # Helper: force-refresh Terrain dropdown for a hex (avoid session_state mutation after widget instantiation)
+    if "force_td_refresh_for" not in st.session_state:
+        st.session_state["force_td_refresh_for"] = None
+    if "force_td_refresh_value" not in st.session_state:
+        st.session_state["force_td_refresh_value"] = None
+
     def append_to_hex_notes(hex_id: int, text_block: str):
         hex_map_local = st.session_state["hex_map"]
         current = (hex_map_local[hex_id].get("notes") or "").rstrip()
@@ -3131,6 +3137,16 @@ with tabs[4]:
         stored_td = (d.get("terrain", "") or "").strip()
         default_td = (st.session_state.get("map_default_terrain", "Landing") or "Landing").strip()
         initial_td = stored_td or default_td
+
+        td_key = f"map_td_{selected_hex}"
+
+        # If exploration rolled terrain for this hex, update the widget state BEFORE creating the selectbox
+        if st.session_state.get("force_td_refresh_for") == selected_hex:
+            st.session_state[td_key] = (st.session_state.get("force_td_refresh_value") or initial_td or "Landing")
+            st.session_state["force_td_refresh_for"] = None
+            st.session_state["force_td_refresh_value"] = None
+        elif td_key not in st.session_state:
+            st.session_state[td_key] = initial_td or "Landing"
 
         def _on_map_td_change(hex_id: int):
             st.session_state["map_default_terrain"] = st.session_state.get(f"map_td_{hex_id}", "Landing") or "Landing"
@@ -3232,7 +3248,11 @@ with tabs[4]:
 
             # Apply terrain to the explored hex
             hex_map[selected_hex]["terrain"] = next_td
-            st.session_state[f"map_td_{selected_hex}"] = next_td
+            # Don’t write to the selectbox key directly here (it already exists this run).
+            # Instead, flag a safe refresh that happens BEFORE the widget is created on rerun.
+            st.session_state["force_td_refresh_for"] = selected_hex
+            st.session_state["force_td_refresh_value"] = next_td
+            st.session_state["map_default_terrain"] = next_td
 
             biome_choice = biome or (st.session_state.get("map_default_biome") or "") or "Barren"
 
