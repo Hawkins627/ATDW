@@ -1574,25 +1574,41 @@ def roll_hacking(flags: list[str]) -> str:
 
 import json
 
-MAP_HEX_COUNT = 100
+MAP_HEX_COUNT = 96
 MAP_COLS = 10  # 10x10 layout (easy starting point)
 
 def ensure_map_state():
+    base = {"name": "", "biome": "", "visited": False, "notes": "", "last": ""}
+
+    # Initialize if missing
     if "hex_map" not in st.session_state:
-        st.session_state["hex_map"] = {
-            i: {
-                "name": "",
-                "biome": "",
-                "visited": False,
-                "party": False,
-                "site": False,
-                "special": False,
-                "notes": "",
-                "last": ""
-            }
-            for i in range(1, MAP_HEX_COUNT + 1)
-        }
+        st.session_state["hex_map"] = {i: dict(base) for i in range(1, MAP_HEX_COUNT + 1)}
+
+    # If MAP_HEX_COUNT changed (ex: 100 -> 96), prune leftovers and normalize keys
+    cleaned = {}
+    for k, v in st.session_state["hex_map"].items():
+        try:
+            kk = int(k)
+        except Exception:
+            continue
+        if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
+            cleaned[kk] = {**base, **v}
+
+    for i in range(1, MAP_HEX_COUNT + 1):
+        cleaned.setdefault(i, dict(base))
+
+    st.session_state["hex_map"] = cleaned
+
+    # Clamp selected hex so the app doesn't crash if it was 97–100 before
     if "selected_hex" not in st.session_state:
+        st.session_state["selected_hex"] = 1
+
+    try:
+        sel = int(st.session_state["selected_hex"])
+    except Exception:
+        sel = 1
+
+    if sel < 1 or sel > MAP_HEX_COUNT:
         st.session_state["selected_hex"] = 1
 
 def render_hex_plotly_map(hex_map: dict, selected_hex: int):
