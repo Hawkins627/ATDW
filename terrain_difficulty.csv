@@ -97,3 +97,9 @@ Easy Going,Inhabited,"This hex is actively populated by some form of animal life
 Easy Going,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
 Easy Going,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
 Easy Going,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+
+Landing,Hazardous,"This hex’s terrain is not easy to deal with. Whether it’s steep cliffs, bubbling lava lakes or swift rivers, the crew takes +1⭕ to move across it, and all characters must pass a DEX check or suffer D20 damage."
+Landing,Convoluted,"Unclear pathways go through jungle, dunes or other tricky terrain. Crossing this type of terrain takes +1⭕."
+Landing,Biome-Dependent,"Roll on the Biome-Dependent Terrain Difficulty table for the biome you are currently exploring."
+Landing,Inhabited,"This hex is actively populated by some form of animal life, either as a hunting ground, nest or gathering spot. An encounter with Local Fauna is triggered automatically."
+Landing,Easy Going,"This hex offers no obstacles whatsoever—perhaps it is a hidden or secluded area, protected from the dangers that lurk outside. No combat encounters can take place here."
