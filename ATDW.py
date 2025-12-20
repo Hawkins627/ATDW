@@ -4036,8 +4036,12 @@ with tabs[9]:
     def append_to_hex_notes(hex_id: int, text_block: str):
         current = (st.session_state["hex_map"][hex_id].get("notes") or "").rstrip()
         new_notes = (current + "\n\n" + text_block).strip() if current else text_block.strip()
+
+        # Update the source-of-truth
         st.session_state["hex_map"][hex_id]["notes"] = new_notes
-        st.session_state[f"map_notes_{hex_id}"] = new_notes  # keeps the widget in sync
+
+        # Tell the UI to refresh this hex's notes widget on NEXT rerun
+        st.session_state["force_notes_refresh_for"] = hex_id
 
     col_map, col_info = st.columns([2, 1], gap="large")
 
