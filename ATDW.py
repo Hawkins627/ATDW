@@ -1613,35 +1613,39 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     import plotly.graph_objects as go
 
     # --- Tighter hex grid spacing + correct last row (97-100) ---
-    MAIN_ROWS = 24          # rows that cover 1..96
-    x_step = 1.00           # tighten horizontally (try 0.92–1.05)
-    y_step = 0.86           # tighten vertically  (try 0.80–0.92)
+    # --- Wider hex grid + correct last row (97-100) ---
+    # 12 rows cover 1..96 because each 2-row pair contains 16 hexes (8 + 8) => 6 pairs => 96
+    MAIN_ROWS = 12
+    x_step = 0.96           # tighten horizontally (try 0.92–1.05)
+    y_step = 0.82           # tighten vertically  (try 0.80–0.92)
 
     pos = {}
     render_order = []
 
-    # Rows 0..23 => hexes 1..96
+    # Rows 0..11 => hexes 1..96 (8 per row, staggered)
     for r in range(MAIN_ROWS):
         pair = r // 2
-        base = pair * 8
+        base = pair * 16  # 16 hexes per 2-row pair
 
         if r % 2 == 0:
-            nums = [base + 1, base + 3, base + 5, base + 7]
+            nums = [base + i for i in range(1, 16, 2)]   # 1,3,5,...,15  (8 hexes)
             x_offset = 0.0
         else:
-            nums = [base + 2, base + 4, base + 6, base + 8]
+            nums = [base + i for i in range(2, 17, 2)]   # 2,4,6,...,16  (8 hexes)
             x_offset = 0.5  # stagger
 
         y = -r * y_step
         for i, n in enumerate(nums):
-            if 1 <= n <= MAP_HEX_COUNT:
+            if 1 <= n <= 96:
                 pos[n] = ((x_offset + i) * x_step, y)
                 render_order.append(n)
 
-    # Final row 97..100 ALL on one row (no dangling)
+    # Final row 97..100 centered under the 8-wide grid
     y_final = -(MAIN_ROWS) * y_step
-    for i, n in enumerate([97, 98, 99, 100]):
-        pos[n] = (i * x_step, y_final)
+    final_nums = [97, 98, 99, 100]
+    final_x_offset = (8 - len(final_nums)) / 2  # centers them => 2.0
+    for i, n in enumerate(final_nums):
+        pos[n] = ((final_x_offset + i) * x_step, y_final)
         render_order.append(n)
 
     def marks_for(n: int) -> str:
@@ -1792,7 +1796,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     fig.update_layout(
         shapes=shapes,
         margin=dict(l=0, r=0, t=0, b=0),
-        height=int((MAIN_ROWS + 2) * 52),
+        height=int((MAIN_ROWS + 3) * 90),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(visible=False, fixedrange=True, range=x_range),
