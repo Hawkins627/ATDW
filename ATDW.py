@@ -1706,6 +1706,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             marker=dict(
                 symbol="hexagon",
                 size=46,
+                angle=30,  # <-- add this (flat-top)
                 color=fill_colors,
                 line=dict(color=line_colors, width=line_widths),
             ),
@@ -1727,11 +1728,12 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
                 x=spec_x,
                 y=spec_y,
                 mode="markers",
-                marker=dict(
-                    symbol="hexagon-open",
-                    size=40,
-                    line=dict(color="rgba(176,0,255,0.55)", width=3),
-                ),
+            marker=dict(
+                symbol="hexagon-open",
+                size=40,
+                angle=30,  # <-- add this too
+                line=dict(color="rgba(176,0,255,0.55)", width=3),
+            ),
                 hoverinfo="skip",
                 showlegend=False,
             )
