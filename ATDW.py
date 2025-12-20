@@ -1578,21 +1578,41 @@ MAP_HEX_COUNT = 96
 MAP_COLS = 10  # 10x10 layout (easy starting point)
 
 def ensure_map_state():
-    base = {"name": "", "biome": "", "visited": False, "notes": "", "last": ""}
+    # Always normalize/repair the map (important when MAP_HEX_COUNT changes)
+    default_hex = {
+        "name": "",
+        "biome": "",
+        "visited": False,
+        "party": False,
+        "site": False,
+        "special": False,
+        "notes": "",
+        "last": ""
+    }
 
-    # Initialize if missing
-    if "hex_map" not in st.session_state:
-        st.session_state["hex_map"] = {i: dict(base) for i in range(1, MAP_HEX_COUNT + 1)}
+    hm = st.session_state.get("hex_map", {})
 
-    # If MAP_HEX_COUNT changed (ex: 100 -> 96), prune leftovers and normalize keys
+    # Clean + prune to 1..MAP_HEX_COUNT (also handles string keys from JSON)
     cleaned = {}
-    for k, v in st.session_state["hex_map"].items():
+    for k, v in (hm or {}).items():
         try:
             kk = int(k)
         except Exception:
             continue
         if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
-            cleaned[kk] = {**base, **v}
+            cleaned[kk] = {**default_hex, **v}
+
+    # Fill any missing hexes
+    for i in range(1, MAP_HEX_COUNT + 1):
+        cleaned.setdefault(i, default_hex.copy())
+
+    st.session_state["hex_map"] = cleaned
+
+    # Selected hex safety
+    if "selected_hex" not in st.session_state:
+        st.session_state["selected_hex"] = 1
+    if st.session_state["selected_hex"] > MAP_HEX_COUNT:
+        st.session_state["selected_hex"] = MAP_HEX_COUNT
 
     for i in range(1, MAP_HEX_COUNT + 1):
         cleaned.setdefault(i, dict(base))
@@ -1655,14 +1675,6 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             if 1 <= n <= 96:
                 pos[n] = ((x_offset + i) * x_step, y)
                 render_order.append(n)
-
-    # Final row 97..100 centered under the 8-wide grid
-    y_final = -(MAIN_ROWS) * y_step
-    final_nums = [97, 98, 99, 100]
-    final_x_offset = (8 - len(final_nums)) / 2  # centers them => 2.0
-    for i, n in enumerate(final_nums):
-        pos[n] = ((final_x_offset + i) * x_step, y_final)
-        render_order.append(n)
 
     def marks_for(n: int) -> str:
         d = hex_map.get(n, {})
