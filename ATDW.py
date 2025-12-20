@@ -1823,60 +1823,12 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
 
 def render_hex_button_map(hex_map: dict, selected_hex: int):
     """
-    Compact, staggered layout matching the template.
-    Final row is 97,98,99,100 in a single row (not staggered).
+    Compact staggered layout:
+    - Uses 4 real columns per row (no empty slot columns)
+    - Odd rows get a small indent spacer
+    - Fixes the last row so 97 98 99 100 are on the same row (no dangling)
     """
-    # 12 pairs (96 hexes) + 1 final row (97-100)
-    total_rows = 25  # 24 rows for 1..96 + 1 final row
-
-    # --- rows for 1..96 ---
-    for r in range(24):
-        pair = r // 2
-        base = pair * 8
-
-        if r % 2 == 0:
-            nums = [base + 1, base + 3, base + 5, base + 7]
-            slots = [0, 2, 4, 6]
-        else:
-            nums = [base + 2, base + 4, base + 6, base + 8]
-            slots = [1, 3, 5, 7]
-
-        cols = st.columns(8, gap="small")
-        for slot_i, n in zip(slots, nums):
-            d = hex_map.get(n, {})
-            visited = bool(d.get("visited"))
-            party = bool(d.get("party"))
-            site = bool(d.get("site"))
-            special = bool(d.get("special"))
-            is_sel = (n == selected_hex)
-
-            marks = []
-            if party: marks.append("P")
-            if site: marks.append("S")
-            if special: marks.append("★")
-
-            label = f"{n}\n{' '.join(marks)}" if marks else f"{n}"
-
-            tooltip = (
-                f"HEXMAP|hex={n}|visited={int(visited)}|party={int(party)}|"
-                f"site={int(site)}|special={int(special)}|selected={int(is_sel)}"
-            )
-
-            if cols[slot_i].button(
-                label,
-                key=f"hexbtn_{n}",
-                help=tooltip,
-                type="secondary",
-                use_container_width=True
-            ):
-                st.session_state["selected_hex"] = n
-                st.rerun()
-
-    # --- final row 97..100 (single row, no staggering) ---
-    final_nums = [97, 98, 99, 100]
-    final_slots = [0, 2, 4, 6]
-    cols = st.columns(8, gap="small")
-    for slot_i, n in zip(final_slots, final_nums):
+    def _draw_hex(n: int, col):
         d = hex_map.get(n, {})
         visited = bool(d.get("visited"))
         party = bool(d.get("party"))
@@ -1896,7 +1848,7 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             f"site={int(site)}|special={int(special)}|selected={int(is_sel)}"
         )
 
-        if cols[slot_i].button(
+        if col.button(
             label,
             key=f"hexbtn_{n}",
             help=tooltip,
@@ -1905,6 +1857,28 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
         ):
             st.session_state["selected_hex"] = n
             st.rerun()
+
+    # --- 24 rows cover 1..96 (because 12 pairs * 8 = 96) ---
+    for r in range(24):
+        pair = r // 2
+        base = pair * 8
+
+        if r % 2 == 0:
+            nums = [base + 1, base + 3, base + 5, base + 7]
+            cols = st.columns(4, gap="small")
+            for i, n in enumerate(nums):
+                _draw_hex(n, cols[i])
+        else:
+            nums = [base + 2, base + 4, base + 6, base + 8]
+            cols = st.columns([0.45, 1, 1, 1, 1], gap="small")  # spacer + 4 columns
+            for i, n in enumerate(nums):
+                _draw_hex(n, cols[i + 1])
+
+    # --- final row 97..100 (single row, aligned) ---
+    final_nums = [97, 98, 99, 100]
+    cols = st.columns(4, gap="small")
+    for i, n in enumerate(final_nums):
+        _draw_hex(n, cols[i])
 
 def _get_query_hex():
     # Works across Streamlit versions
