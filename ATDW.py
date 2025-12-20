@@ -1612,30 +1612,36 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     import math
     import plotly.graph_objects as go
 
-    total_rows = 26
-    y_step = 1.0
-    x_step = 1.0
+    # --- Tighter hex spacing + correct last row (97-100) ---
+    MAIN_ROWS = 24          # rows that cover 1..96
+    x_step = 0.92           # tighten horizontally (tweak 0.88–0.98)
+    y_step = 0.80           # tighten vertically  (tweak 0.75–0.86)
 
-    # Build positions to match your existing staggered 1..100 pattern
     pos = {}
     render_order = []
-    for r in range(total_rows):
+
+    # Build rows 0..23 => hexes 1..96
+    for r in range(MAIN_ROWS):
         pair = r // 2
         base = pair * 8
 
         if r % 2 == 0:
             nums = [base + 1, base + 3, base + 5, base + 7]
-            slots = [0, 2, 4, 6]
+            x_offset = 0.0
         else:
             nums = [base + 2, base + 4, base + 6, base + 8]
-            slots = [1, 3, 5, 7]
+            x_offset = 0.5  # stagger
 
-        for slot_i, n in zip(slots, nums):
-            if 1 <= n <= MAP_HEX_COUNT:
-                x = slot_i * x_step
-                y = -r * y_step
-                pos[n] = (x, y)
-                render_order.append(n)
+        y = -r * y_step
+        for i, n in enumerate(nums):
+            pos[n] = ((x_offset + i) * x_step, y)
+            render_order.append(n)
+
+    # Final row 97..100 ALL on one row (no dangling)
+    y_final = -(MAIN_ROWS) * y_step
+    for i, n in enumerate([97, 98, 99, 100]):
+        pos[n] = (i * x_step, y_final)
+        render_order.append(n)
 
     def marks_for(n: int) -> str:
         d = hex_map.get(n, {})
@@ -1694,7 +1700,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             hovertemplate="<b>Hex %{customdata}</b><extra></extra>",
             marker=dict(
                 symbol="hexagon",
-                size=42,
+                size=46,
                 color=fill_colors,
                 line=dict(color=line_colors, width=line_widths),
             ),
@@ -1728,8 +1734,8 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
 
     # Site dashed border (layout shapes)
     shapes = []
-    rx = 0.55
-    ry = 0.48
+    rx = 0.58 * x_step
+    ry = 0.58 * y_step
 
     for n in render_order:
         if not hex_map.get(n, {}).get("site"):
