@@ -1590,11 +1590,11 @@ def ensure_map_state():
         "last": ""
     }
 
-    hm = st.session_state.get("hex_map", {})
+    hm = st.session_state.get("hex_map", {}) or {}
 
     # Clean + prune to 1..MAP_HEX_COUNT (also handles string keys from JSON)
     cleaned = {}
-    for k, v in (hm or {}).items():
+    for k, v in hm.items():
         try:
             kk = int(k)
         except Exception:
@@ -1608,28 +1608,14 @@ def ensure_map_state():
 
     st.session_state["hex_map"] = cleaned
 
-    # Selected hex safety
-    if "selected_hex" not in st.session_state:
-        st.session_state["selected_hex"] = 1
-    if st.session_state["selected_hex"] > MAP_HEX_COUNT:
-        st.session_state["selected_hex"] = MAP_HEX_COUNT
-
-    for i in range(1, MAP_HEX_COUNT + 1):
-        cleaned.setdefault(i, dict(base))
-
-    st.session_state["hex_map"] = cleaned
-
     # Clamp selected hex so the app doesn't crash if it was 97–100 before
-    if "selected_hex" not in st.session_state:
-        st.session_state["selected_hex"] = 1
-
     try:
-        sel = int(st.session_state["selected_hex"])
+        sel = int(st.session_state.get("selected_hex", 1))
     except Exception:
         sel = 1
-
     if sel < 1 or sel > MAP_HEX_COUNT:
-        st.session_state["selected_hex"] = 1
+        sel = 1
+    st.session_state["selected_hex"] = sel
 
 def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     """
