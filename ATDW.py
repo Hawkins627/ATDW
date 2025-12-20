@@ -1644,12 +1644,6 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
         pos[n] = (i * x_step, y_final)
         render_order.append(n)
 
-    # Final row 97..100 ALL on one row (no dangling)
-    y_final = -(MAIN_ROWS) * y_step
-    for i, n in enumerate([97, 98, 99, 100]):
-        pos[n] = (i * x_step, y_final)
-        render_order.append(n)
-
     def marks_for(n: int) -> str:
         d = hex_map.get(n, {})
         marks = []
@@ -1784,7 +1778,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     fig.update_layout(
         shapes=shapes,
         margin=dict(l=0, r=0, t=0, b=0),
-        height=760,
+        height=int((MAIN_ROWS + 2) * 52),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(visible=False, fixedrange=True),
