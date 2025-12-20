@@ -3048,10 +3048,19 @@ with tabs[4]:
 
     with st.container(border=True):
 
-        terrain_options = [
-            "Hazardous", "Convoluted", "Inhabited",
-            "Biome-Dependent", "Easy Going"
-        ]
+        # Build the dropdown options from terrain_difficulty.csv
+        # (uses the 'previous_hex' column, including your new 'Landing' entry)
+        try:
+            td_df = load_table_df("terrain_difficulty")
+            raw_opts = td_df["previous_hex"].dropna().astype(str).tolist()
+            terrain_options = list(dict.fromkeys(raw_opts))  # unique, preserve file order
+        except Exception:
+            # Fallback list if the CSV can't be loaded for any reason
+            terrain_options = ["Landing", "Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going"]
+
+        # Put Landing first so the dropdown starts there on a fresh session
+        if "Landing" in terrain_options:
+            terrain_options = ["Landing"] + [o for o in terrain_options if o != "Landing"]
 
         # This dropdown is the one you asked for!
         terrain_choice = st.selectbox(
