@@ -2014,6 +2014,23 @@ st.markdown("""
         padding: 0 !important;
     }
 
+    /* Tighten the layout ONLY around our hex buttons */
+    :where(
+      div[data-testid="stHorizontalBlock"]:has(button[title^="HEXMAP|"], button[aria-label^="HEXMAP|"], button[data-tooltip^="HEXMAP|"]),
+      div[data-testid="stHorizontalBlock"]:has(div[title^="HEXMAP|"] button, div[aria-label^="HEXMAP|"] button, div[data-tooltip^="HEXMAP|"] button),
+      div[data-testid="stHorizontalBlock"]:has(span[title^="HEXMAP|"] button, span[aria-label^="HEXMAP|"] button, span[data-tooltip^="HEXMAP|"] button)
+    ){
+      gap: 0px !important;
+      margin-top: -10px !important;  /* pulls rows closer (tweak -8 to -12 if needed) */
+    }
+
+    :where(
+      div[data-testid="stHorizontalBlock"]:has(button[title^="HEXMAP|"], button[aria-label^="HEXMAP|"], button[data-tooltip^="HEXMAP|"])
+    ) > div[data-testid="column"]{
+      padding-left: 0px !important;
+      padding-right: 0px !important;
+    }
+
     /* Reduce spacing for the subtitles ("Persistent 1" etc.) */
     [data-testid="stSidebar"] h3, 
     [data-testid="stSidebar"] h2 {
