@@ -2867,72 +2867,25 @@ with tabs[3]:
 # ---------- TAB: PLANET ----------
 with tabs[4]:
 
-    st.header("Planet Generator")
+    st.header("Planet Generator + Map")
     ensure_state()
+    ensure_map_state()
 
-    # ============================================================
-    #  PLANET FEATURES — Top block (Designation, Atmosphere, etc.)
-    # ============================================================
-    with st.container(border=True):
+    # ------------------------------------------------------------
+    # TOP: QUICK ROLLS (Planet + Biome)
+    # ------------------------------------------------------------
+    st.markdown("### Quick Rolls")
 
-        st.subheader("Planet Features")
+    # Storage for last rolls (so we can display them at the bottom)
+    if "last_planet_roll" not in st.session_state:
+        st.session_state["last_planet_roll"] = {}
+    if "last_biome_roll" not in st.session_state:
+        st.session_state["last_biome_roll"] = {}
 
-        colA, colB = st.columns(2)
+    colP, colB = st.columns(2, gap="large")
 
-        # ------------------------
-        # LEFT COLUMN
-        # ------------------------
-        with colA:
-
-            if st.button("Planet Designation", key="btn_planet_designation"):
-                result = roll_table("planet_designation", group=None, log=True)
-                add_to_persistent(3, f"Designation: {result}")
-                st.success(result)
-
-            if st.button("Planet Diameter", key="btn_planet_diameter"):
-                result = roll_table("planet_diameter", group=None, log=True)
-                add_to_persistent(3, f"Diameter: {result}")
-                st.success(result)
-
-            if st.button("Planet Atmosphere", key="btn_planet_atmosphere"):
-                result = roll_table("planet_atmosphere", group=None, log=True)
-                add_to_persistent(3, f"Atmosphere: {result}")
-                st.success(result)
-
-            if st.button("Planet Climate", key="btn_planet_climate"):
-                result = roll_table("planet_climate", group=None, log=True)
-                add_to_persistent(3, f"Climate: {result}")
-                st.success(result)
-
-        # ------------------------
-        # RIGHT COLUMN
-        # ------------------------
-        with colB:
-
-            if st.button("Biome Diversity", key="btn_planet_biome_diversity"):
-                result = roll_table("planet_biome_diversity", group=None, log=True)
-                add_to_persistent(3, f"Biome Diversity: {result}")
-                st.success(result)
-
-            if st.button("What's in the Sky?", key="btn_whats_in_sky"):
-                result = roll_table("whats_in_sky", group=None, log=True)
-                add_to_persistent(3, f"Sky: {result}")
-                st.success(result)
-
-            if st.button("Day/Night Cycle", key="btn_day_night_cycle"):
-                result = roll_table("day_night_cycle", group=None, log=True)
-                add_to_persistent(3, f"Day/Night Cycle: {result}")
-                st.success(result)
-
-        st.markdown("---")
-
-        # ============================================================
-        # FULL PLANET BUTTON
-        # ============================================================
-        st.subheader("Full Planet (ALL 7 Tables)")
-
-        if st.button("ROLL FULL PLANET", key="btn_full_planet"):
-
+    with colP:
+        if st.button("ROLL FULL PLANET", key="btn_full_planet_top", use_container_width=True):
             designation = roll_table("planet_designation", group=None, log=False)
             diameter = roll_table("planet_diameter", group=None, log=False)
             atmosphere = roll_table("planet_atmosphere", group=None, log=False)
@@ -2940,6 +2893,16 @@ with tabs[4]:
             diversity = roll_table("planet_biome_diversity", group=None, log=False)
             sky = roll_table("whats_in_sky", group=None, log=False)
             cycle = roll_table("day_night_cycle", group=None, log=False)
+
+            st.session_state["last_planet_roll"] = {
+                "Designation": designation,
+                "Diameter": diameter,
+                "Atmosphere": atmosphere,
+                "Climate": climate,
+                "Biome Diversity": diversity,
+                "Sky": sky,
+                "Day/Night Cycle": cycle,
+            }
 
             # persistent
             add_to_persistent(3, f"Designation: {designation}")
@@ -2950,245 +2913,397 @@ with tabs[4]:
             add_to_persistent(3, f"Sky: {sky}")
             add_to_persistent(3, f"Day/Night Cycle: {cycle}")
 
-            display = f"""
-• **Designation:** {designation}  
-• **Diameter:** {diameter}  
-• **Atmosphere:** {atmosphere}  
-• **Climate:** {climate}  
-• **Biome Diversity:** {diversity}  
-• **Sky:** {sky}  
-• **Day/Night Cycle:** {cycle}  
-"""
-            st.success(display)
+            add_to_log(f"Planet Rolled — {designation} | {diameter} | {atmosphere} | {climate}")
 
-            log_entry = f"""
-### Planet Summary
-- **Designation:** {designation}
-- **Diameter:** {diameter}
-- **Atmosphere:** {atmosphere}
-- **Climate:** {climate}
-- **Biome Diversity:** {diversity}
-- **Sky:** {sky}
-- **Day/Night Cycle:** {cycle}
-"""
-            add_to_log(log_entry)
+            st.success("Planet rolled. See **Planet Features** at the bottom of this tab.")
 
-    # ============================================================
-    # BIOME DETAILS SECTION
-    # ============================================================
-    st.markdown("### Biome Details")
-
-    with st.container(border=True):
-
+    with colB:
         first_landing = st.checkbox(
-            "This is the first biome hex of a NEW planet", 
-            key="chk_first_landing"
+            "This is the first biome hex of a NEW planet",
+            key="chk_first_landing_top",
+            help="Prevents SAME-AS-CURRENT-BIOME results on first landing."
         )
 
-        colL, colR = st.columns(2)
+        if st.button("ROLL FULL BIOME", key="btn_full_biome_top", use_container_width=True):
+            biome = roll_table("planet_biome", log=False)
+            if "same as current biome" in biome.lower() and first_landing:
+                biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
 
-        # ------------------------------------------
-        # LEFT — Biome, Activity, Threats
-        # ------------------------------------------
-        with colL:
+            act = roll_table("biome_activity", log=False)
+            thr = roll_table("known_threats", log=False)
 
-            if st.button("Planet Biome", key="btn_planet_biome"):
-                biome = roll_table("planet_biome", log=False)
+            st.session_state["last_biome_roll"] = {
+                "Biome": biome,
+                "Activity": act,
+                "Known Threats": thr,
+            }
 
-                if "same as current biome" in biome.lower():
-                    if first_landing:
-                        biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
-                add_to_persistent(4, f"Biome: {biome}")
-                st.success(biome)
+            # persistent
+            add_to_persistent(4, f"Biome: {biome}")
+            add_to_persistent(4, f"Biome Activity: {act}")
+            add_to_persistent(4, f"Known Threats: {thr}")
 
-            if st.button("Biome Activity", key="btn_biome_act"):
-                act = roll_table("biome_activity", log=True)
-                add_to_persistent(4, f"Activity: {act}")
-                st.success(act)
+            add_to_log(f"Biome Rolled — {biome} | Activity: {act} | Threats: {thr}")
 
-            if st.button("Known Threats", key="btn_biome_threats"):
-                thr = roll_table("known_threats", log=True)
-                add_to_persistent(4, f"Threats: {thr}")
-                st.success(thr)
+            # Auto-apply biome to the currently selected hex in the map editor
+            try:
+                selected_hex = int(st.session_state.get("selected_hex", 1))
+            except Exception:
+                selected_hex = 1
 
-        # ------------------------------------------
-        # RIGHT — FULL BIOME ROLL
-        # ------------------------------------------
-        with colR:
+            hex_map = st.session_state.get("hex_map", {})
+            if isinstance(hex_map, dict) and selected_hex in hex_map:
+                hex_map[selected_hex]["biome"] = biome
+                st.session_state["hex_map"] = hex_map
 
-            if st.button("ROLL FULL BIOME", key="btn_full_biome"):
-                biome = roll_table("planet_biome", log=False)
-                if "same as current biome" in biome.lower() and first_landing:
-                    biome = "Error: Cannot use SAME-AS-CURRENT-BIOME on first landing."
+                # Keep the map widget + defaults in sync
+                st.session_state[f"map_biome_{selected_hex}"] = biome
+                st.session_state["map_default_biome"] = biome
 
-                act = roll_table("biome_activity", log=False)
-                thr = roll_table("known_threats", log=False)
+            st.success("Biome rolled and applied to the selected hex (Map).")
 
-                add_to_persistent(4, f"Biome: {biome}")
-                add_to_persistent(4, f"Activity: {act}")
-                add_to_persistent(4, f"Threats: {thr}")
+    # ------------------------------------------------------------
+    # MAP (merged from the old Map tab)
+    # ------------------------------------------------------------
+    st.markdown("## Map")
 
-                block = f"""
-• **Biome:** {biome}  
-• **Activity:** {act}  
-• **Known Threats:** {thr}  
-"""
-                st.success(block)
+    ensure_map_state()
 
-                add_to_log(f"""
-### Biome Summary
-- **Biome:** {biome}
-- **Activity:** {act}
-- **Known Threats:** {thr}
-""")
+    # Helper: append a block of text to this hex's notes (SAFE with Streamlit widgets)
+    if "force_notes_refresh_for" not in st.session_state:
+        st.session_state["force_notes_refresh_for"] = None
 
-    # ============================================================
-    # TERRAIN DIFFICULTY
-    # ============================================================
-    st.markdown("### Terrain Difficulty")
+    def append_to_hex_notes(hex_id: int, text_block: str):
+        hex_map_local = st.session_state["hex_map"]
+        current = (hex_map_local[hex_id].get("notes") or "").rstrip()
+        new_notes = (current + "\n\n" + text_block).strip() if current else text_block.strip()
+        hex_map_local[hex_id]["notes"] = new_notes
+        st.session_state["hex_map"] = hex_map_local
+        st.session_state["force_notes_refresh_for"] = hex_id
 
-    with st.container(border=True):
-
-        # Build the dropdown options from terrain_difficulty.csv
-        # (uses the 'previous_hex' column, including your new 'Landing' entry)
+    # Terrain options (from terrain_difficulty.csv)
+    def _get_terrain_options():
         try:
             td_df = load_table_df("terrain_difficulty")
-            raw_opts = td_df["previous_hex"].dropna().astype(str).tolist()
-            terrain_options = list(dict.fromkeys(raw_opts))  # unique, preserve file order
+            opts = [str(x).strip() for x in td_df["previous_hex"].dropna().unique().tolist()]
+            return opts
         except Exception:
-            # Fallback list if the CSV can't be loaded for any reason
-            terrain_options = ["Landing", "Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going"]
+            # Safe fallback if the CSV isn't loaded yet
+            return ["Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going", "Landing"]
 
-        # Put Landing first so the dropdown starts there on a fresh session
-        if "Landing" in terrain_options:
-            terrain_options = ["Landing"] + [o for o in terrain_options if o != "Landing"]
+    terrain_options = _get_terrain_options()
 
-        # This dropdown is the one you asked for!
-        terrain_choice = st.selectbox(
-            "Select Terrain Type:",
-            terrain_options,
-            key="terrain_drop"
-        )
+    # A tiny legend for terrain colors (the map shows these as small dots)
+    with st.expander("Terrain Difficulty Legend"):
+        st.markdown("""
+- **Hazardous** → hazy red dot  
+- **Convoluted** → orange dot  
+- **Inhabited** → light gray dot  
+- **Biome-Dependent** → purple dot  
+- **Easy Going** → green dot  
+- **Landing** → hazy blue dot  
+""")
 
-        if st.button("Roll Terrain Difficulty", key="btn_terrain"):
-            result = roll_table("terrain_difficulty", option=terrain_choice, log=True)
-            add_to_persistent(4, f"Terrain ({terrain_choice}): {result}")
-            st.success(result)
+    col_map, col_editor = st.columns([2, 1], gap="large")
 
-    # ============================================================
-    # BIOME-DEPENDENT TERRAIN TABLE
-    # ============================================================
-    st.markdown("### Biome-Dependent Terrain")
+    # -----------------------
+    # RIGHT: Hex Editor
+    # -----------------------
+    with col_editor:
 
-    with st.container(border=True):
+        hex_map = st.session_state["hex_map"]
+        selected_hex = st.session_state["selected_hex"]
+        d = hex_map[selected_hex]
 
-        biome_list = [
-            "Barren","Exotic","Frozen","Irradiated",
-            "Lush","Scorched","Toxic","Urban",
-            "Volcanic","Water"
-        ]
+        st.subheader(f"Hex {selected_hex}")
 
-        biome_choice = st.selectbox(
-            "Biome:",
+        visited = st.checkbox("Visited", value=bool(d.get("visited")), key=f"map_v_{selected_hex}")
+        party_here = st.checkbox("Party Here", value=bool(d.get("party")), key=f"map_party_{selected_hex}")
+        site_present = st.checkbox("Site Present", value=bool(d.get("site")), key=f"map_site_{selected_hex}")
+        special_flag = st.checkbox("Special (flag this hex)", value=bool(d.get("special")), key=f"map_special_{selected_hex}")
+
+        name = st.text_input("Name / Label", value=d.get("name",""), key=f"map_name_{selected_hex}")
+
+        biome_list = ["", "Barren","Exotic","Frozen","Irradiated","Lush","Scorched","Toxic","Urban","Volcanic","Water"]
+
+        # If this hex doesn't have a biome yet, default to the last biome you picked.
+        stored_biome = (d.get("biome", "") or "").strip()
+        default_biome = (st.session_state.get("map_default_biome", "") or "").strip()
+        initial_biome = stored_biome or default_biome
+
+        def _on_map_biome_change(hex_id: int):
+            st.session_state["map_default_biome"] = st.session_state.get(f"map_biome_{hex_id}", "")
+
+        biome = st.selectbox(
+            "Biome (for hazard rolls)",
             biome_list,
-            key="biome_dep_dropdown"
+            index=biome_list.index(initial_biome) if initial_biome in biome_list else 0,
+            key=f"map_biome_{selected_hex}",
+            on_change=_on_map_biome_change,
+            args=(selected_hex,),
         )
 
-        if st.button("Roll Biome-Dependent Terrain", key="btn_biome_dep"):
-            df = load_table_df("biome_dependent_terrain")
-            row = df[df["biome"] == biome_choice].sample(1).iloc[0]
-            result = f"{row['result']}: {row['description']}"
-            add_to_persistent(4, f"Biome-Dependent ({biome_choice}): {result}")
-            add_to_log(f"Biome-Dependent Terrain: {result}")
-            st.success(result)
+        # --- Terrain Difficulty (under Biome, as requested) ---
+        stored_td = (d.get("terrain", "") or "").strip()
+        default_td = (st.session_state.get("map_default_terrain", "Landing") or "Landing").strip()
+        initial_td = stored_td or default_td
 
-    # -------------------------------
-    # PLANETSIDE EXPLORATION LOGIC
-    # -------------------------------
+        def _on_map_td_change(hex_id: int):
+            st.session_state["map_default_terrain"] = st.session_state.get(f"map_td_{hex_id}", "Landing") or "Landing"
 
-    st.markdown("### Planetside Exploration")
-
-    with st.container(border=True):
-
-        # Which biome’s hazards to use?
-        biome_choice = st.selectbox(
-            "Biome for Hazard Rolls:",
-            [
-                "Barren","Exotic","Frozen","Irradiated",
-                "Lush","Scorched","Toxic","Urban",
-                "Volcanic","Water"
-            ],
-            key="pexp_biome_choice"
+        terrain_difficulty = st.selectbox(
+            "Terrain Difficulty",
+            terrain_options,
+            index=terrain_options.index(initial_td) if initial_td in terrain_options else 0,
+            key=f"map_td_{selected_hex}",
+            on_change=_on_map_td_change,
+            args=(selected_hex,),
         )
 
-        # FULL EXPLORATION BUTTON
-        if st.button("ROLL FULL EXPLORATION", key="btn_full_explore"):
+        notes_key = f"map_notes_{selected_hex}"
 
-            # STEP 1 — Roll on Planetside Exploration table
+        # Initialize the widget state the first time this hex is selected
+        if notes_key not in st.session_state:
+            st.session_state[notes_key] = d.get("notes", "")
+
+        # If exploration appended notes for this hex, refresh BEFORE the widget is created
+        if st.session_state.get("force_notes_refresh_for") == selected_hex:
+            st.session_state[notes_key] = d.get("notes", "")
+            st.session_state["force_notes_refresh_for"] = None
+
+        notes = st.text_area("Notes (Special opens this automatically)", key=notes_key, height=220)
+
+        # Enforce only ONE party hex at a time
+        if party_here:
+            for k in hex_map.keys():
+                if k != selected_hex:
+                    hex_map[k]["party"] = False
+
+        # Sync current editor state into the map EVERY run (so the map colors update immediately)
+        hex_map[selected_hex] = {
+            **d,
+            "visited": visited,
+            "party": party_here,
+            "site": site_present,
+            "special": special_flag,
+            "name": name,
+            "biome": biome,
+            "terrain": terrain_difficulty,
+            "notes": notes,
+        }
+
+        # Keep defaults synced to the PARTY hex (so exploration always uses the current hex)
+        party_hex = next((k for k, v in hex_map.items() if v.get("party")), None)
+        if party_hex is not None:
+            pb = (hex_map[party_hex].get("biome") or "").strip()
+            pt = (hex_map[party_hex].get("terrain") or "").strip()
+            if pb:
+                st.session_state["map_default_biome"] = pb
+            if pt:
+                st.session_state["map_default_terrain"] = pt
+
+        st.session_state["hex_map"] = hex_map
+
+        cA, cB = st.columns(2)
+        with cA:
+            if st.button("Save Hex", key=f"btn_save_hex_{selected_hex}"):
+                st.success("Saved.")
+        with cB:
+            if st.button("Add Hex Summary to Log", key=f"btn_log_hex_{selected_hex}"):
+                add_to_log(
+                    f"Hex {selected_hex}: {name or '(unnamed)'} | "
+                    f"Biome: {biome or '(unset)'} | Terrain: {terrain_difficulty or '(unset)'} | "
+                    f"Visited: {visited} | Party: {party_here} | Site: {site_present} | Special: {special_flag}"
+                )
+                st.success("Logged.")
+
+        # -----------------------
+        # PLANETSIDE EXPLORATION (from this hex)
+        # -----------------------
+        st.markdown("### Planetside Exploration (from this hex)")
+
+        def _roll_terrain_from(previous: str):
+            """
+            Rolls terrain_difficulty.csv filtered by previous_hex.
+            Returns: (next_terrain, full_text)
+            """
+            df = load_table_df("terrain_difficulty")
+            prev = (previous or "").strip() or "Landing"
+            sub = df[df["previous_hex"].astype(str).str.strip().str.lower() == prev.lower()]
+            if sub.empty:
+                # fallback: no filter matched, just roll any
+                row = df.sample(1).iloc[0]
+            else:
+                row = sub.sample(1).iloc[0]
+            next_terrain = str(row.get("result", "")).strip() or prev
+            full_text = f"{next_terrain}: {row.get('description', '')}"
+            return next_terrain, full_text
+
+        if st.button("ROLL FULL EXPLORATION (this hex)", key=f"btn_hex_explore_{selected_hex}"):
+
+            # Use the party hex as the "previous hex" for terrain difficulty
+            party_hex = next((k for k, v in hex_map.items() if v.get("party")), None)
+            prev_td = (hex_map.get(party_hex, {}).get("terrain") or st.session_state.get("map_default_terrain") or "Landing") if party_hex else (st.session_state.get("map_default_terrain") or "Landing")
+            next_td, td_text = _roll_terrain_from(prev_td)
+
+            # Apply terrain to the explored hex
+            hex_map[selected_hex]["terrain"] = next_td
+            st.session_state[f"map_td_{selected_hex}"] = next_td
+
+            biome_choice = biome or (st.session_state.get("map_default_biome") or "") or "Barren"
+
             exploration_result = roll_table("planetside_exploration", log=True)
 
-            # Persist & display
-            add_to_persistent(4, f"Planetside Exploration: {exploration_result}")
+            add_to_persistent(4, f"Hex {selected_hex} — Terrain (from {prev_td}): {td_text}")
+            add_to_log(f"Hex {selected_hex} — Terrain (from {prev_td}): {td_text}")
 
-            st.success(f"**Exploration Result:** {exploration_result}")
+            add_to_persistent(4, f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
+            add_to_log(f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
 
-            # -------------------------------------
-            # STEP 2 — Branching logic
-            # -------------------------------------
+            note_lines = [
+                f"Terrain (from {prev_td}): {td_text}",
+                f"Planetside Exploration: {exploration_result}",
+            ]
+            hex_map[selected_hex]["last"] = exploration_result
 
-            # === FINDINGS ===
             if "findings" in exploration_result.lower():
                 findings_result = roll_table("findings", log=True)
-                add_to_persistent(4, f"Findings: {findings_result}")
-                st.success(f"**Findings:** {findings_result}")
+                add_to_persistent(4, f"Hex {selected_hex} — Findings: {findings_result}")
+                add_to_log(f"Hex {selected_hex} — Findings: {findings_result}")
+                note_lines.append(f"Findings: {findings_result}")
 
-            # === HAZARDS ===
             elif "hazard" in exploration_result.lower():
                 hazard_table = f"{biome_choice.lower()}_hazards"
                 hazard_result = roll_table(hazard_table, log=True)
-                add_to_persistent(4, f"Hazard ({biome_choice}): {hazard_result}")
-                st.success(f"**Hazard:** {hazard_result}")
+                add_to_persistent(4, f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
+                add_to_log(f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
+                note_lines.append(f"Hazard ({biome_choice}): {hazard_result}")
 
-            # === SITE ===
             elif "site" in exploration_result.lower():
-                add_to_log("Exploration: Found an Àrsaidh Site.")
-                add_to_persistent(4, "Site Found: Roll full site in Mission tab.")
-                st.success("**Site Found!** Use the Site Generator to roll the full site.")
+                hex_map[selected_hex]["site"] = True
+                add_to_log(f"Hex {selected_hex} — Found an Àrsaidh Site. Roll full site in Mission tab.")
+                add_to_persistent(4, f"Hex {selected_hex} — Site Found: Roll full site in Mission tab.")
+                note_lines.append("Site Found: Àrsaidh Site (roll full site in Mission tab)")
 
-            # === NOTHING ===
             elif "nothing" in exploration_result.lower():
-                st.info("Nothing found in this hex.")
-                add_to_persistent(4, "Exploration: Nothing found.")
-    
-            # Safety fallback
+                add_to_persistent(4, f"Hex {selected_hex} — Exploration: Nothing found.")
+                note_lines.append("Nothing found.")
+
             else:
-                st.warning("Exploration result not recognized — check the CSV formatting.")
+                note_lines.append("Result not recognized (check CSV formatting).")
 
-    # ============================================================
-    # BIOME-SPECIFIC SIGHTS & HAZARDS
-    # ============================================================
-    st.markdown("### Biome-Specific Sights & Hazards")
+            # Auto-append FULL results block into Notes
+            append_to_hex_notes(selected_hex, "\n".join(note_lines))
 
-    biome_cols = st.columns(3)
+            st.session_state["hex_map"] = hex_map
+            st.rerun()
 
-    biome_buttons = [
-        ("Barren Sights","barren_sights"), ("Barren Hazards","barren_hazards"),
-        ("Exotic Sights","exotic_sights"), ("Exotic Hazards","exotic_hazards"),
-        ("Frozen Sights","frozen_sights"), ("Frozen Hazards","frozen_hazards"),
-        ("Irradiated Sights","irradiated_sights"), ("Irradiated Hazards","irradiated_hazards"),
-        ("Lush Sights","lush_sights"), ("Lush Hazards","lush_hazards"),
-        ("Scorched Sights","scorched_sights"), ("Scorched Hazards","scorched_hazards"),
-        ("Toxic Sights","toxic_sights"), ("Toxic Hazards","toxic_hazards"),
-        ("Urban Sights","urban_sights"), ("Urban Hazards","urban_hazards"),
-        ("Volcanic Sights","volcanic_sights"), ("Volcanic Hazards","volcanic_hazards"),
-        ("Water Sights","water_sights"), ("Water Hazards","water_hazards"),
-    ]
+    # -----------------------
+    # LEFT: Map + Import/Export
+    # -----------------------
+    with col_map:
+        st.caption("Click a hex to select it. Fill shows Visited; borders show Party/Site/Special; **small dots show Terrain Difficulty**.")
 
-    for i, (label, table) in enumerate(biome_buttons):
-        col = biome_cols[i % 3]
-        with col.container(border=True):
-            if st.button(label, key=f"btn_{table}"):
-                st.success(roll_table(table, group=4, log=True))
+        # --- Plotly click selection ---
+        picked = render_hex_plotly_map(st.session_state["hex_map"], st.session_state["selected_hex"])
+        if picked is not None and picked != st.session_state["selected_hex"]:
+            st.session_state["selected_hex"] = picked
+            st.session_state["map_hex_dropdown_fallback"] = picked
+            st.rerun()
+
+        # --- Fallback dropdown (ONLY changes selection when the dropdown changes) ---
+        def _on_hex_dropdown_change():
+            st.session_state["selected_hex"] = st.session_state["map_hex_dropdown_fallback"]
+            st.rerun()
+
+        with st.expander("If clicking doesn’t select a hex, use this dropdown instead"):
+            if "map_hex_dropdown_fallback" not in st.session_state:
+                st.session_state["map_hex_dropdown_fallback"] = st.session_state["selected_hex"]
+
+            st.selectbox(
+                "Select Hex",
+                options=list(range(1, MAP_HEX_COUNT + 1)),
+                key="map_hex_dropdown_fallback",
+                on_change=_on_hex_dropdown_change
+            )
+
+        # --- Export JSON ---
+        export_json = json.dumps(st.session_state["hex_map"], indent=2)
+        st.download_button(
+            label="Export Map JSON",
+            data=export_json,
+            file_name="hex_map.json",
+            mime="application/json",
+            use_container_width=True
+        )
+
+        # --- Import JSON ---
+        up = st.file_uploader("Import Map JSON", type=["json"], key="ul_map_json")
+        if up is not None:
+            try:
+                loaded = json.load(up)
+                cleaned = {}
+
+                for k, v in loaded.items():
+                    kk = int(k)
+                    if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
+                        v.setdefault("visited", False)
+                        v.setdefault("party", False)
+                        v.setdefault("site", False)
+                        v.setdefault("special", False)
+                        v.setdefault("name", "")
+                        v.setdefault("biome", "")
+                        v.setdefault("terrain", "")
+                        v.setdefault("notes", "")
+                        v.setdefault("last", "")
+                        cleaned[kk] = v
+
+                # Fill missing
+                default_hex = {
+                    "name": "",
+                    "biome": "",
+                    "terrain": "",
+                    "visited": False,
+                    "party": False,
+                    "site": False,
+                    "special": False,
+                    "notes": "",
+                    "last": ""
+                }
+                for i in range(1, MAP_HEX_COUNT + 1):
+                    cleaned.setdefault(i, default_hex.copy())
+
+                st.session_state["hex_map"] = cleaned
+                ensure_map_state()
+                st.success("Map imported.")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Import failed: {e}")
+
+    # ------------------------------------------------------------
+    # BOTTOM: Planet Features (moved down, as requested)
+    # ------------------------------------------------------------
+    st.markdown("## Planet Features (last roll)")
+
+    last = st.session_state.get("last_planet_roll") or {}
+    if not last:
+        st.info("No planet rolled yet. Use **ROLL FULL PLANET** at the top.")
+    else:
+        st.markdown(
+            "\n".join([f"• **{k}:** {v}" for k, v in last.items()])
+        )
+
+    st.markdown("## Biome Features (last roll)")
+    b = st.session_state.get("last_biome_roll") or {}
+    if not b:
+        st.info("No biome rolled yet. Use **ROLL FULL BIOME** at the top.")
+    else:
+        st.markdown(
+            f"""• **Biome:** {b.get('Biome','')}  
+• **Activity:** {b.get('Activity','')}  
+• **Known Threats:** {b.get('Known Threats','')}"""
+        )
 
 # ---------- TAB: NPC ----------
 with tabs[5]:
