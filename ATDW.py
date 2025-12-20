@@ -4287,24 +4287,33 @@ with tabs[9]:
     # -----------------------
     with col_map:
         st.caption("Click a hex to select it (Visited=green fill, Party=blue border, Site=dashed, Special=purple ring, Selected=red outline).")
-
+    
+        # --- Plotly click selection ---
         picked = render_hex_plotly_map(st.session_state["hex_map"], st.session_state["selected_hex"])
         if picked is not None and picked != st.session_state["selected_hex"]:
             st.session_state["selected_hex"] = picked
+
+            # Keep the fallback dropdown in sync with what you clicked
+            st.session_state["map_hex_dropdown_fallback"] = picked
+
             st.rerun()
 
+        # --- Fallback dropdown (ONLY changes selection when the dropdown changes) ---
+        def _on_hex_dropdown_change():
+            st.session_state["selected_hex"] = st.session_state["map_hex_dropdown_fallback"]
+            st.rerun()
 
-        # Fallback if clicking doesn’t select (older Streamlit)
         with st.expander("If clicking doesn’t select a hex, use this dropdown instead"):
-            fallback_pick = st.selectbox(
+            # Initialize once; do NOT force it on every rerun
+            if "map_hex_dropdown_fallback" not in st.session_state:
+                st.session_state["map_hex_dropdown_fallback"] = st.session_state["selected_hex"]
+
+            st.selectbox(
                 "Select hex",
                 list(range(1, MAP_HEX_COUNT + 1)),
-                index=st.session_state["selected_hex"] - 1,
-                key="map_hex_dropdown_fallback"
+                key="map_hex_dropdown_fallback",
+                on_change=_on_hex_dropdown_change,
             )
-            if fallback_pick != st.session_state["selected_hex"]:
-                st.session_state["selected_hex"] = fallback_pick
-                st.rerun()
 
         st.markdown("---")
         c1, c2, c3 = st.columns(3)
@@ -4356,6 +4365,12 @@ with tabs[9]:
                     })
 
                 st.session_state["hex_map"] = cleaned
+
+                # Keep selection + dropdown safe after import
+                if st.session_state.get("selected_hex", 1) > MAP_HEX_COUNT:
+                    st.session_state["selected_hex"] = 1
+                st.session_state["map_hex_dropdown_fallback"] = st.session_state["selected_hex"]
+    
                 st.success("Map imported.")
                 st.rerun()
 
