@@ -1612,15 +1612,15 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     import math
     import plotly.graph_objects as go
 
-    # --- Tighter hex spacing + correct last row (97-100) ---
+    # --- Tighter hex grid spacing + correct last row (97-100) ---
     MAIN_ROWS = 24          # rows that cover 1..96
-    x_step = 0.92           # tighten horizontally (tweak 0.88–0.98)
-    y_step = 0.80           # tighten vertically  (tweak 0.75–0.86)
+    x_step = 1.00           # tighten horizontally (try 0.92–1.05)
+    y_step = 0.86           # tighten vertically  (try 0.80–0.92)
 
     pos = {}
     render_order = []
 
-    # Build rows 0..23 => hexes 1..96
+    # Rows 0..23 => hexes 1..96
     for r in range(MAIN_ROWS):
         pair = r // 2
         base = pair * 8
@@ -1634,8 +1634,15 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
 
         y = -r * y_step
         for i, n in enumerate(nums):
-            pos[n] = ((x_offset + i) * x_step, y)
-            render_order.append(n)
+            if 1 <= n <= MAP_HEX_COUNT:
+                pos[n] = ((x_offset + i) * x_step, y)
+                render_order.append(n)
+
+    # Final row 97..100 ALL on one row (no dangling)
+    y_final = -(MAIN_ROWS) * y_step
+    for i, n in enumerate([97, 98, 99, 100]):
+        pos[n] = (i * x_step, y_final)
+        render_order.append(n)
 
     # Final row 97..100 ALL on one row (no dangling)
     y_final = -(MAIN_ROWS) * y_step
@@ -1724,7 +1731,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
                 mode="markers",
                 marker=dict(
                     symbol="hexagon-open",
-                    size=36,
+                    size=40,
                     line=dict(color="rgba(176,0,255,0.55)", width=3),
                 ),
                 hoverinfo="skip",
