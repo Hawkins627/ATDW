@@ -1582,6 +1582,7 @@ def ensure_map_state():
     default_hex = {
         "name": "",
         "biome": "",
+        "terrain": "",
         "visited": False,
         "party": False,
         "site": False,
@@ -2056,7 +2057,7 @@ if "log" not in st.session_state:
 # ---------- DEFINE PRIMARY TABS ----------
 tab_labels = [
     "Encounter", "Health", "Mission", "Exploration",
-    "Planet", "NPC", "Antagonist", "Return to Base", "Log", "Map"
+    "Planet", "NPC", "Antagonist", "Return to Base", "Log"
 ]
 
 tabs = st.tabs(tab_labels)
