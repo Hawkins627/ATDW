@@ -1674,6 +1674,8 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
         return " ".join(marks)
 
     xs, ys, labels = [], [], []
+    party_x, party_y = [], []
+    sel_x, sel_y = [], []
     fill_colors, line_colors, line_widths = [], [], []
     customdata = []
 
@@ -1689,18 +1691,15 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
         visited = bool(d.get("visited"))
         party = bool(d.get("party"))
         is_sel = (n == selected_hex)
+        if is_sel:
+            sel_x.append(x); sel_y.append(y)
+        elif party:
+            party_x.append(x); party_y.append(y)
 
         fill_colors.append("#d9f2d9" if visited else "#f2f2f2")
 
-        if is_sel:
-            line_colors.append("#d40000")
-            line_widths.append(5)
-        elif party:
-            line_colors.append("#2b59ff")
-            line_widths.append(4)
-        else:
-            line_colors.append("#666666")
-            line_widths.append(2)
+        line_colors.append("#666666")
+        line_widths.append(2)
 
         customdata.append(n)
 
@@ -1727,6 +1726,40 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
         )
     )
 
+    # Party ring (inner): draw a slightly smaller open-hex on top
+    if party_x:
+        fig.add_trace(
+            go.Scatter(
+                x=party_x,
+                y=party_y,
+                mode="markers",
+                marker=dict(
+                    symbol="hexagon-open",
+                    size=40,  # smaller than 46 so it sits inside
+                    line=dict(color="#2b59ff", width=5),
+                ),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+
+    # Selected ring (inner): smaller open-hex on top
+    if sel_x:
+        fig.add_trace(
+            go.Scatter(
+                x=sel_x,
+                y=sel_y,
+                mode="markers",
+                marker=dict(
+                    symbol="hexagon-open",
+                    size=38,
+                    line=dict(color="#d40000", width=6),
+                ),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+    
     # Special ring (purple inset)
     spec_x, spec_y = [], []
     for n in render_order:
