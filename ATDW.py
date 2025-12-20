@@ -4032,16 +4032,22 @@ with tabs[9]:
     st.markdown("## Map")
     ensure_map_state()
 
-    # Helper: append a block of text to this hex's notes AND sync the text_area widget key
+    # Helper: append a block of text to this hex's notes (SAFE with Streamlit widgets)
+    if "force_notes_refresh_for" not in st.session_state:
+        st.session_state["force_notes_refresh_for"] = None
+
     def append_to_hex_notes(hex_id: int, text_block: str):
-        current = (st.session_state["hex_map"][hex_id].get("notes") or "").rstrip()
+        hex_map_local = st.session_state["hex_map"]
+
+        current = (hex_map_local[hex_id].get("notes") or "").rstrip()
         new_notes = (current + "\n\n" + text_block).strip() if current else text_block.strip()
 
-        # Update the source-of-truth
-        st.session_state["hex_map"][hex_id]["notes"] = new_notes
+        hex_map_local[hex_id]["notes"] = new_notes
+        st.session_state["hex_map"] = hex_map_local
 
-        # Tell the UI to refresh this hex's notes widget on NEXT rerun
+        # Tell the UI to refresh the notes widget value on the NEXT rerun
         st.session_state["force_notes_refresh_for"] = hex_id
+
 
     col_map, col_info = st.columns([2, 1], gap="large")
 
@@ -4070,8 +4076,19 @@ with tabs[9]:
             key=f"map_biome_{selected_hex}",
         )
 
+        notes_key = f"map_notes_{selected_hex}"
+
+        # Initialize the widget state the first time this hex is selected
+        if notes_key not in st.session_state:
+            st.session_state[notes_key] = d.get("notes", "")
+
+        # If exploration appended notes for this hex, refresh BEFORE the widget is created
+        if st.session_state.get("force_notes_refresh_for") == selected_hex:
+            st.session_state[notes_key] = d.get("notes", "")
+            st.session_state["force_notes_refresh_for"] = None
+
         with st.expander("Notes (Special opens this automatically)", expanded=bool(special_flag)):
-            notes = st.text_area("Notes", value=d.get("notes",""), height=200, key=f"map_notes_{selected_hex}")
+            notes = st.text_area("Notes", key=notes_key, height=200)
 
         # Party is unique: only one hex can have party=True
         if party_here:
