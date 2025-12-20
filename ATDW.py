@@ -1607,6 +1607,17 @@ def ensure_map_state():
     for i in range(1, MAP_HEX_COUNT + 1):
         cleaned.setdefault(i, default_hex.copy())
 
+        # Enforce exactly ONE party hex.
+    # - If none are set, default to Hex 1.
+    # - If multiple are set, keep the first and clear the rest.
+    party_hexes = [i for i in range(1, MAP_HEX_COUNT + 1) if cleaned.get(i, {}).get("party")]
+    if not party_hexes:
+        cleaned[1]["party"] = True
+    elif len(party_hexes) > 1:
+        keep = party_hexes[0]
+        for i in party_hexes[1:]:
+            cleaned[i]["party"] = False
+    
     st.session_state["hex_map"] = cleaned
 
     # Clamp selected hex so the app doesn't crash if it was 97–100 before
@@ -1621,6 +1632,10 @@ def ensure_map_state():
     # Remember the last biome you selected in the map editor (used as default for new/unset hexes)
     if "map_default_biome" not in st.session_state:
         st.session_state["map_default_biome"] = ""
+
+    # Remember the last terrain difficulty you selected in the map editor
+    if "map_default_terrain" not in st.session_state:
+        st.session_state["map_default_terrain"] = "Landing"
 
 def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     """
@@ -1638,6 +1653,17 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     """
     import math
     import plotly.graph_objects as go
+
+    # Terrain difficulty dot colors (shown as small dots on each hex)
+    # Normalize lookup key as: terrain.lower().replace(" ", "-")
+    terrain_color_map = {
+        "hazardous": "rgba(255, 99, 71, 0.65)",         # hazy red
+        "convoluted": "rgba(255, 165, 0, 0.65)",        # orange
+        "inhabited": "rgba(190, 190, 190, 0.70)",       # light gray
+        "biome-dependent": "rgba(128, 0, 128, 0.60)",   # purple
+        "easy-going": "rgba(0, 170, 0, 0.55)",          # green
+        "landing": "rgba(70, 130, 180, 0.60)",          # hazy blue
+    }
 
     # --- Tighter hex grid spacing + correct last row (97-100) ---
     # --- Wider hex grid + correct last row (97-100) ---
@@ -1684,6 +1710,11 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     fill_colors, line_colors, line_widths = [], [], []
     customdata = []
 
+    hover_texts = []
+    dot_x, dot_y, dot_colors = [], [], []
+    dot_customdata = []
+    dot_hover = []
+    
     for n in render_order:
         d = hex_map.get(n, {})
         x, y = pos[n]
@@ -1692,6 +1723,27 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
 
         mk = marks_for(n)
         labels.append(f"{n}<br>{mk}" if mk else f"{n}")
+
+        # Hover text: Name / Biome / Terrain
+        name_ = (d.get("name") or "").strip()
+        biome_ = (d.get("biome") or "").strip()
+        terrain_ = (d.get("terrain") or "").strip()
+
+        hover_parts = [f"<b>Hex {n}</b>"]
+        if name_:
+            hover_parts.append(f"Name: {name_}")
+        hover_parts.append(f"Biome: {biome_ if biome_ else '(unset)'}")
+        hover_parts.append(f"Terrain: {terrain_ if terrain_ else '(unset)'}")
+        hover_txt = "<br>".join(hover_parts)
+        hover_texts.append(hover_txt)
+
+        # Terrain dots (only if Terrain is set)
+        if terrain_:
+            tkey = terrain_.lower().replace(" ", "-")
+            dot_x.append(x); dot_y.append(y)
+            dot_colors.append(terrain_color_map.get(tkey, "rgba(0,0,0,0.65)"))
+            dot_customdata.append(n)
+            dot_hover.append(hover_txt)
 
         visited = bool(d.get("visited"))
         party = bool(d.get("party"))
@@ -1720,7 +1772,8 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             textposition="middle center",
             textfont=dict(size=11, color="#111"),
             customdata=customdata,
-            hovertemplate="<b>Hex %{customdata}</b><extra></extra>",
+            hovertext=hover_texts,
+            hovertemplate="%{hovertext}<extra></extra>",
             marker=dict(
                 symbol="hexagon",
                 size=46,
@@ -1731,6 +1784,26 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
         )
     )
 
+    # Terrain difficulty dots (small, colored marker in each hex)
+    if dot_x:
+        fig.add_trace(
+            go.Scatter(
+                x=dot_x,
+                y=dot_y,
+                mode="markers",
+                customdata=dot_customdata,
+                hovertext=dot_hover,
+                hovertemplate="%{hovertext}<extra></extra>",
+                marker=dict(
+                    symbol="circle",
+                    size=10,
+                    color=dot_colors,
+                    line=dict(color="rgba(0,0,0,0.15)", width=1),
+                ),
+                showlegend=False,
+            )
+        )
+    
     # Party ring (inner): draw a slightly smaller open-hex on top
     if party_x:
         fig.add_trace(
@@ -2983,13 +3056,24 @@ with tabs[4]:
 
     # Terrain options (from terrain_difficulty.csv)
     def _get_terrain_options():
+        """Return terrain difficulty dropdown options (with Landing as the default/first option)."""
         try:
             td_df = load_table_df("terrain_difficulty")
-            opts = [str(x).strip() for x in td_df["previous_hex"].dropna().unique().tolist()]
-            return opts
+            raw = [str(x).strip() for x in td_df["previous_hex"].dropna().tolist()]
+            raw = [x for x in raw if x]
+            # Unique, preserve file order
+            opts = list(dict.fromkeys(raw))
         except Exception:
             # Safe fallback if the CSV isn't loaded yet
-            return ["Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going", "Landing"]
+            opts = ["Landing", "Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going"]
+
+        # Ensure Landing exists and is first
+        if "Landing" in opts:
+            opts = ["Landing"] + [o for o in opts if o != "Landing"]
+        else:
+            opts = ["Landing"] + opts
+
+        return opts
 
     terrain_options = _get_terrain_options()
 
