@@ -1595,6 +1595,232 @@ def ensure_map_state():
     if "selected_hex" not in st.session_state:
         st.session_state["selected_hex"] = 1
 
+def render_hex_plotly_map(hex_map: dict, selected_hex: int):
+    """
+    Plotly-based hex map with real fill/border colors.
+
+    Color rules:
+      - visited  -> green fill
+      - party    -> thick blue border
+      - site     -> dashed border (drawn as Plotly shape)
+      - special  -> purple inset ring
+      - selected -> thick red outline (no fill)
+
+    Click-to-select works on newer Streamlit (st.plotly_chart on_select).
+    Returns: selected hex int if a click selection happened, else None.
+    """
+    import math
+    import plotly.graph_objects as go
+
+    total_rows = 26
+    y_step = 1.0
+    x_step = 1.0
+
+    # Build positions to match your existing staggered 1..100 pattern
+    pos = {}
+    render_order = []
+    for r in range(total_rows):
+        pair = r // 2
+        base = pair * 8
+
+        if r % 2 == 0:
+            nums = [base + 1, base + 3, base + 5, base + 7]
+            slots = [0, 2, 4, 6]
+        else:
+            nums = [base + 2, base + 4, base + 6, base + 8]
+            slots = [1, 3, 5, 7]
+
+        for slot_i, n in zip(slots, nums):
+            if 1 <= n <= MAP_HEX_COUNT:
+                x = slot_i * x_step
+                y = -r * y_step
+                pos[n] = (x, y)
+                render_order.append(n)
+
+    def marks_for(n: int) -> str:
+        d = hex_map.get(n, {})
+        marks = []
+        if d.get("party"):
+            marks.append("P")
+        if d.get("site"):
+            marks.append("S")
+        if d.get("special"):
+            marks.append("★")
+        return " ".join(marks)
+
+    xs, ys, labels = [], [], []
+    fill_colors, line_colors, line_widths = [], [], []
+    customdata = []
+
+    for n in render_order:
+        d = hex_map.get(n, {})
+        x, y = pos[n]
+        xs.append(x)
+        ys.append(y)
+
+        mk = marks_for(n)
+        labels.append(f"{n}<br>{mk}" if mk else f"{n}")
+
+        visited = bool(d.get("visited"))
+        party = bool(d.get("party"))
+        is_sel = (n == selected_hex)
+
+        fill_colors.append("#d9f2d9" if visited else "#f2f2f2")
+
+        if is_sel:
+            line_colors.append("#d40000")
+            line_widths.append(5)
+        elif party:
+            line_colors.append("#2b59ff")
+            line_widths.append(4)
+        else:
+            line_colors.append("#666666")
+            line_widths.append(2)
+
+        customdata.append(n)
+
+    fig = go.Figure()
+
+    # Main filled hexes
+    fig.add_trace(
+        go.Scatter(
+            x=xs,
+            y=ys,
+            mode="markers+text",
+            text=labels,
+            textposition="middle center",
+            textfont=dict(size=11, color="#111"),
+            customdata=customdata,
+            hovertemplate="<b>Hex %{customdata}</b><extra></extra>",
+            marker=dict(
+                symbol="hexagon",
+                size=42,
+                color=fill_colors,
+                line=dict(color=line_colors, width=line_widths),
+            ),
+            showlegend=False,
+        )
+    )
+
+    # Special ring (purple inset)
+    spec_x, spec_y = [], []
+    for n in render_order:
+        if hex_map.get(n, {}).get("special"):
+            x, y = pos[n]
+            spec_x.append(x)
+            spec_y.append(y)
+
+    if spec_x:
+        fig.add_trace(
+            go.Scatter(
+                x=spec_x,
+                y=spec_y,
+                mode="markers",
+                marker=dict(
+                    symbol="hexagon-open",
+                    size=36,
+                    line=dict(color="rgba(176,0,255,0.55)", width=3),
+                ),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+
+    # Site dashed border (layout shapes)
+    shapes = []
+    rx = 0.55
+    ry = 0.48
+
+    for n in render_order:
+        if not hex_map.get(n, {}).get("site"):
+            continue
+
+        x0, y0 = pos[n]
+        pts = []
+        for k in range(6):  # flat-top-ish hex outline
+            ang = math.radians(60 * k)
+            pts.append((x0 + rx * math.cos(ang), y0 + ry * math.sin(ang)))
+        path = "M " + " L ".join([f"{px},{py}" for px, py in pts]) + " Z"
+
+        is_sel = (n == selected_hex)
+        party = bool(hex_map.get(n, {}).get("party"))
+
+        if is_sel:
+            line_color = "#d40000"
+            line_width = 5
+            dash = "solid"
+        elif party:
+            line_color = "#2b59ff"
+            line_width = 4
+            dash = "dash"
+        else:
+            line_color = "#666666"
+            line_width = 3
+            dash = "dash"
+
+        shapes.append(
+            dict(
+                type="path",
+                path=path,
+                line=dict(color=line_color, width=line_width, dash=dash),
+                fillcolor="rgba(0,0,0,0)",
+                layer="above",
+            )
+        )
+
+    fig.update_layout(
+        shapes=shapes,
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=760,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(visible=False, fixedrange=True),
+        yaxis=dict(visible=False, fixedrange=True, scaleanchor="x", scaleratio=1),
+    )
+
+    # Render + capture selection (newer Streamlit). Older Streamlit will just render.
+    selected = None
+    try:
+        chart_state = st.plotly_chart(
+            fig,
+            use_container_width=True,
+            on_select="rerun",
+            selection_mode="points",
+            key="hexmap_plotly",
+        )
+
+        sel = None
+        if chart_state is None:
+            sel = None
+        elif isinstance(chart_state, dict):
+            sel = chart_state.get("selection")
+        else:
+            sel = getattr(chart_state, "selection", None)
+
+        points = None
+        if isinstance(sel, dict):
+            points = sel.get("points")
+        else:
+            points = getattr(sel, "points", None) if sel is not None else None
+
+        if points:
+            p0 = points[0]
+            cd = p0.get("customdata") if isinstance(p0, dict) else None
+            if isinstance(cd, (list, tuple)) and cd:
+                cd = cd[0]
+            if cd is None and isinstance(p0, dict):
+                pi = p0.get("point_index")
+                if isinstance(pi, int) and 0 <= pi < len(customdata):
+                    cd = customdata[pi]
+            if cd is not None:
+                selected = int(cd)
+
+    except TypeError:
+        # Old Streamlit: no on_select/selection_mode support
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False}, key="hexmap_plotly_static")
+
+    return selected
+
 def render_hex_button_map(hex_map: dict, selected_hex: int):
     """
     Button-based map (no href links) so clicks do NOT create a new Streamlit session.
@@ -3813,216 +4039,10 @@ with tabs[9]:
         st.session_state["hex_map"][hex_id]["notes"] = new_notes
         st.session_state[f"map_notes_{hex_id}"] = new_notes  # keeps the widget in sync
 
-    # --- CSS: robust selectors (tooltip may be on button OR on wrapper div/span) ---
-    st.markdown(
-        """
-<style>
-/* Target the actual clickable element regardless of where Streamlit puts the tooltip/help text */
-:where(
-  button[title^="HEXMAP|"],
-  button[aria-label^="HEXMAP|"],
-  button[data-tooltip^="HEXMAP|"],
-  div[title^="HEXMAP|"] button,
-  div[aria-label^="HEXMAP|"] button,
-  div[data-tooltip^="HEXMAP|"] button,
-  span[title^="HEXMAP|"] button,
-  span[aria-label^="HEXMAP|"] button,
-  span[data-tooltip^="HEXMAP|"] button
-){
-  width: 54px !important;
-  min-width: 54px !important;
-  max-width: 54px !important;
-  height: 48px !important;
-
-  padding: 0 !important;
-  margin: 0 !important;
-
-  border-radius: 0 !important;
-  border: 2px solid #666 !important;
-
-  background: #f2f2f2 !important;
-  color: #111 !important;
-  font-weight: 700 !important;
-  font-size: 12px !important;
-
-  /* allow multi-line labels if you use \n */
-  white-space: pre-line !important;
-  line-height: 1.05 !important;
-
-  /* HEX SHAPE */
-  clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%) !important;
-  -webkit-clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%) !important;
-
-  box-shadow: 0 1px 0 rgba(0,0,0,0.15) !important;
-}
-
-:where(
-  button[title^="HEXMAP|"],
-  button[aria-label^="HEXMAP|"],
-  button[data-tooltip^="HEXMAP|"],
-  div[title^="HEXMAP|"] button,
-  div[aria-label^="HEXMAP|"] button,
-  div[data-tooltip^="HEXMAP|"] button,
-  span[title^="HEXMAP|"] button,
-  span[aria-label^="HEXMAP|"] button,
-  span[data-tooltip^="HEXMAP|"] button
-):hover{
-  transform: translateY(-1px);
-}
-
-/* VISITED = green fill */
-:where(
-  button[title^="HEXMAP|"][title*="visited=1"],
-  button[aria-label^="HEXMAP|"][aria-label*="visited=1"],
-  button[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"],
-  div[title^="HEXMAP|"][title*="visited=1"] button,
-  div[aria-label^="HEXMAP|"][aria-label*="visited=1"] button,
-  div[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"] button,
-  span[title^="HEXMAP|"][title*="visited=1"] button,
-  span[aria-label^="HEXMAP|"][aria-label*="visited=1"] button,
-  span[data-tooltip^="HEXMAP|"][data-tooltip*="visited=1"] button
-){
-  background: #d9f2d9 !important;
-  border-color: #3c7a3c !important;
-}
-
-/* PARTY = thick blue border */
-:where(
-  button[title^="HEXMAP|"][title*="party=1"],
-  button[aria-label^="HEXMAP|"][aria-label*="party=1"],
-  button[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"],
-  div[title^="HEXMAP|"][title*="party=1"] button,
-  div[aria-label^="HEXMAP|"][aria-label*="party=1"] button,
-  div[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"] button,
-  span[title^="HEXMAP|"][title*="party=1"] button,
-  span[aria-label^="HEXMAP|"][aria-label*="party=1"] button,
-  span[data-tooltip^="HEXMAP|"][data-tooltip*="party=1"] button
-){
-  border-width: 4px !important;
-  border-color: #2b59ff !important;
-}
-
-/* SITE = dashed border */
-:where(
-  button[title^="HEXMAP|"][title*="site=1"],
-  button[aria-label^="HEXMAP|"][aria-label*="site=1"],
-  button[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"],
-  div[title^="HEXMAP|"][title*="site=1"] button,
-  div[aria-label^="HEXMAP|"][aria-label*="site=1"] button,
-  div[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"] button,
-  span[title^="HEXMAP|"][title*="site=1"] button,
-  span[aria-label^="HEXMAP|"][aria-label*="site=1"] button,
-  span[data-tooltip^="HEXMAP|"][data-tooltip*="site=1"] button
-){
-  border-style: dashed !important;
-}
-
-/* SPECIAL = purple inset ring */
-:where(
-  button[title^="HEXMAP|"][title*="special=1"],
-  button[aria-label^="HEXMAP|"][aria-label*="special=1"],
-  button[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"],
-  div[title^="HEXMAP|"][title*="special=1"] button,
-  div[aria-label^="HEXMAP|"][aria-label*="special=1"] button,
-  div[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"] button,
-  span[title^="HEXMAP|"][title*="special=1"] button,
-  span[aria-label^="HEXMAP|"][aria-label*="special=1"] button,
-  span[data-tooltip^="HEXMAP|"][data-tooltip*="special=1"] button
-){
-  box-shadow: 0 0 0 3px rgba(176,0,255,0.35) inset, 0 1px 0 rgba(0,0,0,0.15) !important;
-}
-
-/* SELECTED = thick RED BORDER (no fill) */
-:where(
-  button[title^="HEXMAP|"][title*="selected=1"],
-  button[aria-label^="HEXMAP|"][aria-label*="selected=1"],
-  button[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"],
-  div[title^="HEXMAP|"][title*="selected=1"] button,
-  div[aria-label^="HEXMAP|"][aria-label*="selected=1"] button,
-  div[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"] button,
-  span[title^="HEXMAP|"][title*="selected=1"] button,
-  span[aria-label^="HEXMAP|"][aria-label*="selected=1"] button,
-  span[data-tooltip^="HEXMAP|"][data-tooltip*="selected=1"] button
-){
-  border-color: #d40000 !important;
-  border-width: 5px !important;
-  outline: none !important;
-}
-</style>
-        """,
-        unsafe_allow_html=True
-    )
-
-    selected_hex = st.session_state["selected_hex"]
-    hex_map = st.session_state["hex_map"]
-
     col_map, col_info = st.columns([2, 1], gap="large")
 
     # -----------------------
-    # LEFT: Map + Import/Export
-    # -----------------------
-    with col_map:
-        st.caption("Click a hex to select it.")
-        render_hex_button_map(hex_map, selected_hex)
-
-        st.markdown("---")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.metric("Visited", sum(1 for v in hex_map.values() if v.get("visited")))
-        with c2:
-            st.metric("Named", sum(1 for v in hex_map.values() if (v.get("name") or "").strip()))
-        with c3:
-            st.metric("Biome set", sum(1 for v in hex_map.values() if (v.get("biome") or "").strip()))
-
-        export_blob = json.dumps(hex_map, indent=2)
-        st.download_button(
-            "Download Map JSON",
-            data=export_blob,
-            file_name="atdw_hex_map.json",
-            mime="application/json",
-            key="dl_map_json"
-        )
-
-        up = st.file_uploader("Import Map JSON", type=["json"], key="ul_map_json")
-        if up is not None:
-            try:
-                loaded = json.load(up)
-
-                cleaned = {}
-                for k, v in loaded.items():
-                    kk = int(k)
-                    if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
-                        # ensure schema exists
-                        v.setdefault("visited", False)
-                        v.setdefault("party", False)
-                        v.setdefault("site", False)
-                        v.setdefault("special", False)
-                        v.setdefault("name", "")
-                        v.setdefault("biome", "")
-                        v.setdefault("notes", "")
-                        v.setdefault("last", "")
-                        cleaned[kk] = v
-
-                for i in range(1, MAP_HEX_COUNT + 1):
-                    cleaned.setdefault(i, {
-                        "name": "",
-                        "biome": "",
-                        "visited": False,
-                        "party": False,
-                        "site": False,
-                        "special": False,
-                        "notes": "",
-                        "last": ""
-                    })
-
-                st.session_state["hex_map"] = cleaned
-                st.success("Map imported.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Could not import JSON: {e}")
-
-    # -----------------------
-    # RIGHT: Hex editor
+    # RIGHT FIRST: Hex editor (so changes apply BEFORE drawing the map)
     # -----------------------
     with col_info:
         selected_hex = st.session_state["selected_hex"]
@@ -4049,13 +4069,13 @@ with tabs[9]:
         with st.expander("Notes (Special opens this automatically)", expanded=bool(special_flag)):
             notes = st.text_area("Notes", value=d.get("notes",""), height=200, key=f"map_notes_{selected_hex}")
 
-        # --- Immediate sync so map updates instantly when toggles change ---
-        # Make Party unique (only one hex can have party=True)
+        # Party is unique: only one hex can have party=True
         if party_here:
             for k in hex_map.keys():
                 if k != selected_hex and hex_map[k].get("party"):
                     hex_map[k]["party"] = False
 
+        # Sync current editor state into the map EVERY run (so the map colors update immediately)
         hex_map[selected_hex] = {
             **d,
             "visited": visited,
@@ -4084,21 +4104,19 @@ with tabs[9]:
         st.markdown("### Planetside Exploration (from this hex)")
         if st.button("ROLL FULL EXPLORATION (this hex)", key=f"btn_hex_explore_{selected_hex}"):
 
-            biome_choice = biome if biome else "Barren"  # fallback so it doesn't crash
-
+            biome_choice = biome if biome else "Barren"
             exploration_result = roll_table("planetside_exploration", log=True)
+
             add_to_persistent(4, f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
             add_to_log(f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
 
             note_lines = [f"Planetside Exploration: {exploration_result}"]
-
             hex_map[selected_hex]["last"] = exploration_result
 
             if "findings" in exploration_result.lower():
                 findings_result = roll_table("findings", log=True)
                 add_to_persistent(4, f"Hex {selected_hex} — Findings: {findings_result}")
                 add_to_log(f"Hex {selected_hex} — Findings: {findings_result}")
-                st.success(f"Findings: {findings_result}")
                 note_lines.append(f"Findings: {findings_result}")
 
             elif "hazard" in exploration_result.lower():
@@ -4106,33 +4124,105 @@ with tabs[9]:
                 hazard_result = roll_table(hazard_table, log=True)
                 add_to_persistent(4, f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
                 add_to_log(f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
-                st.success(f"Hazard ({biome_choice}): {hazard_result}")
                 note_lines.append(f"Hazard ({biome_choice}): {hazard_result}")
 
             elif "site" in exploration_result.lower():
-                # Auto-mark site on the map
                 hex_map[selected_hex]["site"] = True
-
                 add_to_log(f"Hex {selected_hex} — Found an Àrsaidh Site. Roll full site in Mission tab.")
                 add_to_persistent(4, f"Hex {selected_hex} — Site Found: Roll full site in Mission tab.")
-                st.success("Site Found! Use the Site Generator in the Mission tab.")
                 note_lines.append("Site Found: Àrsaidh Site (roll full site in Mission tab)")
 
             elif "nothing" in exploration_result.lower():
                 add_to_persistent(4, f"Hex {selected_hex} — Exploration: Nothing found.")
-                st.info("Nothing found in this hex.")
                 note_lines.append("Nothing found.")
 
             else:
-                st.warning("Exploration result not recognized — check the CSV formatting.")
                 note_lines.append("Result not recognized (check CSV formatting).")
 
-            # Append the full roll result block to Notes automatically
-            block = "\n".join(note_lines)
-            append_to_hex_notes(selected_hex, block)
+            # Auto-append FULL results block into Notes
+            append_to_hex_notes(selected_hex, "\n".join(note_lines))
 
             st.session_state["hex_map"] = hex_map
             st.rerun()
+
+    # -----------------------
+    # LEFT: Map + Import/Export
+    # -----------------------
+    with col_map:
+        st.caption("Click a hex to select it (Visited=green fill, Party=blue border, Site=dashed, Special=purple ring, Selected=red outline).")
+
+        picked = render_hex_plotly_map(st.session_state["hex_map"], st.session_state["selected_hex"])
+        if picked and picked != st.session_state["selected_hex"]:
+            st.session_state["selected_hex"] = picked
+            st.rerun()
+
+        # Fallback if clicking doesn’t select (older Streamlit)
+        with st.expander("If clicking doesn’t select a hex, use this dropdown instead"):
+            fallback_pick = st.selectbox(
+                "Select hex",
+                list(range(1, MAP_HEX_COUNT + 1)),
+                index=st.session_state["selected_hex"] - 1,
+                key="map_hex_dropdown_fallback"
+            )
+            if fallback_pick != st.session_state["selected_hex"]:
+                st.session_state["selected_hex"] = fallback_pick
+                st.rerun()
+
+        st.markdown("---")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.metric("Visited", sum(1 for v in st.session_state["hex_map"].values() if v.get("visited")))
+        with c2:
+            st.metric("Named", sum(1 for v in st.session_state["hex_map"].values() if (v.get("name") or "").strip()))
+        with c3:
+            st.metric("Biome set", sum(1 for v in st.session_state["hex_map"].values() if (v.get("biome") or "").strip()))
+
+        export_blob = json.dumps(st.session_state["hex_map"], indent=2)
+        st.download_button(
+            "Download Map JSON",
+            data=export_blob,
+            file_name="atdw_hex_map.json",
+            mime="application/json",
+            key="dl_map_json"
+        )
+
+        up = st.file_uploader("Import Map JSON", type=["json"], key="ul_map_json")
+        if up is not None:
+            try:
+                loaded = json.load(up)
+                cleaned = {}
+
+                for k, v in loaded.items():
+                    kk = int(k)
+                    if 1 <= kk <= MAP_HEX_COUNT and isinstance(v, dict):
+                        v.setdefault("visited", False)
+                        v.setdefault("party", False)
+                        v.setdefault("site", False)
+                        v.setdefault("special", False)
+                        v.setdefault("name", "")
+                        v.setdefault("biome", "")
+                        v.setdefault("notes", "")
+                        v.setdefault("last", "")
+                        cleaned[kk] = v
+
+                for i in range(1, MAP_HEX_COUNT + 1):
+                    cleaned.setdefault(i, {
+                        "name": "",
+                        "biome": "",
+                        "visited": False,
+                        "party": False,
+                        "site": False,
+                        "special": False,
+                        "notes": "",
+                        "last": ""
+                    })
+
+                st.session_state["hex_map"] = cleaned
+                st.success("Map imported.")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Could not import JSON: {e}")
 
 # ---------- SIDEBAR: PERSISTENT POOLS ----------
 st.sidebar.header("Persistent Data Pools")
