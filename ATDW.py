@@ -1823,12 +1823,14 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
 
 def render_hex_button_map(hex_map: dict, selected_hex: int):
     """
-    Button-based map (no href links) so clicks do NOT create a new Streamlit session.
-    Styles are applied via CSS using the button tooltip ("help") string prefix HEXMAP|.
+    Compact, staggered layout matching the template.
+    Final row is 97,98,99,100 in a single row (not staggered).
     """
-    total_rows = 26  # 1..100 layout pattern in your template
+    # 12 pairs (96 hexes) + 1 final row (97-100)
+    total_rows = 25  # 24 rows for 1..96 + 1 final row
 
-    for r in range(total_rows):
+    # --- rows for 1..96 ---
+    for r in range(24):
         pair = r // 2
         base = pair * 8
 
@@ -1839,9 +1841,7 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             nums = [base + 2, base + 4, base + 6, base + 8]
             slots = [1, 3, 5, 7]
 
-        nums = [n for n in nums if 1 <= n <= MAP_HEX_COUNT]
         cols = st.columns(8, gap="small")
-
         for slot_i, n in zip(slots, nums):
             d = hex_map.get(n, {})
             visited = bool(d.get("visited"))
@@ -1850,20 +1850,12 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             special = bool(d.get("special"))
             is_sel = (n == selected_hex)
 
-            # markers line (space-separated so it's readable)
             marks = []
-            if party:
-                marks.append("P")
-            if site:
-                marks.append("S")
-            if special:
-                marks.append("★")
+            if party: marks.append("P")
+            if site: marks.append("S")
+            if special: marks.append("★")
 
-            # two-line label: number on top, markers underneath
-            if marks:
-                label = f"{n}\n{' '.join(marks)}"
-            else:
-                label = f"{n}"
+            label = f"{n}\n{' '.join(marks)}" if marks else f"{n}"
 
             tooltip = (
                 f"HEXMAP|hex={n}|visited={int(visited)}|party={int(party)}|"
@@ -1879,6 +1871,40 @@ def render_hex_button_map(hex_map: dict, selected_hex: int):
             ):
                 st.session_state["selected_hex"] = n
                 st.rerun()
+
+    # --- final row 97..100 (single row, no staggering) ---
+    final_nums = [97, 98, 99, 100]
+    final_slots = [0, 2, 4, 6]
+    cols = st.columns(8, gap="small")
+    for slot_i, n in zip(final_slots, final_nums):
+        d = hex_map.get(n, {})
+        visited = bool(d.get("visited"))
+        party = bool(d.get("party"))
+        site = bool(d.get("site"))
+        special = bool(d.get("special"))
+        is_sel = (n == selected_hex)
+
+        marks = []
+        if party: marks.append("P")
+        if site: marks.append("S")
+        if special: marks.append("★")
+
+        label = f"{n}\n{' '.join(marks)}" if marks else f"{n}"
+
+        tooltip = (
+            f"HEXMAP|hex={n}|visited={int(visited)}|party={int(party)}|"
+            f"site={int(site)}|special={int(special)}|selected={int(is_sel)}"
+        )
+
+        if cols[slot_i].button(
+            label,
+            key=f"hexbtn_{n}",
+            help=tooltip,
+            type="secondary",
+            use_container_width=True
+        ):
+            st.session_state["selected_hex"] = n
+            st.rerun()
 
 def _get_query_hex():
     # Works across Streamlit versions
