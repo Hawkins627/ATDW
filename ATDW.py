@@ -1616,8 +1616,8 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     # --- Wider hex grid + correct last row (97-100) ---
     # 12 rows cover 1..96 because each 2-row pair contains 16 hexes (8 + 8) => 6 pairs => 96
     MAIN_ROWS = 12
-    x_step = 1.20           # tighten horizontally (try 0.92–1.05)
-    y_step = 1.00           # tighten vertically  (try 0.80–0.92)
+    x_step = 1.05           # tighten horizontally (try 0.92–1.05)
+    y_step = 0.92           # tighten vertically  (try 0.80–0.92)
 
     pos = {}
     render_order = []
@@ -1706,7 +1706,6 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             marker=dict(
                 symbol="hexagon",
                 size=46,
-                angle=30,  # <-- add this (flat-top)
                 color=fill_colors,
                 line=dict(color=line_colors, width=line_widths),
             ),
@@ -1731,7 +1730,6 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             marker=dict(
                 symbol="hexagon-open",
                 size=40,
-                angle=30,  # <-- add this too
                 line=dict(color="rgba(176,0,255,0.55)", width=3),
             ),
                 hoverinfo="skip",
