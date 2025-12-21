@@ -4336,7 +4336,7 @@ with tabs[9]:
         # Map display controls
         with st.expander("Map display", expanded=False):
             map_zoom_level = st.slider("Zoom", 0.6, 2.5, 1.0, 0.05, key="map_zoom_level")
-            default_h = int((MAIN_ROWS + 3) * 90)
+            default_h = int((12 + 3) * 90)
             map_height_px = st.slider("Map height (px)", 450, 2000, default_h, 50, key="map_height_px")
         
         # --- Plotly click selection ---
