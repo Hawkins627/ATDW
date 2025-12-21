@@ -4126,8 +4126,7 @@ with tabs[9]:
         # Tell the UI to refresh the notes widget value on the NEXT rerun
         st.session_state["force_notes_refresh_for"] = hex_id
 
-
-        col_map, col_info = st.columns([3, 1], gap="large")
+    col_map, col_info = st.columns([3, 1], gap="large")
 
     # -----------------------
     # RIGHT FIRST: Hex editor (so changes apply BEFORE drawing the map)
