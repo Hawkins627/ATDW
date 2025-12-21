@@ -1582,6 +1582,7 @@ def ensure_map_state():
     default_hex = {
         "name": "",
         "biome": "",
+        "terrain": "",
         "visited": False,
         "party": False,
         "site": False,
@@ -1620,6 +1621,10 @@ def ensure_map_state():
     # Remember the last biome you selected in the map editor (used as default for new/unset hexes)
     if "map_default_biome" not in st.session_state:
         st.session_state["map_default_biome"] = ""
+
+    # Remember the last terrain type you selected in the map editor
+    if "map_default_terrain" not in st.session_state:
+        st.session_state["map_default_terrain"] = "Landing"
 
 def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     """
@@ -3041,66 +3046,6 @@ with tabs[4]:
 - **Known Threats:** {thr}
 """)
 
-    # ============================================================
-    # TERRAIN DIFFICULTY
-    # ============================================================
-    st.markdown("### Terrain Difficulty")
-
-    with st.container(border=True):
-
-        # Build the dropdown options from terrain_difficulty.csv
-        # (uses the 'previous_hex' column, including your new 'Landing' entry)
-        try:
-            td_df = load_table_df("terrain_difficulty")
-            raw_opts = td_df["previous_hex"].dropna().astype(str).tolist()
-            terrain_options = list(dict.fromkeys(raw_opts))  # unique, preserve file order
-        except Exception:
-            # Fallback list if the CSV can't be loaded for any reason
-            terrain_options = ["Landing", "Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going"]
-
-        # Put Landing first so the dropdown starts there on a fresh session
-        if "Landing" in terrain_options:
-            terrain_options = ["Landing"] + [o for o in terrain_options if o != "Landing"]
-
-        # This dropdown is the one you asked for!
-        terrain_choice = st.selectbox(
-            "Select Terrain Type:",
-            terrain_options,
-            key="terrain_drop"
-        )
-
-        if st.button("Roll Terrain Difficulty", key="btn_terrain"):
-            result = roll_table("terrain_difficulty", option=terrain_choice, log=True)
-            add_to_persistent(4, f"Terrain ({terrain_choice}): {result}")
-            st.success(result)
-
-    # ============================================================
-    # BIOME-DEPENDENT TERRAIN TABLE
-    # ============================================================
-    st.markdown("### Biome-Dependent Terrain")
-
-    with st.container(border=True):
-
-        biome_list = [
-            "Barren","Exotic","Frozen","Irradiated",
-            "Lush","Scorched","Toxic","Urban",
-            "Volcanic","Water"
-        ]
-
-        biome_choice = st.selectbox(
-            "Biome:",
-            biome_list,
-            key="biome_dep_dropdown"
-        )
-
-        if st.button("Roll Biome-Dependent Terrain", key="btn_biome_dep"):
-            df = load_table_df("biome_dependent_terrain")
-            row = df[df["biome"] == biome_choice].sample(1).iloc[0]
-            result = f"{row['result']}: {row['description']}"
-            add_to_persistent(4, f"Biome-Dependent ({biome_choice}): {result}")
-            add_to_log(f"Biome-Dependent Terrain: {result}")
-            st.success(result)
-
     # -------------------------------
     # PLANETSIDE EXPLORATION LOGIC
     # -------------------------------
@@ -4216,6 +4161,78 @@ with tabs[9]:
             args=(selected_hex,),
         )
 
+        # -----------------------
+        # TERRAIN DIFFICULTY (Map tab)
+        # -----------------------
+        st.markdown("### Terrain Difficulty")
+
+        with st.container(border=True):
+
+            # Build dropdown options from terrain_difficulty.csv (uses 'previous_hex', including 'Landing')
+            try:
+                td_df = load_table_df("terrain_difficulty")
+                raw_opts = td_df["previous_hex"].dropna().astype(str).tolist()
+                terrain_options = list(dict.fromkeys(raw_opts))  # unique, preserve file order
+            except Exception:
+                terrain_options = ["Landing", "Hazardous", "Convoluted", "Inhabited", "Biome-Dependent", "Easy Going"]
+
+            # Put Landing first so the dropdown starts there on a fresh session
+            if "Landing" in terrain_options:
+                terrain_options = ["Landing"] + [o for o in terrain_options if o != "Landing"]
+
+            stored_terrain = (d.get("terrain", "") or "").strip()
+            default_terrain = (st.session_state.get("map_default_terrain", "Landing") or "Landing").strip()
+            initial_terrain = stored_terrain or default_terrain or "Landing"
+
+            def _on_map_terrain_change(hex_id: int):
+                st.session_state["map_default_terrain"] = st.session_state.get(f"map_terrain_{hex_id}", "Landing")
+
+            terrain = st.selectbox(
+                "Select Terrain Type:",
+                terrain_options,
+                index=terrain_options.index(initial_terrain) if initial_terrain in terrain_options else 0,
+                key=f"map_terrain_{selected_hex}",
+                on_change=_on_map_terrain_change,
+                args=(selected_hex,),
+            )
+
+            if st.button("Roll Terrain Difficulty", key=f"btn_map_td_{selected_hex}"):
+                td_result = roll_table("terrain_difficulty", option=terrain, log=True)
+                add_to_persistent(4, f"Hex {selected_hex} — Terrain ({terrain}): {td_result}")
+                add_to_log(f"Hex {selected_hex} — Terrain ({terrain}): {td_result}")
+                append_to_hex_notes(selected_hex, f"Terrain ({terrain}): {td_result}")
+                st.success(td_result)
+
+        st.markdown("### Biome-Dependent Terrain")
+
+        with st.container(border=True):
+            biome_list_td = [
+                "Barren","Exotic","Frozen","Irradiated",
+                "Lush","Scorched","Toxic","Urban",
+                "Volcanic","Water"
+            ]
+
+            # Default to this hex's biome if set; otherwise fall back to the last map biome or Barren
+            biome_td_initial = (biome or (st.session_state.get("map_default_biome") or "") or "Barren").strip()
+            if biome_td_initial not in biome_list_td:
+                biome_td_initial = "Barren"
+
+            biome_td_choice = st.selectbox(
+                "Biome:",
+                biome_list_td,
+                index=biome_list_td.index(biome_td_initial),
+                key=f"map_biome_dep_{selected_hex}",
+            )
+
+            if st.button("Roll Biome-Dependent Terrain", key=f"btn_map_bdt_{selected_hex}"):
+                df = load_table_df("biome_dependent_terrain")
+                row = df[df["biome"] == biome_td_choice].sample(1).iloc[0]
+                bd_result = f"{row['result']}: {row['description']}"
+                add_to_persistent(4, f"Hex {selected_hex} — Biome-Dependent Terrain ({biome_td_choice}): {bd_result}")
+                add_to_log(f"Hex {selected_hex} — Biome-Dependent Terrain ({biome_td_choice}): {bd_result}")
+                append_to_hex_notes(selected_hex, f"Biome-Dependent Terrain ({biome_td_choice}): {bd_result}")
+                st.success(bd_result)
+
         notes_key = f"map_notes_{selected_hex}"
 
         # Initialize the widget state the first time this hex is selected
@@ -4245,6 +4262,7 @@ with tabs[9]:
             "special": special_flag,
             "name": name,
             "biome": biome,
+            "terrain": terrain,
             "notes": notes,
         }
         st.session_state["hex_map"] = hex_map
@@ -4257,7 +4275,7 @@ with tabs[9]:
             if st.button("Add Hex Summary to Log", key=f"btn_log_hex_{selected_hex}"):
                 add_to_log(
                     f"Hex {selected_hex}: {name or '(unnamed)'} | "
-                    f"Biome: {biome or '(unset)'} | Visited: {visited} | "
+                    f"Biome: {biome or '(unset)'} | Terrain: {terrain or '(unset)'} | Visited: {visited} | "
                     f"Party: {party_here} | Site: {site_present} | Special: {special_flag}"
                 )
                 st.success("Logged.")
@@ -4372,6 +4390,7 @@ with tabs[9]:
                         v.setdefault("special", False)
                         v.setdefault("name", "")
                         v.setdefault("biome", "")
+                        v.setdefault("terrain", "")
                         v.setdefault("notes", "")
                         v.setdefault("last", "")
                         cleaned[kk] = v
@@ -4380,6 +4399,7 @@ with tabs[9]:
                     cleaned.setdefault(i, {
                         "name": "",
                         "biome": "",
+                        "terrain": "",
                         "visited": False,
                         "party": False,
                         "site": False,
