@@ -1626,7 +1626,7 @@ def ensure_map_state():
     if "map_default_terrain" not in st.session_state:
         st.session_state["map_default_terrain"] = "Landing"
 
-def render_hex_plotly_map(hex_map: dict, selected_hex: int):
+def render_hex_plotly_map(hex_map: dict, selected_hex: int, zoom_level: float = 1.0, height_px: int | None = None):
     """
     Plotly-based hex map with real fill/border colors.
 
@@ -1642,6 +1642,10 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     """
     import math
     import plotly.graph_objects as go
+    # --- Display scaling (user-controlled) ---
+    zl = max(0.6, min(float(zoom_level or 1.0), 2.5))  # clamp
+    marker_size = max(18, int(46 * zl))
+    font_size = max(8, int(11 * zl))
 
     # --- Tighter hex grid spacing + correct last row (97-100) ---
     # --- Wider hex grid + correct last row (97-100) ---
@@ -1722,12 +1726,12 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
             mode="markers+text",
             text=labels,
             textposition="middle center",
-            textfont=dict(size=11, color="#111"),
+            textfont=dict(size=font_size, color="#111"),
             customdata=customdata,
             hovertemplate="<b>Hex %{customdata}</b><extra></extra>",
             marker=dict(
                 symbol="hexagon",
-                size=46,
+                size=marker_size,
                 color=fill_colors,
                 line=dict(color=line_colors, width=line_widths),
             ),
@@ -1839,7 +1843,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     xmin, xmax = min(xs), max(xs)
     ymin, ymax = min(ys), max(ys)
 
-    zoom = 1.35  # try 1.25–1.60 (higher = tighter)
+    zoom = 1.35 / zl  # higher zl => smaller range => zoom in
     xc = (xmin + xmax) / 2
     yc = (ymin + ymax) / 2
 
@@ -1852,7 +1856,7 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int):
     fig.update_layout(
         shapes=shapes,
         margin=dict(l=0, r=0, t=0, b=0),
-        height=int((MAIN_ROWS + 3) * 90),
+        height=int(height_px) if height_px else int((MAIN_ROWS + 3) * 90 * zl),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(visible=False, fixedrange=True, range=x_range),
@@ -4123,7 +4127,7 @@ with tabs[9]:
         st.session_state["force_notes_refresh_for"] = hex_id
 
 
-    col_map, col_info = st.columns([2, 1], gap="large")
+        col_map, col_info = st.columns([3, 1], gap="large")
 
     # -----------------------
     # RIGHT FIRST: Hex editor (so changes apply BEFORE drawing the map)
@@ -4329,9 +4333,21 @@ with tabs[9]:
     # -----------------------
     with col_map:
         st.caption("Click a hex to select it (Visited=green fill, Party=blue border, Site=dashed, Special=purple ring, Selected=red outline).")
-    
+
+        # Map display controls
+        with st.expander("Map display", expanded=False):
+            map_zoom_level = st.slider("Zoom", 0.6, 2.5, 1.0, 0.05, key="map_zoom_level")
+            default_h = int((MAIN_ROWS + 3) * 90)
+            map_height_px = st.slider("Map height (px)", 450, 2000, default_h, 50, key="map_height_px")
+        
         # --- Plotly click selection ---
-        picked = render_hex_plotly_map(st.session_state["hex_map"], st.session_state["selected_hex"])
+        picked = render_hex_plotly_map(
+            st.session_state["hex_map"],
+            st.session_state["selected_hex"],
+            zoom_level=map_zoom_level,
+            height_px=map_height_px,
+        )
+
         if picked is not None and picked != st.session_state["selected_hex"]:
             st.session_state["selected_hex"] = picked
 
