@@ -18,6 +18,9 @@ def ensure_state():
     if "log" not in st.session_state:
         st.session_state["log"] = []
 
+    if "map_uirev" not in st.session_state:
+    st.session_state["map_uirev"] = 0
+
     # Flat damage modifier from Size (and later other effects)
     if "damage_flat_modifier" not in st.session_state:
         st.session_state["damage_flat_modifier"] = 0
@@ -4325,6 +4328,7 @@ with tabs[9]:
             append_to_hex_notes(selected_hex, "\n".join(note_lines))
 
             st.session_state["hex_map"] = hex_map
+            st.session_state["map_uirev"] += 1
             st.rerun()
 
     # -----------------------
