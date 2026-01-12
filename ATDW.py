@@ -1907,7 +1907,11 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int, zoom_level: float = 
 
     except TypeError:
         # Old Streamlit: no on_select/selection_mode support
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False}, key="hexmap_plotly_static")
+        uirev = st.session_state.get("map_uirev", 0)
+
+        st.plotly_chart(fig, use_container_width=True,
+                config={"displayModeBar": False},
+                key=f"hexmap_plotly_static_{uirev}")
 
     return selected
 
