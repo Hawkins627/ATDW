@@ -1869,13 +1869,15 @@ def render_hex_plotly_map(hex_map: dict, selected_hex: int, zoom_level: float = 
     # Render + capture selection (newer Streamlit). Older Streamlit will just render.
     selected = None
     try:
-        chart_state = st.plotly_chart(
-            fig,
-            use_container_width=True,
-            on_select="rerun",
-            selection_mode="points",
-            key="hexmap_plotly",
-        )
+    uirev = st.session_state.get("map_uirev", 0)
+
+    chart_state = st.plotly_chart(
+        fig,
+        use_container_width=True,
+        on_select="rerun",
+        selection_mode="points",
+        key=f"hexmap_plotly_{uirev}",
+    )
 
         sel = None
         if chart_state is None:
