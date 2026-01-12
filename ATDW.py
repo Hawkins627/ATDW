@@ -19,7 +19,7 @@ def ensure_state():
         st.session_state["log"] = []
 
     if "map_uirev" not in st.session_state:
-    st.session_state["map_uirev"] = 0
+        st.session_state["map_uirev"] = 0
 
     # Flat damage modifier from Size (and later other effects)
     if "damage_flat_modifier" not in st.session_state:
