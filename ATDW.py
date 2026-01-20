@@ -4266,7 +4266,7 @@ with tabs[9]:
             hex_map[selected_hex]["last"] = exploration_result
 
             if "findings" in exploration_result.lower():
-                findings_result = roll_table("findings", log=True)
+                findings_result = roll_table("findings", log=False)
                 add_to_persistent(4, f"Hex {selected_hex} — Findings: {findings_result}")
                 add_to_log(f"Hex {selected_hex} — Findings: {findings_result}")
                 note_lines.append(f"Findings: {findings_result}")
