@@ -4217,7 +4217,7 @@ with tabs[9]:
             )
 
             if st.button("Roll Terrain Difficulty", key=f"btn_map_td_{selected_hex}"):
-                td_result = roll_table("terrain_difficulty", option=terrain, log=True)
+                td_result = roll_table("terrain_difficulty", option=terrain, log=False)
                 add_to_persistent(4, f"Hex {selected_hex} — Terrain ({terrain}): {td_result}")
                 add_to_log(f"Hex {selected_hex} — Terrain ({terrain}): {td_result}")
                 append_to_hex_notes(selected_hex, f"Terrain ({terrain}): {td_result}")
