@@ -4273,7 +4273,7 @@ with tabs[9]:
 
             elif "hazard" in exploration_result.lower():
                 hazard_table = f"{biome_choice.lower()}_hazards"
-                hazard_result = roll_table(hazard_table, log=True)
+                hazard_result = roll_table(hazard_table, log=False)
                 add_to_persistent(4, f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
                 add_to_log(f"Hex {selected_hex} — Hazard ({biome_choice}): {hazard_result}")
                 note_lines.append(f"Hazard ({biome_choice}): {hazard_result}")
