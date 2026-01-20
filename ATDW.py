@@ -4257,7 +4257,7 @@ with tabs[9]:
         if st.button("ROLL FULL EXPLORATION (this hex)", key=f"btn_hex_explore_{selected_hex}"):
 
             biome_choice = biome or (st.session_state.get("map_default_biome") or "") or "Barren"
-            exploration_result = roll_table("planetside_exploration", log=True)
+            exploration_result = roll_table("planetside_exploration", log=False)
 
             add_to_persistent(4, f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
             add_to_log(f"Hex {selected_hex} — Planetside Exploration: {exploration_result}")
